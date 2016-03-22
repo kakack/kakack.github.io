@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="Kaka Chen" />
+    <title>面试编程：字符串 | Kaka Chen</title>
+<link href="http://cdn.duitang.com/uploads/item/201202/02/20120202154112_UQfCN.jpg" rel="icon" type="image/x-icon" />
+
+    <link href="/feed/" rel="alternate" title="Kaka Chen" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/highlight.css">
+    <script type="text/javascript" src="/media/js/jquery-1.7.1.min.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <div id="main" role="main">
+        <header>
+        <h1>面试编程：字符串</h1>
+        </header>
+        <nav>
+        <span><a title="home page" class="" href="/">Home</a></span>
+        <span><a title="about" class="" href="/about/">About</a></span>
+        <span><a title="guestbook" class="" href="/guestbook/">Guestbook</a></span>
+        <span><a title="categories" class="" href="/categories/">Categories</a></span>
+        <span><a title="tags" class="" href="/tags/">Tags</a></span>
+        <span><a title="links" class="" href="/links/">Links</a></span>
+        <span><a title="subscribe by RSS" class="" href="/feed/">Subscribe</a></span>
+        </nav>
+        <article class="content">
+        <section class="post">
+<p>第二篇写一点关于string的常见面试编程题目.</p>
+
+<hr />
+
+<h2>逆序</h2>
+
+<p>如果没有任何条件限制，那么做一个普通逆序是比较容易的</p>
+
+<pre><code>char* Reverse(char* s)
+{
+    //将q指向字符串最后一个字符
+    char* q = s ;
+    while( *q++ ) ;
+    q -= 2 ;//最后一位是'\0'
+
+    //分配空间，存储逆序后的字符串。
+    char* p = new char[sizeof(char) * (q - s + 2)] ; 
+    char* r = p ;
+
+    // 逆序存储
+    while(q &gt;= s)
+        *p++ = *q-- ;
+    *p = '\0' ;
+
+    return r ;
+}
+</code></pre>
+
+<p>在这个基础上稍微加点限制条件，一般会考到原地逆序，也就是说不允许使用额外的空间，方法大致一样，都是将字符串首尾调换。如图
+<img src="http://pic002.cnblogs.com/images/2011/64257/2011030921173395.png" alt="" /></p>
+
+<p>最常用的方法是</p>
+
+<pre><code>char* Reverse(char* s)
+{
+    // p指向字符串头部
+    char* p = s ;
+
+    // q指向字符串尾部
+    char* q = s ;
+    while( *q )
+        ++q ;
+    q -- ;
+
+    // 用t作中间变量交换并移动指针，直到p和q交叉
+    while(q &gt; p)
+    {
+        char t = *p ;
+        *p++ = *q ;
+        *q-- = t ;
+    }
+
+    return s ;
+ }
+</code></pre>
+
+<p>然后可以用递归的方法来做</p>
+
+<pre><code>// 对字符串s在区间left和right之间进行逆序，递归法
+void Reverse( char* s, int left, int right )
+{
+    if(left &gt;= right)
+        return s ;
+
+    char t = s[left] ;
+    s[left] = s[right] ;
+    s[right] = t ;
+
+    Reverse(s, left + 1, right - 1) ;
+    }
+</code></pre>
+
+<p>如果不允许出现中间变量t，那么可以用异或操作来传递</p>
+
+<pre><code>// 使用异或操作对字符串s进行逆序
+char* Reverse(char* s)
+{
+    char* r = s ;
+
+    //令p指向字符串最后一个字符
+    char* p = s;
+    while (*(p + 1) != '\0')
+        ++p ;
+
+    // 使用异或操作进行交换
+    while (p &gt; s)
+    {
+        *p = *p ^ *s ;
+        *s = *p ^ *s ;
+        *p = *p-- ^ *s++ ;
+    }
+
+    return r ;
+}
+</code></pre>
+
+<p>另外在逆序中再难一点的可以有关于单词的逆序输出，比如给定"This is a sentence"，则输出是"sentence a is This"，为了简化问题，字符串中不包含标点符号。</p>
+
+<p>分两步</p>
+
+<p>1 先按单词逆序得到"sihT si a ecnetnes"</p>
+
+<p>2 再整个句子逆序得到"sentence a is This"</p>
+
+<p>对于步骤一，关键是如何确定单词，这里以空格为单词的分界。当找到一个单词后，就可以使用上面讲过的方法将这个单词进行逆序，当所有的单词都逆序以后，将整个句子看做一个整体（即一个大的包含空格的单词）再逆序一次即可，如下图所示，第一行是原始字符换，第二行是按单词逆序后的字符串，最后一行是按整个句子逆序后的字符串。</p>
+
+<p><img src="http://pic002.cnblogs.com/images/2011/64257/2011030921192821.png" alt="" /></p>
+
+<pre><code>// 对指针p和q之间的所有字符逆序
+void ReverseWord(char* p, char* q)
+{
+    while(p &lt; q)
+    {
+        char t = *p ;
+        *p++ = *q ;
+        *q-- = t ;
+    }
+}
+
+// 将句子按单词逆序
+char* ReverseSentence(char* s)
+{
+    // 这两个指针用来确定一个单词的首尾边界
+    char* p = s ; // 指向单词的首字符
+    char* q = s ; // 指向空格或者 '\0'
+
+    while(*q != '\0')
+    {
+        if (*q == '')
+        {
+            ReverseWord(p, q - 1) ;
+            q++ ; // 指向下一个单词首字符
+            p = q ;
+        }
+        else
+            q++ ;
+    }
+
+    ReverseWord(p, q - 1) ; // 对最后一个单词逆序
+    ReverseWord(s, q - 1) ; // 对整个句子逆序
+
+    return s ;
+}
+</code></pre>
+
+<p>至于字符串的拷贝，求长等方法的重写就不在此赘述了，因为肯定没逆序那么难。可以根据第一段代码中的方法自行修改得到。</p>
+
+<hr />
+
+<h2>关于字符串编程的几个注意事项</h2>
+
+<p>因为有一阵没用c写字符串了，所以有些内容也记得不太清楚了。其中C/C++关于字符串的定义方式有三种：字符串常量，char数组，char指针。</p>
+
+<ol>
+<li><p>字符串常量：位于一对双括号中的任何字符。双引号里的字符加上编译器自动提供的结束标志\0字符，作为
+一个字符串存储在内存中。如：printf("%s","hello"); //"hello"
+ 如果字符串文字中间没有间隔或间隔的是空格符，ANSI  C 会将其串联起来。例：</p>
+
+<p>  char greeting[50] = "hello,and" "how are" "you";</p>
+
+<p>等价于：</p>
+
+<p>  char greeting[50] = "hello,and how are you";</p>
+
+<p>字符串常量属于静态存储类。静态存储是指如果在一个函数中使用字符串常量，即使是多次调用了这个函数，
+该字符串在程序的整个运行过程中只存储一份。整个引号的内容作为指向该字符串存储位置的指针。这一点与
+把数组名作为指向数组存储位置的指针类似。</p></li>
+<li><p>char数组：初始化例子：
+   char m[40] = "hello,world";</p>
+
+<p>   //定义字符串数组时必须指定数组大小（整型常量），在指定大小时，要确保数组的大小比预定的大一个，因为编译器会自动添加'\0'。多余的元素会初始化为'\0'</p>
+
+<p>   char m={'h','e','l','\0'};  //注意标志结束的空字符，若没有它，得到的只是一个字符数组而不是字符串</p></li>
+<li>char指针：char * m = "hello,world";//自动添加'\0'此时字符串指针m指向字符串常量,不成用 * (m+1)='o'修改此常量，因为这个字符串常量放在常量区不能被修改</li>
+</ol>
+
+
+<p>最后辨析一下char指针和char数组表示的字符串的区别：
+数组形式：</p>
+
+<ul>
+<li><p>编译器会把数组名m看作是数组首元素的地址&amp;m[0]的同义词，m是个地址常量。可以用m+1来标识数组里的下一个元素，但不能使用++m，增量运算符只能在变量前使用， 而不能在常量前使用。</p></li>
+<li><p>m[40]在计算机内存中被分配一个有40个元素的数组（其中每个元素对应一个字符，还有一个附加的元素对应结束的空字符'\0'）。每个元素都被初始化为相应的字符。</p></li>
+<li><p>通常，被引用的字符串存储在可执行文件的数据段部分；当程序被加载到内存中时，字符串也被加载到内存中，把被引用的字符串复制到数组中</p></li>
+</ul>
+
+
+<p>指针形式：</p>
+
+<ul>
+<li><p>指针形式（*m）也会在静态存储区为字符串预留空间。此外，一旦程序开始执行，还要为指针变量m另外预留一个存储位置，以在该指针变量中能够存储字符串的地址。</p></li>
+<li><p>m指向字符串的第一个字符，可用++m指向第二个字符。  指针m是个变量。</p></li>
+</ul>
+
+
+</section>
+<section class="meta">
+<span class="author">
+  <a href="http://ellochen.github.com/about">Kaka Chen</a>
+</span>
+<span class="time">
+  /
+  <time datetime="2014-03-25">2014-03-25</time>
+</span>
+<br />
+<span class="license">
+  Published under <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">(CC) BY-NC-SA</a>
+</span>
+
+<span class="categories">
+  in categories
+  
+  <a href="/categories/#interview" title="interview">interview</a>&nbsp;
+  
+</span>
+
+
+<span class="tags">
+  tagged with 
+  
+  <a href="/tags/#algorithm" title="algorithm">algorithm</a>&nbsp;
+  
+  <a href="/tags/#interview" title="interview">interview</a>&nbsp;
+  
+  <a href="/tags/#string" title="string">string</a>&nbsp;
+  
+</span>
+
+</section>
+<section class="comment">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'kakack'; // required: replace example with your forum shortname
+    var disqus_url = 'http://kakack.github.io/2014/03/%E9%9D%A2%E8%AF%95%E7%BC%96%E7%A8%8B%EF%BC%9A%E5%AD%97%E7%AC%A6%E4%B8%B2/';
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = 'http://kakack.github.io/2014/03/%E9%9D%A2%E8%AF%95%E7%BC%96%E7%A8%8B%EF%BC%9A%E9%93%BE%E8%A1%A8/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = 'http://kakack.github.io/2014/03/%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E4%B8%8EETL/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+
+        </article>
+      </div>
+
+    <footer>
+        <p><small>Powered by <a href="https://github.com/mojombo/jekyll">Jekyll</a> & <a href="http://pages.github.com">GitHub</a> | Copyright 2008 - 2014 by <a href="http://kakack.github.io/about/">kakack</a> | <span class="label label-info">2014-04-03 21:48:26 CST</span></small></p>
+    </footer>
+
+    </div>
+
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-12936429-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

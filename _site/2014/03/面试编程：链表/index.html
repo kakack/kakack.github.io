@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="Kaka Chen" />
+    <title>面试编程：链表 | Kaka Chen</title>
+<link href="http://cdn.duitang.com/uploads/item/201202/02/20120202154112_UQfCN.jpg" rel="icon" type="image/x-icon" />
+
+    <link href="/feed/" rel="alternate" title="Kaka Chen" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/highlight.css">
+    <script type="text/javascript" src="/media/js/jquery-1.7.1.min.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <div id="main" role="main">
+        <header>
+        <h1>面试编程：链表</h1>
+        </header>
+        <nav>
+        <span><a title="home page" class="" href="/">Home</a></span>
+        <span><a title="about" class="" href="/about/">About</a></span>
+        <span><a title="guestbook" class="" href="/guestbook/">Guestbook</a></span>
+        <span><a title="categories" class="" href="/categories/">Categories</a></span>
+        <span><a title="tags" class="" href="/tags/">Tags</a></span>
+        <span><a title="links" class="" href="/links/">Links</a></span>
+        <span><a title="subscribe by RSS" class="" href="/feed/">Subscribe</a></span>
+        </nav>
+        <article class="content">
+        <section class="post">
+<p><img src="http://ww3.sinaimg.cn/mw690/b03122c9gw1dxzk3m2cscg.gif" alt="" /></p>
+
+<p>经过这几天的面试和面试准备，发现那些大公司像Hulu、Baidu、EMC等招人的时候，在电面期间就喜欢看面试者编程的能力，遇到的一般方法是在像<a href="http://collabedit.com/">http://collabedit.com/</a>的网上在线写code，<del>当然听饼师兄说，有的公司会喜欢直接远程监控让你在自己的IDE上写代码编译debug，这个难度更大简直无情</del>，我之前对于这块的锻炼确实比较少，因为已经很久没有写简单算法了，所以一下子写一段20行左右明确完成某个工作的函数确实有点吃力，但之后自己慢慢练了一下，也感谢一些面试官没玩命搞我，表现也好起来了。打算写几篇博客简单罗列一下近期遇到有代表性的在线编程题，做纪念和巩固。今天第一篇就写链表。</p>
+
+<hr />
+
+<p>关于链表，作为最简单的一种数据结构，一般被考察到的大多是其中最简单的单链表，也就是每个节点Node含两个成员，value保存本节点包含的信息，next指针指向下一个节点。另外还会有一个head指针指向链表的第一个Node。链表的扩展一般有双向链表，即有next和previous两个指针分别指向该Node的下一个和上一个节点，另外单向链表还会出现环的情况，在此不再赘述。链表的缺点是不支持随机访问。关于链表的增删改查没必要说了，下面来讲两个面试编程中比较常见的问题。</p>
+
+<hr />
+
+<h2>链表排序</h2>
+
+<p>对于链表来说，排序比数组排序麻烦好多，因为会涉及到插入的顺序和那些该死的指针，所以不是所有数组上可行的排序方法都能在链表中实践。</p>
+
+<pre><code>（1）插入排序    （适合）
+（2）冒泡排序    （适合）
+（3）希尔排序    （适合）
+（4）选择排序    （适合）
+（5）快速排序    （不适合）
+（6）合并排序    （不适合）
+（7）基数排序    （不适合）
+（8）堆排序      （不适合）
+</code></pre>
+
+<p>  其实，一般来说。如果涉及到数据之间的相对关系调配，那么只适合线性排序；如果只是数据内容之间的相互交换，那么这种排序方法也比较适合链表的排序。快速排序、合并排序、堆排序都涉及到了中间值的选取问题，所以不大适合链表排序。第一个问我这个问题是Baidu的工程师，当时直接给斯巴达了，写了半天被人家呵呵了……
+  后来自己查了点资料，动手写了一下链表的几种排序。</p>
+
+<ul>
+<li>插入排序</li>
+</ul>
+
+
+<pre><code class="``">  void sortlist(linklist * head)
+{
+    linklist * newhead, * s, * pre ,* p;
+    p=head-&gt;next;
+    newhead=p-&gt;next;
+    p-&gt;next=NULL;         //准备两个链表，一个是已经排好的head开头，一个是还没排好的newhead开头
+    while(newhead)        //依次遍历没有排好序的那个链表
+    {            
+        s=newhead;        //用s把当前第一个节点拿出来做比较
+        newhead=newhead-&gt;next; //待排序链表往后走
+        pre=head;         
+        p=head-&gt;next;
+        while(p!=NULL &amp;&amp; p-&gt;data &lt; s-&gt;data)//每次判断p比s的值小，那么用作比较的pre和p往后走，直到遇到比s大的p出现
+        {
+            pre=p;
+            p=p-&gt;next;
+        }
+        s-&gt;next=p;
+        pre-&gt;next=s;
+    }
+}
+</code></pre>
+
+<ul>
+<li>选择排序：每次选出待排序部分最小的一个node连到链表上</li>
+</ul>
+
+
+<pre><code class="``">  void selectsort(linklist * head)
+{
+    linklist * p, * min , *q;
+    int t;
+    for( p=head-&gt;next;p-&gt;next!=NULL;p=p-&gt;next)        //p每次往后移动一个node
+    {
+        for(min=p,q=p-&gt;next;q!=NULL;q=q-&gt;next)
+        {
+            if(q-&gt;data &lt; min-&gt;data)
+                min=q;                               //找到最小的一个node，保存到min里
+        }
+        if(min!=p)                                    //如果不是p自己，那么更新操作
+        {                      
+            t=p-&gt;data;
+            p-&gt;data=min-&gt;data;           
+            min-&gt;data=t;
+        }
+    }
+}
+</code></pre>
+
+<ul>
+<li>冒泡排序</li>
+</ul>
+
+
+<pre><code class="``">  void bubblesort(linklist * head)
+{
+    linklist * end, * p , * q;                //end用来记录排好序的最后一个元素地址，p，q分别为前驱，后继
+    int temp;
+    p=head-&gt;next;
+    q=p-&gt;next;
+    end=NULL;
+    while(end!=head-&gt;next)
+                                             //如果head所指结点的next成员为end，循环结束
+    {
+        p=head-&gt;next;//p结点从链表头结点开始
+        q=p-&gt;next;//q指向p所指结点的下一个结点
+        while(p-&gt;next!=end)
+                                             //当p-&gt;next的值为end时，表示到链尾
+        {
+            if(p-&gt;data&gt;q-&gt;data)              //按照数据域从小到大排序
+            {
+                temp=p-&gt;data;
+                p-&gt;data=q-&gt;data;
+                q-&gt;data=temp;
+            }
+            p=q;
+            q=q-&gt;next;
+        }
+        end=p;                             //使end指向每次排序的q所指的结点即尾结点
+    }
+}
+</code></pre>
+
+<hr />
+
+<h2>链表逆序</h2>
+
+<p>这个是EMC的工程师问的题目，摸索了一下就写出来了</p>
+
+<pre><code>
+Node * ReverseList(Node *head) //链表逆序
+{
+if ( head == NULL || head-&gt;next == NULL ) 
+// 否则下面的就错了，一定要注意一些特定条件的判断，边界问题狠重要，软件开发要注意对异常分支的处理     
+
+        // 三个指针的方式结构比较清晰
+        Node *p1 = head;
+        Node *p2 = p1-&gt;next;
+        Node *p3 = p2-&gt;next;   //逆序需要三个临时的指针
+        p1-&gt;next = NULL;
+        while ( p3 != NULL )
+        {
+                p2-&gt;next = p1; // p2-&gt;next为p3，已经保存过了
+                //p1、p2、p3都向前移动一个
+                p1 = p2;
+                p2 = p3;
+                p3 = p3-&gt;next;
+        }
+        p2-&gt;next = p1; //最末端节点挂在链上
+        head = p2;
+        return head;
+}
+</code></pre>
+
+<hr />
+
+<h2>两个有序链表merge成一个有序链表</h2>
+
+<pre><code>
+Node * Merge(Node *head1 , Node *head2)
+{
+        if ( head1 == NULL)
+        return head2;
+        if ( head2 == NULL)
+        return head1;
+
+        // 良好的习惯，指针要初始化为NULL
+        Node *head = NULL;
+        Node *p1 = NULL;
+        Node *p2 = NULL;
+
+        // 从小到大，获得头节点
+        if ( head1-&gt;data =&lt; head2-&gt;data )
+        {
+                head = head1;
+                p1 = head1-&gt;next;    // 注意更新的不一样
+                p2 = head2;
+        }
+        else
+        {
+                head = head2;
+                p2 = head2-&gt;next;
+                p1 = head1;
+        }
+
+        Node *pcurrent = head;
+        while ( p1 != NULL &amp;&amp; p2 != NULL)
+        {
+                if ( p1-&gt;data &lt;= p2-&gt;data )
+                {
+                       pcurrent-&gt;next = p1; // 挂接新节点
+                       pcurrent = p1; //更新当前最后一个节点
+                       p1 = p1-&gt;next; //更新下一个待比较节点
+                }
+                else
+                {
+                       pcurrent-&gt;next = p2;
+                       pcurrent = p2;
+                       p2 = p2-&gt;next;
+                }
+        }
+
+        if ( p1 != NULL ) //挂接剩余部分
+        pcurrent-&gt;next = p1;
+        if ( p2 != NULL )
+        pcurrent-&gt;next = p2;
+
+        return head;
+}
+</code></pre>
+
+<p>或者事用递归调用的办法</p>
+
+<pre><code>Node * MergeRecursive(Node *head1 , Node *head2)
+{        //退出条件是某链结束
+        if ( head1 == NULL )
+        return head2;
+        if ( head2 == NULL)
+        return head1;
+
+        Node *head = NULL;
+        if ( head1-&gt;data &lt; head2-&gt;data )
+        {
+                head = head1;
+                head-&gt;next = MergeRecursive(head1-&gt;next,head2);
+        }
+        else
+        {
+                head = head2;
+                head-&gt;next = MergeRecursive(head1,head2-&gt;next);
+        }
+
+        return head;
+}
+</code></pre>
+
+</section>
+<section class="meta">
+<span class="author">
+  <a href="http://ellochen.github.com/about">Kaka Chen</a>
+</span>
+<span class="time">
+  /
+  <time datetime="2014-03-24">2014-03-24</time>
+</span>
+<br />
+<span class="license">
+  Published under <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">(CC) BY-NC-SA</a>
+</span>
+
+<span class="categories">
+  in categories
+  
+  <a href="/categories/#interview" title="interview">interview</a>&nbsp;
+  
+</span>
+
+
+<span class="tags">
+  tagged with 
+  
+  <a href="/tags/#algorithm" title="algorithm">algorithm</a>&nbsp;
+  
+  <a href="/tags/#interview" title="interview">interview</a>&nbsp;
+  
+  <a href="/tags/#linkedlist" title="linkedlist">linkedlist</a>&nbsp;
+  
+</span>
+
+</section>
+<section class="comment">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'kakack'; // required: replace example with your forum shortname
+    var disqus_url = 'http://kakack.github.io/2014/03/%E9%9D%A2%E8%AF%95%E7%BC%96%E7%A8%8B%EF%BC%9A%E9%93%BE%E8%A1%A8/';
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = 'http://kakack.github.io/2014/03/%E9%9D%A2%E8%AF%95%E7%BC%96%E7%A8%8B%EF%BC%9A%E6%95%B0%E7%BB%84/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = 'http://kakack.github.io/2014/03/%E9%9D%A2%E8%AF%95%E7%BC%96%E7%A8%8B%EF%BC%9A%E5%AD%97%E7%AC%A6%E4%B8%B2/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+
+        </article>
+      </div>
+
+    <footer>
+        <p><small>Powered by <a href="https://github.com/mojombo/jekyll">Jekyll</a> & <a href="http://pages.github.com">GitHub</a> | Copyright 2008 - 2014 by <a href="http://kakack.github.io/about/">kakack</a> | <span class="label label-info">2014-04-03 21:48:26 CST</span></small></p>
+    </footer>
+
+    </div>
+
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-12936429-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

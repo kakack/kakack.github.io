@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="Kaka Chen" />
+    <title>当我们聊起c++ | Kaka Chen</title>
+<link href="http://cdn.duitang.com/uploads/item/201202/02/20120202154112_UQfCN.jpg" rel="icon" type="image/x-icon" />
+
+    <link href="/feed/" rel="alternate" title="Kaka Chen" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/highlight.css">
+    <script type="text/javascript" src="/media/js/jquery-1.7.1.min.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <div id="main" role="main">
+        <header>
+        <h1>当我们聊起c++</h1>
+        </header>
+        <nav>
+        <span><a title="home page" class="" href="/">Home</a></span>
+        <span><a title="about" class="" href="/about/">About</a></span>
+        <span><a title="guestbook" class="" href="/guestbook/">Guestbook</a></span>
+        <span><a title="categories" class="" href="/categories/">Categories</a></span>
+        <span><a title="tags" class="" href="/tags/">Tags</a></span>
+        <span><a title="links" class="" href="/links/">Links</a></span>
+        <span><a title="subscribe by RSS" class="" href="/feed/">Subscribe</a></span>
+        </nav>
+        <article class="content">
+        <section class="post">
+<p><img src="http://ww2.sinaimg.cn/mw690/b03122c9gw1dzc044ys39g.gif" alt="" /></p>
+
+<p>紧张地被通知百度明天下午4：00打电话来面，搜了一下面经吓得屁滚尿流，要不要这样啊亲！还要自备电脑当场写code给他看，于是之前看了Java，今天就看看C++相关的内容。当我们和面试官聊起C++，可能会说些这样的话题</p>
+
+<hr />
+
+<h3>static</h3>
+
+<p>Static是C++中用来控制变量储存方式和可见性的关键字。当我们使用static时是需要一个数据对象为整个类而非某个对象服务,同时又力求不破坏类的封装性,即要求此成员隐藏在类的内部，对外不可见。没有this指针，不能包含虚函数做成员函数，</p>
+
+<p>静态成员使用方法：&lt;类名>::&lt;静态成员名>，静态成员是属于整个类的而不是某个对象，静态成员变量只存储一份供所有对象共用。所以在所有对象中都可以共享它。使用静态成员变量实现多个对象之间的数据共享不会破坏隐藏的原则，保证了安全性还可以节省内存。静态成员函数中不能引用非静态成员。</p>
+
+<h3>this指针</h3>
+
+<p>this 指针是一个隐含于每一个类的成员函数中的特殊指针（包括析构函数和构造函数），它用于指向正在被成员函数操作的对象。不是对象的一部分，不影响sizeof()。</p>
+
+<h3>const</h3>
+
+<p>const关键字修饰的内容不可被改变，被const修饰的东西都受到强制保护，可以预防意外的变动，能提高程序的健壮性。</p>
+
+<ol>
+<li><p>修饰变量，表示类型为Type的变量value是不可变的：</p>
+
+<p>   TYPE const ValueName = value;</p>
+
+<p>   const TYPE ValueName = value;</p></li>
+<li><p>修饰指针：</p>
+
+<ul>
+<li><p>指针是常量：</p>
+
+<p>   char *const cp; //到char的const指针</p></li>
+<li><p>指针指向的内容是常量：</p>
+
+<p>   char const *pc1; //到const char的指针</p>
+
+<p>   const char *pc2; //到const char的指针（这两个声明是等同的）</p></li>
+<li><p>两者都不可变</p>
+
+<p>   const char* const pContent;</p></li>
+</ul>
+</li>
+<li><p>函数中使用：</p>
+
+<ul>
+<li>const修饰函数参数</li>
+<li>const修饰函数返回值</li>
+</ul>
+</li>
+<li>类相关：
+
+<ul>
+<li>const修饰成员变量，表示成员常量，不能被修改，同时它只能在初始化列表中赋值。</li>
+<li>const修饰类的成员函数，则该成员函数不能修改类中任何非const成员函数。一般写在函数的最后来修饰。</li>
+<li>const修饰类对象/对象指针/对象引用，const对象只能访问const的成员函数</li>
+</ul>
+</li>
+</ol>
+
+
+<h3>Reference</h3>
+
+<p>引用是某一个目标变量的别名，不占用储存单元，但是要在一开始初始化。作为函数参数时和指针效果一样。</p>
+
+<p>和指针的关系：引用是对象的别名，操作引用就是操作这个对象，必须在创建的同时有效得初始化（引用一个有效的对象，不可为NULL），初始化完毕就再也不可改变，引用具有指针的效率，又具有变量使用的方便性和直观性，在语言层面上引用和对象的用法一样，在二进制层面上引用一般都是通过指针来实现的，只是编译器帮我们完成了转换。之所以使用引用是为了用适当的工具做恰如其分的事，体现了最小特权原则。</p>
+
+<h3>内存分配</h3>
+
+<pre><code>1）从静态存储区域分配。内存在程序编译的时候就已经分配好，这块内存在程序的整个运行期间都存在，如全局变量，static变量。
+2）在栈上创建。在执行函数时，函数内局部变量的存储单元都可以在栈上创建，函数执行结束时这些存储单元自动被释放。栈内存分配运算内置于处理器的指令集中，效率很高，但是分配的内存容量有限。
+3）从堆上分配（动态内存分配）程序在运行的时候用malloc或new申请任意多少的内存，程序员负责在何时用free或delete释放内存。动态内存的生存期自己决定，使用非常灵活。
+</code></pre>
+
+<p> new/delete与malloc()/free()：都是在堆(heap)上进行动态的内存操作。用malloc函数需要指定内存分配的字节数并且不能初始化对象，new 会自动调用对象的构造函数。delete 会调用对象的destructor，而free 不会调用对象的destructor.</p>
+
+<pre><code>- 操作对象：前者是C++的运算符，后者是C++的标准库函数，对于非内部数据类的对象而言，光用malloc或free无法满足要求，不在编译器控制范围内，所以不能把构造函数和析构函数强加给malloc/free，因此C++需要一个能完成动态内存分配和初始化工作的运算符new，以及一个能完成清理与释放内存工作的运算符delete。
+- 用法上：1、malloc的原型是void * malloc(size_t size); 返回值的类型是void *，所以在调用malloc 时要显式地进行类型转换，将void * 转换成所需要的指针类型。2、 malloc 函数本身并不识别要申请的内存是什么类型，它只关心内存的总字节数。
+</code></pre>
+
+<p>在C++中，内存可以分为以下五个块：</p>
+
+<ul>
+<li>栈区stack：由编译器自动分配和释放，存放函数的参数值、局部变量的值</li>
+<li>堆区heap：由程序员分配和释放，如果不释放则会在程序结束时由操作系统收回，分配类型类似于链表</li>
+<li>全局区（静态区）static：全局变量和静态变量是存放在一起的，初始化的全局变量和静态变量在一块，未初始化的在相邻的另一块区域，程序结束后由系统释放</li>
+<li>文字常量区：存常量字符串，程序结束后系统释放</li>
+<li>程序代码区：存放函数体的二进制代码</li>
+</ul>
+
+
+</section>
+<section class="meta">
+<span class="author">
+  <a href="http://ellochen.github.com/about">Kaka Chen</a>
+</span>
+<span class="time">
+  /
+  <time datetime="2014-03-13">2014-03-13</time>
+</span>
+<br />
+<span class="license">
+  Published under <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">(CC) BY-NC-SA</a>
+</span>
+
+<span class="categories">
+  in categories
+  
+  <a href="/categories/#c++" title="c++">c++</a>&nbsp;
+  
+</span>
+
+
+<span class="tags">
+  tagged with 
+  
+  <a href="/tags/#C++" title="C++">C++</a>&nbsp;
+  
+</span>
+
+</section>
+<section class="comment">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'kakack'; // required: replace example with your forum shortname
+    var disqus_url = 'http://kakack.github.io/2014/03/%E5%BD%93%E6%88%91%E4%BB%AC%E8%81%8A%E8%B5%B7C%2B%2B/';
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = 'http://kakack.github.io/2014/03/%E6%B5%85%E8%B0%88%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = 'http://kakack.github.io/2014/03/Hadoop%E4%B9%8B%E5%88%9D%E4%BD%93%E9%AA%8C/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+
+        </article>
+      </div>
+
+    <footer>
+        <p><small>Powered by <a href="https://github.com/mojombo/jekyll">Jekyll</a> & <a href="http://pages.github.com">GitHub</a> | Copyright 2008 - 2014 by <a href="http://kakack.github.io/about/">kakack</a> | <span class="label label-info">2014-04-03 21:48:26 CST</span></small></p>
+    </footer>
+
+    </div>
+
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-12936429-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

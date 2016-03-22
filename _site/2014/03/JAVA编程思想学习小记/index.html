@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="Kaka Chen" />
+    <title>Java编程思想学习小记 | Kaka Chen</title>
+<link href="http://cdn.duitang.com/uploads/item/201202/02/20120202154112_UQfCN.jpg" rel="icon" type="image/x-icon" />
+
+    <link href="/feed/" rel="alternate" title="Kaka Chen" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/highlight.css">
+    <script type="text/javascript" src="/media/js/jquery-1.7.1.min.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <div id="main" role="main">
+        <header>
+        <h1>Java编程思想学习小记</h1>
+        </header>
+        <nav>
+        <span><a title="home page" class="" href="/">Home</a></span>
+        <span><a title="about" class="" href="/about/">About</a></span>
+        <span><a title="guestbook" class="" href="/guestbook/">Guestbook</a></span>
+        <span><a title="categories" class="" href="/categories/">Categories</a></span>
+        <span><a title="tags" class="" href="/tags/">Tags</a></span>
+        <span><a title="links" class="" href="/links/">Links</a></span>
+        <span><a title="subscribe by RSS" class="" href="/feed/">Subscribe</a></span>
+        </nav>
+        <article class="content">
+        <section class="post">
+<p><img src="http://img3.yytcdn.com/uploads/attachments/fan_topic_reply/6593671/F5CE01342B76A652CF0557DB6952C848.gif" alt="" />
+<del>经过这几次面试被吐槽，突然发现会用java和懂java真是两种不一样的境界啊！</del></p>
+
+<p>推荐一个博客园里我觉得写java写的最好的博客<a href="http://www.cnblogs.com/skywang12345/">戳</a>，自带源码，看起来爽爆！</p>
+
+<hr />
+
+<h2>概况</h2>
+
+<p>Java和Javax都是Java的API包，其中Javax的x是extension扩展的意思，其中核心包13个</p>
+
+<ul>
+<li>java.applet：提供创建 applet 所必需的类和 applet 用来与其 applet 上下文通信的类。Applet是一种在web环境下，于浏览器或者客户端运行的java程序组件</li>
+<li>java.awt：包含用于创建用户界面和绘制图形图像的所有类。</li>
+<li>java.beans：JavaBean是一种特殊的java类，是一种可以重复使用的软件组件，优点是可序列化，提供无参构造器，提供getter和setter方法访问对象属性。</li>
+<li>java.io：通过数据流、序列化和文件系统提供系统输入和输出。</li>
+<li>java.lang：提供利用 Java 编程语言进行程序设计的基础类。</li>
+<li>java.math：提供用于执行任意精度整数算法 (BigInteger) 和任意精度小数算法 (BigDecimal) 的类。</li>
+<li>java.net：为实现网络应用程序提供类。</li>
+<li>java.nio：定义作为数据容器的缓冲区，并提供其他 NIO 包的概述。</li>
+<li>java.rmi：提供RMI包</li>
+<li>java.security：为安全框架提供类和接口。</li>
+<li>java.sql：提供使用 JavaTM 编程语言访问并处理存储在数据源（通常是一个关系数据库）中的数据的 API。</li>
+<li>java.text：提供以与自然语言无关的方式来处理文本、日期、数字和消息的类和接口。</li>
+<li>java.util：包含 collection 框架、遗留的 collection 类、事件模型、日期和时间设施、国际化和各种实用工具类（字符串标记生成器、随机数生成器和位数组）。</li>
+</ul>
+
+
+<hr />
+
+<h2>语句结构</h2>
+
+<p>Java跳出循环结构的办法：Java中的break和continue都只能作用于最内层的循环，如果要在内层跳出外层循环，可以有这么两种办法</p>
+
+<ul>
+<li>可以在外循环中定义一个标号，然后在里层循环体中break后加上这个标号：</li>
+</ul>
+
+
+<pre><code>ok:
+for(int i=0;i&lt;10;i++) {   
+   for(int j=0;j&lt;10;j++) {   
+     System.out.println(“i=” + i + “,j=” + j);
+     if(j == 5) break ok;
+  }
+}
+</code></pre>
+
+<ul>
+<li> 或者在里层循环体中可以控制外层循环结构的控制变量：</li>
+</ul>
+
+
+<pre><code>int arr[][] ={   {1,2,3},{4,5,6,7},{9}    };//卧槽这边这个双大括号在git上居然会报错！给跪了！
+boolean found = false;
+for(int i=0;i&lt;arr.length&amp;&amp; !found;i++){
+   for(int j=0;j&lt;arr[i].length;j++){
+      System.out.println(“i=” + i + “,j=” + j);
+      if(arr[i][j]  ==5) {
+        found = true;
+        break;
+    }
+  }
+}
+</code></pre>
+
+<p>Switch(exp)语句中对exp的要求：exp只能是一个整数表达或者一个枚举常量，整数表达式可以是int基本类型或Integer包装类型，由于byte,short,char都可以隐含转换为int，所以，这些类型以及这些类型的包装类型也是可以的。而long、String则不可以，不过现在在Java7中，String也被允许。</p>
+
+<p>比较“==”操作符与equals操作符比较：对于Java中已有的类，==操作符判断的是某一个变量值是否一样，如果是对象的比较，则会比较所引用的对象是否一样；而equals比较的是两个对象内容是否一样，不需要引用同一个对象，但是如果是自己定义的对象，equals要重写，如果使用默认的Object类的equals方法，就等于==操作符。附上Object类的equals方法：</p>
+
+<pre><code>boolean equals(Object o){
+return this==o;
+}
+</code></pre>
+
+<p>Override和Overload：Override是重写，Overload是重载。重载Overload表示同一个类中可以有多个名称相同的方法，但这些方法的参数列表各不相同（即参数个数或类型不同）。重写Override表示子类中的方法可以与父类中的某个方法的名称和参数完全相同，通过子类创建的实例对象调用这个方法时，将调用子类中的定义方法。其中，父类的Constructor不能被继承，因此也不能被重写Override，但是可以被重载Overload，如果自己没有写Constrictor，那么系统会自己生成一个默认无参构造器，但如果已经自己写了构造器，就不能使用默认构造器了。</p>
+
+<ul>
+<li><p>Override：</p>
+
+<ol>
+<li>覆盖的方法的标志必须要和被覆盖的方法的标志完全匹配，才能达到覆盖的效果；</li>
+<li>覆盖的方法的返回值必须和被覆盖的方法的返回一致；</li>
+<li>覆盖的方法所抛出的异常必须和被覆盖方法的所抛出的异常一致，或者是其子类；</li>
+<li>被覆盖的方法不能为private，否则在其子类中只是新定义了一个方法，并没有对其进行覆盖。</li>
+</ol>
+</li>
+<li>Overload:
+
+<ol>
+<li>在使用重载时只能通过不同的参数样式。例如，不同的参数类型，不同的参数个数，不同的参数顺序（当然，同一方法内的几个参数类型必须不一样，例如可以是fun(int,float)，但是不能为fun(int,int)）；</li>
+<li>不能通过访问权限、返回类型、抛出的异常进行重载；</li>
+<li>方法的异常类型和数目不会对重载造成影响；</li>
+<li>对于继承来说，如果某一方法在父类中是访问权限是priavte，那么就不能在子类对其进行重载，如果定义的话，也只是定义了一个新方法，而不会达到重载的效果。</li>
+</ol>
+</li>
+</ul>
+
+
+<p>关于try-catch-finally语句的执行：先执行try中的语句，如果有异常，在相应的catch中执行，然后再执行finally中的语句，如果在catch中有return语句，那么，在这个return这个地方，程序先暂停一下，把现有的变量保存压到堆中，去执行finally 里面的东西，执行完毕了，再把堆中保存的变量拿出来来执行return语句的。可以看下面一个例子，结果是：</p>
+
+<pre><code>在finally里面的x：2
+
+1
+</code></pre>
+
+<p>代码如下：</p>
+
+<pre><code>    public static void main(String[] args) {
+        System.out.println(new Test().test());
+    }
+    static int test() {
+        int x = 1;
+        try {
+            return x;   //值为1的x被保存起来
+        } finally {
+            x = 2;
+            System.out.println("在finally里面的x：" + x);//先执行了这个，打印出了x为2
+        }
+    }
+</code></pre>
+
+<hr />
+
+<h2>对象相关</h2>
+
+<ol>
+<li><p>面向对象的编程有以下四个特点：</p>
+
+<ul>
+<li>封装：保证程序模块最优性，实现“高内聚，低耦合”，将对象封装成高度自治和封闭的个体，减少模块与对象之间的依赖关系。</li>
+<li>抽象：抽象就是找出一些事物的相似和共性之处，然后将这些事物归为一个类，这个类只考虑这些事物的相似和共性之处，并且会忽略与当前主题和目标无关的那些方面，将注意力集中在与当前目标有关的方面。</li>
+<li>继承：实现类的扩充和多样化应用，可以新增或者修改原有类的成员来更好地应用于现有的情况，提高程序的可重用性和扩展性。</li>
+<li>多态：实现程序调用时才决定其引用的参数或使用的方法的具体类型</li>
+</ul>
+</li>
+<li><p>操纵对象的标示符其实是一个引用reference</p></li>
+<li><p>对象的创建可以在堆栈中或者堆中。前者将储存空间分配和释放处于优先位置，后者动态创建，直到运行时才会直到其真正生命周期</p></li>
+<li><p>对象的储存：有五种方法</p>
+
+<ul>
+<li>寄存器内部，最快，因为在处理器内部，但数量有限且不能直接控制</li>
+<li>堆栈，位于RAM，创建初期直到对象在堆栈内生命周期，可以控制<em>堆栈指针</em>上下操作</li>
+<li>堆，一种通用的内存池，位于RAM，用于存放所有Java对象，较为灵活</li>
+<li>常量储存，常存在程序代码内部，安全，也可以在ROM中</li>
+<li>非RAM储存，例如流对象和持久化对象</li>
+</ul>
+</li>
+<li><p>三种类的复用关系：组合、继承extend和代理。其中组合是显式的，继承是隐式的，而代理处于两者之间。 子类到父类还能向上转型upcasting。</p></li>
+<li>final关键字：其实是指一个值或者一个对象的引用不能被修改，但是可以通过修改被引用的对象中的内容
+
+<ul>
+<li>数据：一个不变的编译时常量；一个在运行时被初始化后就不会改变的值</li>
+<li>方法：保证继承时候方法不会被修改，又保证效率</li>
+<li>类：该类不能被继承</li>
+</ul>
+</li>
+</ol>
+
+
+<pre><code class="`">      final StringBuffer a=new StringBuffer("Hello!");
+      StringBuffer b=new StringBuffer("World!");
+
+//    a=new StringBuffer("yes!");     //这个编译错误，不允许修改引用
+      a.append(b);                    //这个可以通过，将a中的值改为"Hello！World!"
+</code></pre>
+
+<p> Java基本类型列表：不用new来创建，是<strong><em>非引用</em></strong>的自动变量，这个变量直接储存值并且至于堆栈中。</p>
+
+<table class="table table-bordered table-striped table-condensed">
+    <tr>
+        <td>基本类型</td>
+        <td>大小 </td>
+        <td>区间 </td>
+        <td>包装器类型 </td>
+    </tr>
+    <tr>
+        <td>boolean </td>
+        <td>- </td>
+        <td>- </td>
+        <td>Boolean </td>
+    </tr>
+    <tr>
+        <td>char </td>
+        <td>16-bit</td>
+        <td>Unicode 0 ~ Unicode 2^16 </td>
+        <td>Character </td>
+    </tr>
+    <tr>
+       <td>byte</td> 
+       <td>8-bit</td>
+       <td>-128 ~ 127</td>
+       <td>Byte</td>
+    </tr>
+    <tr>
+       <td>short</td>
+       <td>16-bit</td>
+       <td>-2^15 ~ 2^15 -1</td>
+       <td>Short</td>
+   </tr>
+   <tr>
+        <td>int</td>
+        <td>32-bit</td>
+        <td>-2^31 ~ 2^31 - 1</td>
+        <td>Interger</td>
+   </tr>
+   <tr>
+        <td>long</td>
+        <td>64-bit</td>
+        <td>-2^63 ~ 2^63 - 1</td>
+        <td>Long</td>
+   </tr>
+   <tr>
+        <td>float</td>
+        <td>32-bit</td>
+        <td>IEEE753 ~IEEE754</td>
+        <td>Float</td>
+   </tr>
+   <tr>
+        <td>double</td>
+        <td>64-bit</td>
+        <td>IEEE754 ~ IEE754</td>
+        <td>Double</td>
+   </tr>
+   <tr>
+       <td>void</td>
+       <td>-</td>
+       <td>-</td>
+       <td>Void</td>
+   </tr>
+</table>
+
+
+<p>其中boolean占多大空间没有明确定义，仅仅指定字面的true or false</p>
+
+<p>Java中还有一类复杂数据类型，如Integer，是int的封装类，当做对象来处理，如放到一个ArrayList中，只能是Integer，Integer为int提供了与String相互传递的方法。此外，int的默认值为0，而Integer的默认值为null，即Integer可以区分出未赋值和值为0的区别</p>
+
+<p>当Java中的方法参数是简单类型的时候，是通过值传递的方法，也就是该方法只复制了参数的值，在方法中对这个值的任何操作都不会影响原值。而方法对于参数对象的操作却是以引用参数的形式进行，没有将其实例化但是却借用了它的一个“别名”，传递的实际值是对象在内存中的地址，所以对其做操作会影响到内存中源对象参数的值。我写了个例子，重写了三个swap()函数，第一第三个实际是对对象进行操作，属于引用传递，第二个是值传递。</p>
+
+<pre><code>public class Test {
+    public static void main(String args[]){   
+        Test sw = new Test(1,2);   
+        System.out.println("i is" + sw.i);   
+        System.out.println("j is" + sw.j);   
+
+  //      sw.swap();             //直接改变当前对象内部参数      
+  //      sw.swap(sw.i,sw.j);    //值传递，会不改变外部两个int的值 
+          sw.swap(sw);           //使用引用传参的方法改变已经实例化对象内部参数
+
+        System.out.println("i is" + sw.i);   
+        System.out.println("j is" + sw.j);   
+    }   
+    int i,j;   
+    public Test(int i, int j){   
+        this.i = i;   
+        this.j = j;   
+    }   
+
+    public  void swap(){   //通过对象内部成员参数变化
+        int temp;   
+        temp = i;   
+        i = j;   
+        j = temp;   
+    }
+
+    public void swap(int a,int b){    //只是参数传递值
+        int tmp=a;
+        a=b;
+        b=tmp;
+        System.out.println("a is" + a);   
+        System.out.println("b is" + b); 
+    }
+
+    public void swap(Test in){
+        int tmp=in.i;
+        in.i=in.j;
+        in.j=tmp;
+    }
+}
+</code></pre>
+
+<p>另外，如果将其中一个引用传给另一个，那么改变其中一个就会使这两个参数都改变，如</p>
+
+<pre><code>Test ts=new Test();
+        Test tb=new Test();
+        ts.a=1;
+        tb=ts;
+        ts.a=2;     //不论真正执行的是这一句还是下面那句，输出结果都是两个2
+//      tb.a=2;         
+        System.out.println(ts.a);
+        System.out.println(tb.a);
+</code></pre>
+
+<p>所以为了保证修改一个但是不影响另一个，在我们赋值的时候常用clone()方法。首先要实现Cloneable接口，然后在重载clone方法，最后在clone()方法中调用了super.clone()，这也意味着无论clone类的继承结构是什么样的，super.clone()直接或间接调用了java.lang.Object类的clone()方法。</p>
+
+<pre><code>public class Test implements Cloneable {
+    public String name;
+    public Object clone() {
+        Test o = null;
+        try {
+            o = (Test) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return o;
+    }
+}
+</code></pre>
+
+<p>这样当我们用clone()方法复制两个Test对象时，可以分别对其进行操作。</p>
+
+<pre><code>        Test ts = new Test();
+        ts.a = 1;
+        Test tb =(Test)ts.clone();       //代替tb = ts;
+        ts.a = 2;
+        tb.a = 3;//可以肚子修改ts和tb
+        System.out.println(ts.a);
+        System.out.println(tb.a);
+</code></pre>
+
+<hr />
+
+<h2>访问权限</h2>
+
+<table border="1">
+<tr>
+    <td>作用域</td>
+    <td>当前类</td>
+    <td>同一package</td>
+    <td>子孙类</td>
+    <td>其他package</td>
+</tr>
+<tr>
+    <td>public</td>
+    <td>√</td>
+    <td>√</td>
+    <td>√</td>
+    <td>√</td>
+</tr>
+<tr>
+    <td>protected</td>
+    <td>√</td>
+    <td>√</td>
+    <td>√</td>
+    <td>&times;</td>
+</tr>
+<tr>
+    <td>friendly</td>
+    <td>√</td>
+    <td>√</td>
+    <td>&times;</td>
+    <td>&times;</td>
+</tr>
+<tr>
+    <td>private</td>
+    <td>√</td>
+    <td>&times;</td>
+    <td>&times;</td>
+    <td>&times;</td>
+</tr>
+</table>
+
+
+<p>其中friendly又称为包访问权限。</p>
+
+<hr />
+
+<h2>抽象与接口</h2>
+
+<p>抽象类abstract，包含一个或多个抽象方法，即仅有声明而没有方法体，如果子类没有实现抽象父类中所有的抽象方法，那么子类也必须定义为抽象类。而接口interface则提供一个完全抽象的类，其中所有方法都必须是抽象的。抽象类的作用是抽象出共同属性，所以可以有private等多种权限的成员变量和非抽象的成员方法，接口中的方法定义默认为public abstract类型，接口中的成员变量类型默认为public static final。抽象类是单一继承的，不能实例化。接口用于多重继承，也不能实例化。只能包含static final的成员变量，不过在interface中一般不定义成员变量。而成员方法在接口里只能是抽象方法，访问权限只能是public。</p>
+
+<p>二者在语法上的区别</p>
+
+<ol>
+<li>抽象类可以有构造方法，接口中不能有构造方法。</li>
+<li>抽象类中可以有普通成员变量，接口中没有普通成员变量</li>
+<li>抽象类中可以包含非抽象的普通方法，接口中的所有方法必须都是抽象的，不能有非抽象的普通方法。</li>
+<li>抽象类中的抽象方法的访问类型可以是public，protected和（默认类型,虽然
+eclipse下不报错，但应该也不行），但接口中的抽象方法只能是public类型的，并且默认即为public abstract类型。</li>
+<li>抽象类中可以包含静态方法，接口中不能包含静态方法</li>
+<li>抽象类和接口中都可以包含静态成员变量，抽象类中的静态成员变量的访问类型可以任意，但接口中定义的变量只能是public static final类型，并且默认即为public static final类型。</li>
+<li>一个类可以实现多个接口，但只能继承一个抽象类。</li>
+</ol>
+
+
+<p>二者在使用中，接口更多是在系统架构设计时发挥作用，是模块之间通信的契约，而抽象类更强调方便代码实现重用。</p>
+
+<hr />
+
+<h2>内部类</h2>
+
+<p>定义在一个类内部的类叫内部类，包含内部类的类称为外部类。内部类可以声明public、protected、private等访问限制，可以声明为abstract的供其他内部类或外部类继承与扩展，或者声明为static、final的，也可以实现特定的接口。但是内部类中不能有任何static的成员。</p>
+
+<p>外部类可以按照常规访问办法访问内部类中的所有成员，包括private成员。其他类可以访问内部类，可以使用外部类提供创建内部类的方法供其他类使用，或者直接创建内部类的对象。如果不需要借助外部类来访问，可以使用嵌套类，即加static。<strong>静态内部类</strong>可以不需要其他外部对象，不能从嵌套类的对象中访问非静态的外围类对象。</p>
+
+<p><strong>匿名内部类</strong>是一种为了简介代码编写的办法，只能在定义后使用一次，而且必须继承一个父类或者实现一个接口，最常用在多线程上，继承Thread类或者实现Runnable接口</p>
+
+<hr />
+
+<h2>持有对象与集合类</h2>
+
+<p><img src="https://lh3.googleusercontent.com/-pyddD-tXSso/UyrRne3PS6I/AAAAAAAAAFA/tUGNvkKkJSs/w1072-h1006-no/%25E6%2596%25B0%25E6%2596%2587%25E6%25A1%25A3_1+%25281%2529.jpg" alt="" /></p>
+
+<ol>
+<li>Collection，最基本的集合接口，都支持iterator()方法来遍历集合
+
+<ul>
+<li><p>List：是有序的collection，允许有相同的元素，</p>
+
+<ul>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3308807.html">LinkedList</a>：基于双向链表，特性集更大，但是开销更大，随机访问较慢。实现了List接口，允许null元素。此外LinkedList提供额外的get，remove，insert方法在LinkedList的首部或尾部。这些操作使LinkedList可被用作堆栈（stack），队列（queue）或双向队列（deque）。可以直接当做栈来使用</p></li>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3308556.html">ArrayList</a>：擅长随机访问元素，是有序的，实现了可变大小的数组，基于<strong>动态数组</strong>。当容量不足时，新的容量=“(原始容量x3)/2 + 1。</p></li>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3308833.html">Vector</a>：类似ArrayList，但是是可同步的，是可以clone的，容量不足事，新容量增长一倍。</p></li>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3308852.html">Stack</a>：继承自Vector实现一个后进先出的堆栈，也是数组实现</p></li>
+</ul>
+</li>
+<li>Set：与Collection完全一样的接口，所以没有额外功能，不保存重复的对象，需要定义equals()方法来确保对象唯一性，不保证顺序
+
+<ul>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3311252.html">HashSet</a>：使用了散列，最快的获取元素方式，同步访问，底层使用hashmap来保存元素，元素是无序的，存入元素需要HashCode</p></li>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3311268.html">TreeSet</a>：按比较顺序的升序保存对象，使用TreeMap实现，元素是有序的，元素必须实现comparable接口</p></li>
+<li><p>LinkedHashSet：按被添加的顺序保存对象</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Map：一种以key-value的形式保存
+
+<ul>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3310887.html">HashTable</a>：最基本的key-value映射的hash表，是同步的(通过synchronized方法实现)，是cloneable的，任何非空（non-null）的值都可以作为key或者value，默认的“加载因子”是0.75, 默认的容量大小是11， “实际容量” >= “阈值”时，(阈值 = 总的容量 x 加载因子)，就将变为“原始容量x2 + 1”。支持Iterator(迭代器)和Enumeration(枚举器)两种方式遍历。底层是用Entry[]数组储存键值对，继承自dictionary类。</p></li>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3310835.html">HashMap</a>：类似HashTable，是非同步的，允许null值，默认的“加载因子”是0.75, 默认的容量大小是16，“实际容量” >= “阈值”时，(阈值 = 总的容量 * 加载因子)，就将HashMap的容量翻倍。只支持迭代器遍历。</p></li>
+<li><p><a href="http://www.cnblogs.com/skywang12345/p/3310928.html">TreeMap</a>：是一个有序的key-value集合，它是通过红黑树实现的,该映射根据其键的自然顺序进行排序，是非同步的。</p></li>
+<li><p>WeakHashMap：改进的HashMap，实现弱引用，如果一个key不被外部引用则会被收回。</p></li>
+</ul>
+</li>
+</ol>
+
+
+<p>Sort()方法排序，要继承comparator接口，并且利用重写的comparable，shuffle()方法则是随机打乱容器中顺序</p>
+
+<p>迭代器：不关心容器类型，用于遍历并选择序列中的对象，作为轻量级对象，创建代价较小，但是会有些奇怪的限制比如在java里只能单向移动。其操作有：</p>
+
+<ul>
+<li>iterator()方法从容器得到一个迭代器，指向序列第一个元素</li>
+<li>next()获得序列中下一个元素</li>
+<li>hasNext()检查序列中是否还有元素</li>
+<li>remove()将新近返回的元素删除</li>
+</ul>
+
+
+<p> 迭代器带来的最大好处就是可以不必关心容器的类型就能对容器中的对象进行操作。有一个更加强大的子类：ListIterator，只能用于List类的访问，但是可以双向移动，而且可以创建迭代器所在位置的前一个和后一个元素的索引</p>
+
+<p>对List来说，你也可以通过listIterator()取得其迭代器，两种迭代器在有些时候是不能通用的，Iterator和ListIterator主要区别在以下方面：</p>
+
+<ol>
+<li><p>ListIterator有add()方法，可以向List中添加对象，而Iterator不能</p></li>
+<li><p>ListIterator和Iterator都有hasNext()和next()方法，可以实现顺序向后遍历，但是ListIterator有hasPrevious()和previous()方法，可以实现逆向（顺序向前）遍历。Iterator就不可以。</p></li>
+<li><p>ListIterator可以定位当前的索引位置，nextIndex()和previousIndex()可以实现。Iterator没有此功能。</p></li>
+<li><p>都可实现删除对象，但是ListIterator可以实现对象的修改，set()方法可以实现。Iierator仅能遍历，不能修改。</p></li>
+</ol>
+
+
+<hr />
+
+<h2>异常和错误</h2>
+
+<p>异常Exception：Java传递给用户系统或者程序错误的方式。其中有检查异常和非检查异常，前者继承自java.lang.Exception类，需要try, catch和finally关键字在编译期进行处理，否则编译器会报错，而后者不需要这么做，继承自RuntimeException。</p>
+
+<p>错误和异常的三个级别：1，Error表示应用程序本身无法克服和恢复的一种严重问题，程序只有死的份了，如内存溢出和死锁；2，Exception表示程序还能够克服和恢复的问题，其中又分为系统异常和普通异常，系统异常是软件本身缺陷所导致的问题，也就是软件开发人员考虑不周所导致的问题，软件使用者无法克服和恢复这种问题，但在这种问题下还可以让软件系统继续运行或者让软件死掉，例如，数组脚本越界（ArrayIndexOutOfBoundsException），空指针异常（NullPointerException）、类转换异常（ClassCastException）；3，普通异常是运行环境的变化或异常所导致的问题，是用户能够克服的问题，例如，网络断线，硬盘空间不够，发生这样的异常后，程序不应该死掉。</p>
+
+<p>异常处理
+-  调用方法的时候返回布尔值来代替返回null
+-  catch块里打印异常信息
+-  尽量抛出受控异常
+-  防止数据库异常显示到客户端
+-  要在数据库连接，数据库查询，流处理后，在finally块中调用close()方法</p>
+
+<p>Throws和Throw的区别：throws总是出现在一个函数头中，用来标明该成员函数可能抛出的各种异常，是语句抛出异常，可以单独使用；throw用来让一个方法抛出任何异常，要和try-catch-finally一起使用，</p>
+
+<p>final,finalize,finally关键字的区别：final关键字在创建不可变的类的时候非常有用，只是声明这个类是final的。而finalize()方法则是垃圾回收器在回收一个对象前调用。finally在你的产品代码中，在关闭连接和资源文件的是时候都必须要用到finally块。</p>
+
+<hr />
+
+<h2>IO</h2>
+
+<p>Java的io由java.io库提供全面的io接口，基于流来操作，而nio中是基于块来操作。整个io体系被分为input/output和reader/writer两类。所谓的流Stream，是指有序的字节或者字符通过一个通信信道从源地址传送到目的地址。Java支持两个数据流：InputStream和OutputStream。其层次可分为：
+1. File（文件特征与管理）：用于文件或者目录的描述信息，例如生成新目录，修改文件名，删除文件，判断文件所在路径等。
+2. InputStream（二进制格式操作byte）：抽象类，基于字节的输入操作，是所有输入流的父类。定义了所有输入流都具有的共同特征。
+3. OutputStream（二进制格式操作byte）：抽象类。基于字节的输出操作。是所有输出流的父类。定义了所有输出流都具有的共同特征。Java中字符是采用Unicode标准，一个字符是16位，即一个字符使用两个字节来表示。为此，JAVA中引入了处理字符的流。
+4. Reader（文件格式操作）：抽象类，基于字符的输入操作。
+5. Writer（文件格式操作）：抽象类，基于字符的输出操作。
+6. RandomAccessFile（随机文件操作）：它的功能丰富，可以从文件的任意位置进行存取（输入输出）操作。</p>
+
+<p>操作流程
+在Java中IO操作也是有相应步骤的，以文件操作为例，主要的操作流程如下：</p>
+
+<pre><code>  - 使用File类打开一个文件  
+  - 通过字节流或字符流的子类，指定输出的位置
+  - 进行读/写操作
+  - 关闭输入/输出
+</code></pre>
+
+<p>字节流和字符流之间的区别：</p>
+
+<pre><code>- 字节流在操作的时候本身是不会用到缓冲区（内存）的，是与文件本身直接操作的，而字符流在操作的时候是使用到缓冲区的
+- 字节流在操作文件时，即使不关闭资源（close方法），文件也能输出，但是如果字符流不使用close方法的话，则不会输出任何内容，说明字符流用的是缓冲区，并且可以使用flush方法强制进行刷新缓冲区，这时才能在不close的情况下输出内容
+</code></pre>
+
+<p>NIO是jdk1.4中就有了的所谓的"新io"方式，可以认为是一种非阻塞的io，工作原理：</p>
+
+<ol>
+<li>由一个专门的线程来处理所有的 IO 事件，并负责分发。</li>
+<li>事件驱动机制：事件到的时候触发，而不是同步的去监视事件。</li>
+<li>线程通讯：线程之间通过 wait,notify 等方式通讯。保证每次上下文切换都是有意义的。减少无谓的线程切换。</li>
+</ol>
+
+
+<p>与传统io不同的是，nio用了一个双向通道Channel（包含socket，file和pipe三种管道）来代替原有的流stream，在channel上可以注册感兴趣的事件：服务端接收，客户端连接，读事件和写事件。用Selector管理channel，将多元异步操作集中到一个线程里。</p>
+
+<p>Java序列化：Jre自带的将一个java对象变成字节流的形式传出去或者从一个字节流中恢复成一个java对象的功能，要被传输的对象必须实现serializable接口。</p>
+
+<hr />
+
+<h2>字符串String</h2>
+
+<p>String对象是不可变的，每次看上去修改了一个String，实际上都是创建了一个新的String，因为它的<em>只读属性</em>，所以指向它的任何引用都不可能改变它的值。</p>
+
+<p>计算一个string长度的方法是length()，感觉笔试题里很喜欢出这个。</p>
+
+<p>还有一个比较喜欢出得String知识点是null和""之间的区别。
+- 简单来说String s=null;只是定义了一个句柄，也就是说你有了个引用，但是这个引用未指乡任何内存空间   <br/>
+- String s="";这个引用已经指向了一块是空字符串的内存空间，是一个实际的东东了，所以你可以对它操作，而不用担心什么了</p>
+
+<pre><code>class Untitled {
+    public static void main(String[] args) {
+    String a="";
+    String b="abc";
+    String c=null;
+
+    System.out.println(a); 
+    System.out.println(a+b);
+    System.out.println(c);
+    System.out.println(c+b);
+    }
+}
+</code></pre>
+
+<p>输出分别是：</p>
+
+<pre><code>abc
+null
+nullabc
+</code></pre>
+
+<p>另外一些像indexOf、replace、split等方法就不解释了，因为很多单单看方法名就能猜出是什么功能。</p>
+
+<p>String和StringBuffer的比较：Java中对于字符和字符串的操作提供了三个类，分别是：1.Character 是进行单个字符操作的；2.String 对一串字符进行操作，不可变类；3.StringBuffer 也是对一串字符进行操作，但是可变类。所以对StringBuffer进行修改不会重新去建立一个新的对象，在初始化的时候定义好内容，然后用append方法进行增加。在String做增加操作的时候，实际上是先建立一个StringBuffer再作append然后再转为String。另外还有一种StringBuilder，是非线程安全的可变字符串，不保证同步。</p>
+
+<hr />
+
+<h2>线程与并发</h2>
+
+<p>引入并发机制的主要目的是为了使我们可以将程序划分为多个分离的、独立运行的任务，其中每一个任务都由执行线程来驱动。继承Thread类、实现Runnable接口，在程序开发中只要是多线程，肯定永远以实现Runnable接口为主，因为实现Runnable接口相比继承Thread类有如下优势：</p>
+
+<pre><code>1、可以避免由于Java的单继承特性而带来的局限；
+
+2、增强程序的健壮性，代码能够被多个线程共享，代码与数据是独立的；
+
+3、适合多个相同程序代码的线程区处理同一资源的情况。
+</code></pre>
+
+<p>在并发线程中，使用sleep()函数来实现线程的等待阻塞，让出cpu时间，但是它是Thread的static方法，所以线程虽然休眠了但是机锁没有释放，其他线程还是无法访问这个对象。而另一个外wait()方法则是将对象放入等待池并且释放机锁，可以用notify或者notifyAll来唤醒。</p>
+
+<p>在并发多线程中，<strong><em>synchronized</em></strong>关键字很重要，是为了防止资源冲突提供的内置支持，当任务要执行被synchronized关键字保护的代码片段时，它将检查锁是否可用，然后获取锁，执行代码，释放锁。保证在执行synchronized(this)代码的时候，同一时刻最多只有一个线程执行，但是其他线程可以访问其他非synchronized(this)代码块，但是不能访问其他synchronized代码。Synchronized关键字可以形容一个方法或者一个代码块，如</p>
+
+<ul>
+<li>public synchronized void accessVal(int newVal);</li>
+<li>synchronized(syncObject) {<br/>
+//允许访问控制的代码<br/>
+}</li>
+</ul>
+
+
+<p>在线程中start()方法是进入就绪状态，run()方法是启动线程。</p>
+
+<hr />
+
+<h2>初始化和垃圾清理</h2>
+
+<p>Java有特殊的技巧来回收无用对象占据的内存资源，对于一些特殊情况，假如对象不是用new来得到了一块“特殊”的内存空间（多指一些所谓的“本地方法”，即非java代码的方式），就需要用finalize()方法来释放，一旦准备好释放，首先调用finalize()方法，并且在下一次垃圾回收动作发生时才会真正回收对象占用内存。在Java中：1，对象不一定总被垃圾回收；2，垃圾回收不等于“析构”；3，垃圾回收只和内存有关。
+常用的垃圾回收方式：</p>
+
+<ul>
+<li>stop-and-copy：先暂停运行程序，把所有存货的对象从当前堆复制到另一个堆，没复制过去的都是垃圾但是效率稍低，因为1.维护两个堆，2.程序进入稳定后可能只有少量垃圾，所以复制操作浪费</li>
+<li>mark-and-down：遍历所有的引用，每当找到一个存活的对象，就会设一个标记，全部标记工作结束后，开始清理，当只有少量垃圾的时候表现比较好，剩下的空间是不连续的。</li>
+</ul>
+
+
+<p>原则上每个类实例化后都必须进行初始化，但对于基本类型，会有一个默认的初始值。</p>
+
+<p>在类的内部，变量定义的先后顺序决定了初始化的顺序，即使变量定义散布于方法定义之间，仍旧会在任何方法（包括构造器）调用之前得到初始化</p>
+
+<p>初始化的顺序先静态对象，再是非静态对象</p>
+
+</section>
+<section class="meta">
+<span class="author">
+  <a href="http://ellochen.github.com/about">Kaka Chen</a>
+</span>
+<span class="time">
+  /
+  <time datetime="2014-03-08">2014-03-08</time>
+</span>
+<br />
+<span class="license">
+  Published under <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">(CC) BY-NC-SA</a>
+</span>
+
+<span class="categories">
+  in categories
+  
+  <a href="/categories/#java" title="java">java</a>&nbsp;
+  
+</span>
+
+
+<span class="tags">
+  tagged with 
+  
+  <a href="/tags/#java" title="java">java</a>&nbsp;
+  
+</span>
+
+</section>
+<section class="comment">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'kakack'; // required: replace example with your forum shortname
+    var disqus_url = 'http://kakack.github.io/2014/03/JAVA%E7%BC%96%E7%A8%8B%E6%80%9D%E6%83%B3%E5%AD%A6%E4%B9%A0%E5%B0%8F%E8%AE%B0/';
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = 'http://kakack.github.io/2014/03/JVM%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = 'http://kakack.github.io/2014/03/%E6%B5%85%E8%B0%88%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+
+        </article>
+      </div>
+
+    <footer>
+        <p><small>Powered by <a href="https://github.com/mojombo/jekyll">Jekyll</a> & <a href="http://pages.github.com">GitHub</a> | Copyright 2008 - 2014 by <a href="http://kakack.github.io/about/">kakack</a> | <span class="label label-info">2014-04-03 21:48:26 CST</span></small></p>
+    </footer>
+
+    </div>
+
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-12936429-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1512 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <rss version="2.0"
+        xmlns:content="http://purl.org/rss/1.0/modules/content/"
+        xmlns:atom="http://www.w3.org/2005/Atom"
+  >
+  <channel>
+    <title>Kaka Chen</title>
+    <link href="http://kakack.github.io/feed/" rel="self" />
+    <link href="http://ellochen.github.com" />
+    <lastBuildDate>2014-04-03T21:48:26+08:00</lastBuildDate>
+    <webMaster>silver.accc@gmail.com</webMaster>
+    
+    <item>
+      <title>《剑指offer》：单例模式</title>
+      <link href="http://kakack.github.io/2014/04/%E3%80%8A%E5%89%91%E6%8C%87offer%E3%80%8B%EF%BC%9A%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/"/>
+      <pubDate>2014-04-03T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/04/《剑指offer》：单例模式</guid>
+      <content:encoded><![CDATA[<p>看《剑指offer》时候自己关于这部分写的一个小总结摘抄</p>
+
+<h2>Singleton模式</h2>
+
+<p>设计模式这一块以前遇到的比较少，在面试里被问道总归有点尴尬。在《剑指offer》一书中，有一部分对singleton进行了详细解释描述，简单总结归纳如下。</p>
+
+<p>参考了一下一个<a href="http://www.cnblogs.com/rush/archive/2011/10/30/2229565.html">写的挺好的博客</a></p>
+
+<hr />
+
+<p>我自己对单例这一块的认识也仅仅局限于在整个program中只允许某个类存在一个实例这样低级理解上，一般如果叫我当场简单写一个单例模式，我会这样写（在网上被评为最他妈懒汉的写法，摔！）：</p>
+
+<pre><code> public class Singleton {  
+     private static Singleton instance;  
+      private Singleton (){}   
+      public static Singleton getInstance() {  
+            if (instance == null) {  
+            instance = new Singleton();  
+       }  
+     return instance;  
+     }  
+ }  
+</code></pre>
+
+<p>虽然符合单例模式写法最基础的三个要点：</p>
+
+<ol>
+<li>有一个私有的无参构造函数，这可以防止其他类实例化它，而且单例类也不应该被继承，如果单例类允许继承那么每个子类都可以创建实例，这就违背了Singleton模式“唯一实例”的初衷。</li>
+<li>一个静态的变量用来保存单实例的引用。</li>
+<li>一个公有的静态方法用来获取单实例的引用，如果实例为null即创建一个。</li>
+</ol>
+
+
+<p>*单例类被定义为sealed,就像前面提到的该类不应该被继承，所以为了保险起见可以把该类定义成不允许派生，但没有要求一定要这样定义。</p>
+
+<p>但是这种写法显然会被黑出翔，因为只适合于单线程。在多线程情况下，如果有多个线程同时判断<code>if(instance == null)</code>得到true的回答，那么两个线程都会得到一个实例，不符合单例的要求。所以有了这个写法。</p>
+
+<pre><code>public class Singleton {  
+    private static Singleton instance;  
+    private Singleton (){}
+    public static synchronized Singleton getInstance() {  
+     if (instance == null) {  
+         instance = new Singleton();  
+     }  
+     return instance;  
+    }  
+}  
+</code></pre>
+
+<p>但是这个做法显然效率低，99%情况下不需要同步。</p>
+
+<p>书上给了同步锁的例子，跟加synchronized效果类似，不重复写了。</p>
+
+<p>书上为实现在实例已经创造出来之后不必加锁，可以有这种写法：</p>
+
+<pre><code>public class Singleton {  
+    private Singleton (){}
+    private static object syncObj = new object();
+    private static Singleton instance = null;
+    public static Singleton Instance
+{
+  get
+  {
+    if(instance == null)
+    {
+     lock(syncObj)
+       {
+         if(instance == null)
+            instance = new Singleton();
+       }
+    }
+    return instance;
+  }
+}
+}
+</code></pre>
+
+<p>在C#中，静态构造函数可以确保只被调用一次，在此不举例了。</p>
+
+<p>最后一个例子可以有效解决创建时机过早的问题：</p>
+
+<pre><code>public sealed class Singleton
+{
+    Singleton(){}
+    public static Singleton Instance
+    {
+      get
+      {
+         return Nested.instance;
+      }
+    }
+
+    class Nested
+    {
+     static Nested(){}
+     internal static readonly Singleton instance = new Singleton();
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<h2>总结</h2>
+
+<p>单例模式的优点：</p>
+
+<p>单例模式（Singleton）会控制其实例对象的数量，从而确保访问对象的唯一性。</p>
+
+<p>实例控制：单例模式防止其它对象对自己的实例化，确保所有的对象都访问一个实例。
+伸缩性：因为由类自己来控制实例化进程，类就在改变实例化进程上有相应的伸缩性。</p>
+
+<p>单例模式的缺点：</p>
+
+<p>系统开销。虽然这个系统开销看起来很小，但是每次引用这个类实例的时候都要进行实例是否存在的检查。这个问题可以通过静态实例来解决。
+开发混淆。当使用一个单例模式的对象的时候（特别是定义在类库中的），开发人员必须要记住不能使用new关键字来实例化对象。因为开发者看不到在类库中的源代码，所以当他们发现不能实例化一个类的时候会很惊讶。
+对象生命周期。单例模式没有提出对象的销毁。在提供内存管理的开发语言（比如，基于.NetFramework的语言）中，只有单例模式对象自己才能将对象实例销毁，因为只有它拥有对实例的引用。在各种开发语言中，比如C++，其它类可以销毁对象实例，但是这么做将导致单例类内部的指针指向不明。</p>
+
+<p>单例适用性</p>
+
+<p>使用Singleton模式有一个必要条件：在一个系统要求一个类只有一个实例时才应当使用单例模式。反之，如果一个类可以有几个实例共存，就不要使用单例模式。</p>
+
+<p>不要使用单例模式存取全局变量。这违背了单例模式的用意，最好放到对应类的静态成员中。</p>
+
+<p>不要将数据库连接做成单例，因为一个系统可能会与数据库有多个连接，并且在有连接池的情况下，应当尽可能及时释放连接。Singleton模式由于使用静态成员存储类实例，所以可能会造成资源无法及时释放，带来问题。</p>
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>分布式机器学习的故事</title>
+      <link href="http://kakack.github.io/2014/04/%E5%88%86%E5%B8%83%E5%BC%8F%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E6%95%85%E4%BA%8B/"/>
+      <pubDate>2014-04-02T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/04/分布式机器学习的故事</guid>
+      <content:encoded><![CDATA[<p>转一个Yi Wang's Tech Notes 的博客</p>
+
+<p><a href="http://cxwangyi.github.io/2014/01/20/distributed-machine-learning/">分布式机器学习的故事</a></p>
+
+<p>写的很赞，存着慢慢研究</p>
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>Spark on yarn：softmax regression算法的实现</title>
+      <link href="http://kakack.github.io/2014/04/Spark+on+Yarn%EF%BC%9ASoftmax+Regression%E7%AE%97%E6%B3%95%E7%9A%84%E5%AE%9E%E7%8E%B0/"/>
+      <pubDate>2014-04-01T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/04/Spark on Yarn：Softmax Regression算法的实现</guid>
+      <content:encoded><![CDATA[<p>话说淘宝技术部水平那么高咋网站做的那么渣呢……</p>
+
+<p>摘抄一篇淘宝技术部的<a href="http://rdc.taobao.org/?p=503">Spark on Yarn：Softmax Regression算法的实现</a></p>
+
+<p>mark一下</p>
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>数据仓库与etl</title>
+      <link href="http://kakack.github.io/2014/03/%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E4%B8%8EETL/"/>
+      <pubDate>2014-03-30T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/03/数据仓库与ETL</guid>
+      <content:encoded><![CDATA[<p><img src="http://ww1.sinaimg.cn/large/80f120ecjw1dpzqetvqxwg.gif" alt="" /></p>
+
+<p>我本科时期毕设的时候就做过一个线上数据中心的Demo，刚刚拿到需求的时候也很像我们平时理解的数据库，因为当时我的Demo主要要做的工作也就是CRUD操作，所以一直心里想笑，干嘛取个数据中心Data Center那么高大上的名字，其实数据中心或者数据仓库与数据库的区别还是比较明显的，简单说，数据仓库就像是一个码头，而数据库就是码头中的仓库，如果给某个码头航拍一张照片，我们看到的最大的建筑一定是巨大的集装箱仓库，但是光有仓库是不能让一个码头正常工作的，因为我们需要塔台来指挥货物的调配，需要吊车来运载货物，需要地勤，也需要各种各样的文职人员定期对仓库货物进行评估、分析，对后来需要存储的货物预测，再有效设计现有货物的利用途径等。所以说存储只是数据仓库的一项功能，而数据仓库概念提出的最主要目的是为在存储的基础上解决对数据的分析和使用，为企业提出决策支持。所以一般常见的数据仓库会有三部分组成：源数据、数据仓库、数据应用：</p>
+
+<p><img src="http://webdataanalysis.net/wp-content/uploads/2010/08/data-warehouse-frame.png" alt="" /></p>
+
+<p>数据仓库从各数据源获取数据及在数据仓库内的数据转换和流动都可以认为是ETL（抽取Extra, 转化Transfer, 装载Load）的过程，ETL是数据仓库的流水线，也可以认为是数据仓库的血液，它维系着数据仓库中数据的新陈代谢，而数据仓库日常的管理和维护工作的大部分精力就是保持ETL的正常和稳定。</p>
+
+<hr />
+
+<h2>数据源</h2>
+
+<p>常见的数据源有结构化数据、半结构化数据和非结构化数据三种，这三种数据源的区别大致如下：</p>
+
+<ul>
+<li>结构化数据：格式清晰规范，如关系型数据库中的数据，可以用二维表储存，各个字段长度属性固定，最方便管理，也会带有像时间戳、签名等识别信息。</li>
+<li>半结构化数据：格式也相对规范，一般都是纯文本数据，可以通过某种方式解析得到每项的数据。最常见的就是日志数据、XML、JSON等格式的数据，在直接使用之前需要解析，因为各个字段长度不等。</li>
+<li>非结构化数据：指的是那些非纯文本类数据，没有标准格式，无法直接地解析出相应的值。常见的非结构化数据有富文本文档、网页、多媒体（图像、声音、视频等）。需要有特定的办法来使用，很难定义标准的方法来解析。一般不会直接将其存为二进制的文档，数据仓库之父——Inmon的建议是在数据仓库中只需要储存非结构化数据的元数据（Meta Data），或者称为解释型数据。所以这些非结构化数据一般会被存在文件系统中，然后在数据仓库中存储这些数据的信息和检索，以便快速查阅这些数据。对于大型网站而言，这一部分数据会被用作高级的数据挖掘，其统计分析意义不大。</li>
+</ul>
+
+
+<hr />
+
+<h2>数据存储</h2>
+
+<p>在存储过程中，源数据是通过ETL进行转换后以特定形式存入数据仓库。但是在具体是否存放所有源数据细节的问题上有些分歧，有的认为数据仓库主旨是面向分析，所以不必存放所有细节，另一种观点认为应该先建立和维护细节模型，再根据需求建立分析模型。但是个人认为数据分析的需求不是由数据本身决定的，而是在后期应用过程中迭代产生，需求的变更和重定向是非常频繁的，所以对于后一种存储办法显然更能应对未来可能产生的需求变更问题。</p>
+
+<hr />
+
+<h2>元数据管理</h2>
+
+<p>　　元数据（Meta Date），其实应该叫做解释性数据，即数据的数据。主要记录数据仓库中模型的定义、各层级间的映射关系、监控数据仓库的数据状态及ETL的任务运行状态。一般会通过元数据资料库（Metadata Repository）来统一地存储和管理元数据，其主要目的是使数据仓库的设计、部署、操作和管理能达成协同和一致。</p>
+
+<hr />
+
+<h2>关于ETL</h2>
+
+<p>ETL，Extraction-Transformation-Loading的缩写，中文名称为数据抽取、转换和加载。</p>
+
+<ol>
+<li>数据抽取：可以认为一次抽取就是把源数据的数据抽取到ODS（操作型数据储存）或者DW(Data Warehouse数据仓库)当中，这里的源数据可以是关系型数据库或者文本文件、日志文件等。其中抽取的策略是比较重要的一环。一般有全量抽取和增量抽取两种。全量抽取适用于总量小而又难以判断是否发生修改的内容，如关系表、维度表、配置表等，而增量抽取则用于那些数据量大，不可能每次都做全量抽取的数据。判断增量的办法比较多：
+
+<ul>
+<li> 有时间标识字段，标记源数据中修改时间，如createtime、updatetime</li>
+<li> 根据上次抽取结束自增长id</li>
+<li> 分析数据日志</li>
+<li> 与之前数据hash值比较</li>
+<li> 与源数据主动推增</li>
+</ul>
+</li>
+<li>数据清洗：一般在抽取之后做，用于去除不合规定和没有意义的数据。清洗主要包括这些方面：
+
+<ul>
+<li> 空值处理：替换成某个特定值或者去除</li>
+<li> 验证数据正确性</li>
+<li> 规范格式</li>
+<li> 数据转码</li>
+<li> 统一标准</li>
+</ul>
+</li>
+<li>数据转换和加载</li>
+</ol>
+
+
+<p>常见的ETL工具有Informatica、Datastage、微软SSIS等。之前做处理的时候ETL都是学长写好的，所以在此做个简单小结。</p>
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>面试编程：字符串</title>
+      <link href="http://kakack.github.io/2014/03/%E9%9D%A2%E8%AF%95%E7%BC%96%E7%A8%8B%EF%BC%9A%E5%AD%97%E7%AC%A6%E4%B8%B2/"/>
+      <pubDate>2014-03-25T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/03/面试编程：字符串</guid>
+      <content:encoded><![CDATA[<p>第二篇写一点关于string的常见面试编程题目.</p>
+
+<hr />
+
+<h2>逆序</h2>
+
+<p>如果没有任何条件限制，那么做一个普通逆序是比较容易的</p>
+
+<pre><code>char* Reverse(char* s)
+{
+    //将q指向字符串最后一个字符
+    char* q = s ;
+    while( *q++ ) ;
+    q -= 2 ;//最后一位是'\0'
+
+    //分配空间，存储逆序后的字符串。
+    char* p = new char[sizeof(char) * (q - s + 2)] ; 
+    char* r = p ;
+
+    // 逆序存储
+    while(q &gt;= s)
+        *p++ = *q-- ;
+    *p = '\0' ;
+
+    return r ;
+}
+</code></pre>
+
+<p>在这个基础上稍微加点限制条件，一般会考到原地逆序，也就是说不允许使用额外的空间，方法大致一样，都是将字符串首尾调换。如图
+<img src="http://pic002.cnblogs.com/images/2011/64257/2011030921173395.png" alt="" /></p>
+
+<p>最常用的方法是</p>
+
+<pre><code>char* Reverse(char* s)
+{
+    // p指向字符串头部
+    char* p = s ;
+
+    // q指向字符串尾部
+    char* q = s ;
+    while( *q )
+        ++q ;
+    q -- ;
+
+    // 用t作中间变量交换并移动指针，直到p和q交叉
+    while(q &gt; p)
+    {
+        char t = *p ;
+        *p++ = *q ;
+        *q-- = t ;
+    }
+
+    return s ;
+ }
+</code></pre>
+
+<p>然后可以用递归的方法来做</p>
+
+<pre><code>// 对字符串s在区间left和right之间进行逆序，递归法
+void Reverse( char* s, int left, int right )
+{
+    if(left &gt;= right)
+        return s ;
+
+    char t = s[left] ;
+    s[left] = s[right] ;
+    s[right] = t ;
+
+    Reverse(s, left + 1, right - 1) ;
+    }
+</code></pre>
+
+<p>如果不允许出现中间变量t，那么可以用异或操作来传递</p>
+
+<pre><code>// 使用异或操作对字符串s进行逆序
+char* Reverse(char* s)
+{
+    char* r = s ;
+
+    //令p指向字符串最后一个字符
+    char* p = s;
+    while (*(p + 1) != '\0')
+        ++p ;
+
+    // 使用异或操作进行交换
+    while (p &gt; s)
+    {
+        *p = *p ^ *s ;
+        *s = *p ^ *s ;
+        *p = *p-- ^ *s++ ;
+    }
+
+    return r ;
+}
+</code></pre>
+
+<p>另外在逆序中再难一点的可以有关于单词的逆序输出，比如给定"This is a sentence"，则输出是"sentence a is This"，为了简化问题，字符串中不包含标点符号。</p>
+
+<p>分两步</p>
+
+<p>1 先按单词逆序得到"sihT si a ecnetnes"</p>
+
+<p>2 再整个句子逆序得到"sentence a is This"</p>
+
+<p>对于步骤一，关键是如何确定单词，这里以空格为单词的分界。当找到一个单词后，就可以使用上面讲过的方法将这个单词进行逆序，当所有的单词都逆序以后，将整个句子看做一个整体（即一个大的包含空格的单词）再逆序一次即可，如下图所示，第一行是原始字符换，第二行是按单词逆序后的字符串，最后一行是按整个句子逆序后的字符串。</p>
+
+<p><img src="http://pic002.cnblogs.com/images/2011/64257/2011030921192821.png" alt="" /></p>
+
+<pre><code>// 对指针p和q之间的所有字符逆序
+void ReverseWord(char* p, char* q)
+{
+    while(p &lt; q)
+    {
+        char t = *p ;
+        *p++ = *q ;
+        *q-- = t ;
+    }
+}
+
+// 将句子按单词逆序
+char* ReverseSentence(char* s)
+{
+    // 这两个指针用来确定一个单词的首尾边界
+    char* p = s ; // 指向单词的首字符
+    char* q = s ; // 指向空格或者 '\0'
+
+    while(*q != '\0')
+    {
+        if (*q == '')
+        {
+            ReverseWord(p, q - 1) ;
+            q++ ; // 指向下一个单词首字符
+            p = q ;
+        }
+        else
+            q++ ;
+    }
+
+    ReverseWord(p, q - 1) ; // 对最后一个单词逆序
+    ReverseWord(s, q - 1) ; // 对整个句子逆序
+
+    return s ;
+}
+</code></pre>
+
+<p>至于字符串的拷贝，求长等方法的重写就不在此赘述了，因为肯定没逆序那么难。可以根据第一段代码中的方法自行修改得到。</p>
+
+<hr />
+
+<h2>关于字符串编程的几个注意事项</h2>
+
+<p>因为有一阵没用c写字符串了，所以有些内容也记得不太清楚了。其中C/C++关于字符串的定义方式有三种：字符串常量，char数组，char指针。</p>
+
+<ol>
+<li><p>字符串常量：位于一对双括号中的任何字符。双引号里的字符加上编译器自动提供的结束标志\0字符，作为
+一个字符串存储在内存中。如：printf("%s","hello"); //"hello"
+ 如果字符串文字中间没有间隔或间隔的是空格符，ANSI  C 会将其串联起来。例：</p>
+
+<p>  char greeting[50] = "hello,and" "how are" "you";</p>
+
+<p>等价于：</p>
+
+<p>  char greeting[50] = "hello,and how are you";</p>
+
+<p>字符串常量属于静态存储类。静态存储是指如果在一个函数中使用字符串常量，即使是多次调用了这个函数，
+该字符串在程序的整个运行过程中只存储一份。整个引号的内容作为指向该字符串存储位置的指针。这一点与
+把数组名作为指向数组存储位置的指针类似。</p></li>
+<li><p>char数组：初始化例子：
+   char m[40] = "hello,world";</p>
+
+<p>   //定义字符串数组时必须指定数组大小（整型常量），在指定大小时，要确保数组的大小比预定的大一个，因为编译器会自动添加'\0'。多余的元素会初始化为'\0'</p>
+
+<p>   char m={'h','e','l','\0'};  //注意标志结束的空字符，若没有它，得到的只是一个字符数组而不是字符串</p></li>
+<li>char指针：char * m = "hello,world";//自动添加'\0'此时字符串指针m指向字符串常量,不成用 * (m+1)='o'修改此常量，因为这个字符串常量放在常量区不能被修改</li>
+</ol>
+
+
+<p>最后辨析一下char指针和char数组表示的字符串的区别：
+数组形式：</p>
+
+<ul>
+<li><p>编译器会把数组名m看作是数组首元素的地址&amp;m[0]的同义词，m是个地址常量。可以用m+1来标识数组里的下一个元素，但不能使用++m，增量运算符只能在变量前使用， 而不能在常量前使用。</p></li>
+<li><p>m[40]在计算机内存中被分配一个有40个元素的数组（其中每个元素对应一个字符，还有一个附加的元素对应结束的空字符'\0'）。每个元素都被初始化为相应的字符。</p></li>
+<li><p>通常，被引用的字符串存储在可执行文件的数据段部分；当程序被加载到内存中时，字符串也被加载到内存中，把被引用的字符串复制到数组中</p></li>
+</ul>
+
+
+<p>指针形式：</p>
+
+<ul>
+<li><p>指针形式（*m）也会在静态存储区为字符串预留空间。此外，一旦程序开始执行，还要为指针变量m另外预留一个存储位置，以在该指针变量中能够存储字符串的地址。</p></li>
+<li><p>m指向字符串的第一个字符，可用++m指向第二个字符。  指针m是个变量。</p></li>
+</ul>
+
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>面试编程：链表</title>
+      <link href="http://kakack.github.io/2014/03/%E9%9D%A2%E8%AF%95%E7%BC%96%E7%A8%8B%EF%BC%9A%E9%93%BE%E8%A1%A8/"/>
+      <pubDate>2014-03-24T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/03/面试编程：链表</guid>
+      <content:encoded><![CDATA[<p><img src="http://ww3.sinaimg.cn/mw690/b03122c9gw1dxzk3m2cscg.gif" alt="" /></p>
+
+<p>经过这几天的面试和面试准备，发现那些大公司像Hulu、Baidu、EMC等招人的时候，在电面期间就喜欢看面试者编程的能力，遇到的一般方法是在像<a href="http://collabedit.com/">http://collabedit.com/</a>的网上在线写code，<del>当然听饼师兄说，有的公司会喜欢直接远程监控让你在自己的IDE上写代码编译debug，这个难度更大简直无情</del>，我之前对于这块的锻炼确实比较少，因为已经很久没有写简单算法了，所以一下子写一段20行左右明确完成某个工作的函数确实有点吃力，但之后自己慢慢练了一下，也感谢一些面试官没玩命搞我，表现也好起来了。打算写几篇博客简单罗列一下近期遇到有代表性的在线编程题，做纪念和巩固。今天第一篇就写链表。</p>
+
+<hr />
+
+<p>关于链表，作为最简单的一种数据结构，一般被考察到的大多是其中最简单的单链表，也就是每个节点Node含两个成员，value保存本节点包含的信息，next指针指向下一个节点。另外还会有一个head指针指向链表的第一个Node。链表的扩展一般有双向链表，即有next和previous两个指针分别指向该Node的下一个和上一个节点，另外单向链表还会出现环的情况，在此不再赘述。链表的缺点是不支持随机访问。关于链表的增删改查没必要说了，下面来讲两个面试编程中比较常见的问题。</p>
+
+<hr />
+
+<h2>链表排序</h2>
+
+<p>对于链表来说，排序比数组排序麻烦好多，因为会涉及到插入的顺序和那些该死的指针，所以不是所有数组上可行的排序方法都能在链表中实践。</p>
+
+<pre><code>（1）插入排序    （适合）
+（2）冒泡排序    （适合）
+（3）希尔排序    （适合）
+（4）选择排序    （适合）
+（5）快速排序    （不适合）
+（6）合并排序    （不适合）
+（7）基数排序    （不适合）
+（8）堆排序      （不适合）
+</code></pre>
+
+<p>  其实，一般来说。如果涉及到数据之间的相对关系调配，那么只适合线性排序；如果只是数据内容之间的相互交换，那么这种排序方法也比较适合链表的排序。快速排序、合并排序、堆排序都涉及到了中间值的选取问题，所以不大适合链表排序。第一个问我这个问题是Baidu的工程师，当时直接给斯巴达了，写了半天被人家呵呵了……
+  后来自己查了点资料，动手写了一下链表的几种排序。</p>
+
+<ul>
+<li>插入排序</li>
+</ul>
+
+
+<pre><code class="``">  void sortlist(linklist * head)
+{
+    linklist * newhead, * s, * pre ,* p;
+    p=head-&gt;next;
+    newhead=p-&gt;next;
+    p-&gt;next=NULL;         //准备两个链表，一个是已经排好的head开头，一个是还没排好的newhead开头
+    while(newhead)        //依次遍历没有排好序的那个链表
+    {            
+        s=newhead;        //用s把当前第一个节点拿出来做比较
+        newhead=newhead-&gt;next; //待排序链表往后走
+        pre=head;         
+        p=head-&gt;next;
+        while(p!=NULL &amp;&amp; p-&gt;data &lt; s-&gt;data)//每次判断p比s的值小，那么用作比较的pre和p往后走，直到遇到比s大的p出现
+        {
+            pre=p;
+            p=p-&gt;next;
+        }
+        s-&gt;next=p;
+        pre-&gt;next=s;
+    }
+}
+</code></pre>
+
+<ul>
+<li>选择排序：每次选出待排序部分最小的一个node连到链表上</li>
+</ul>
+
+
+<pre><code class="``">  void selectsort(linklist * head)
+{
+    linklist * p, * min , *q;
+    int t;
+    for( p=head-&gt;next;p-&gt;next!=NULL;p=p-&gt;next)        //p每次往后移动一个node
+    {
+        for(min=p,q=p-&gt;next;q!=NULL;q=q-&gt;next)
+        {
+            if(q-&gt;data &lt; min-&gt;data)
+                min=q;                               //找到最小的一个node，保存到min里
+        }
+        if(min!=p)                                    //如果不是p自己，那么更新操作
+        {                      
+            t=p-&gt;data;
+            p-&gt;data=min-&gt;data;           
+            min-&gt;data=t;
+        }
+    }
+}
+</code></pre>
+
+<ul>
+<li>冒泡排序</li>
+</ul>
+
+
+<pre><code class="``">  void bubblesort(linklist * head)
+{
+    linklist * end, * p , * q;                //end用来记录排好序的最后一个元素地址，p，q分别为前驱，后继
+    int temp;
+    p=head-&gt;next;
+    q=p-&gt;next;
+    end=NULL;
+    while(end!=head-&gt;next)
+                                             //如果head所指结点的next成员为end，循环结束
+    {
+        p=head-&gt;next;//p结点从链表头结点开始
+        q=p-&gt;next;//q指向p所指结点的下一个结点
+        while(p-&gt;next!=end)
+                                             //当p-&gt;next的值为end时，表示到链尾
+        {
+            if(p-&gt;data&gt;q-&gt;data)              //按照数据域从小到大排序
+            {
+                temp=p-&gt;data;
+                p-&gt;data=q-&gt;data;
+                q-&gt;data=temp;
+            }
+            p=q;
+            q=q-&gt;next;
+        }
+        end=p;                             //使end指向每次排序的q所指的结点即尾结点
+    }
+}
+</code></pre>
+
+<hr />
+
+<h2>链表逆序</h2>
+
+<p>这个是EMC的工程师问的题目，摸索了一下就写出来了</p>
+
+<pre><code>
+Node * ReverseList(Node *head) //链表逆序
+{
+if ( head == NULL || head-&gt;next == NULL ) 
+// 否则下面的就错了，一定要注意一些特定条件的判断，边界问题狠重要，软件开发要注意对异常分支的处理     
+
+        // 三个指针的方式结构比较清晰
+        Node *p1 = head;
+        Node *p2 = p1-&gt;next;
+        Node *p3 = p2-&gt;next;   //逆序需要三个临时的指针
+        p1-&gt;next = NULL;
+        while ( p3 != NULL )
+        {
+                p2-&gt;next = p1; // p2-&gt;next为p3，已经保存过了
+                //p1、p2、p3都向前移动一个
+                p1 = p2;
+                p2 = p3;
+                p3 = p3-&gt;next;
+        }
+        p2-&gt;next = p1; //最末端节点挂在链上
+        head = p2;
+        return head;
+}
+</code></pre>
+
+<hr />
+
+<h2>两个有序链表merge成一个有序链表</h2>
+
+<pre><code>
+Node * Merge(Node *head1 , Node *head2)
+{
+        if ( head1 == NULL)
+        return head2;
+        if ( head2 == NULL)
+        return head1;
+
+        // 良好的习惯，指针要初始化为NULL
+        Node *head = NULL;
+        Node *p1 = NULL;
+        Node *p2 = NULL;
+
+        // 从小到大，获得头节点
+        if ( head1-&gt;data =&lt; head2-&gt;data )
+        {
+                head = head1;
+                p1 = head1-&gt;next;    // 注意更新的不一样
+                p2 = head2;
+        }
+        else
+        {
+                head = head2;
+                p2 = head2-&gt;next;
+                p1 = head1;
+        }
+
+        Node *pcurrent = head;
+        while ( p1 != NULL &amp;&amp; p2 != NULL)
+        {
+                if ( p1-&gt;data &lt;= p2-&gt;data )
+                {
+                       pcurrent-&gt;next = p1; // 挂接新节点
+                       pcurrent = p1; //更新当前最后一个节点
+                       p1 = p1-&gt;next; //更新下一个待比较节点
+                }
+                else
+                {
+                       pcurrent-&gt;next = p2;
+                       pcurrent = p2;
+                       p2 = p2-&gt;next;
+                }
+        }
+
+        if ( p1 != NULL ) //挂接剩余部分
+        pcurrent-&gt;next = p1;
+        if ( p2 != NULL )
+        pcurrent-&gt;next = p2;
+
+        return head;
+}
+</code></pre>
+
+<p>或者事用递归调用的办法</p>
+
+<pre><code>Node * MergeRecursive(Node *head1 , Node *head2)
+{        //退出条件是某链结束
+        if ( head1 == NULL )
+        return head2;
+        if ( head2 == NULL)
+        return head1;
+
+        Node *head = NULL;
+        if ( head1-&gt;data &lt; head2-&gt;data )
+        {
+                head = head1;
+                head-&gt;next = MergeRecursive(head1-&gt;next,head2);
+        }
+        else
+        {
+                head = head2;
+                head-&gt;next = MergeRecursive(head1,head2-&gt;next);
+        }
+
+        return head;
+}
+</code></pre>
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>面试编程：数组</title>
+      <link href="http://kakack.github.io/2014/03/%E9%9D%A2%E8%AF%95%E7%BC%96%E7%A8%8B%EF%BC%9A%E6%95%B0%E7%BB%84/"/>
+      <pubDate>2014-03-24T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/03/面试编程：数组</guid>
+      <content:encoded><![CDATA[<p>数组这一块在之前的几次面试中吃尽了苦头，这里好好整理一下。</p>
+
+<p>使用数组的最大一个好处就可以利用下标进行随机访问，缺点是在内存中储存的时候不想链表那么灵活，要占据连续的一块内存。</p>
+
+<p>数组这块写的比较好的一个博客是<a href="http://www.cnblogs.com/graphics/archive/2010/08/24/1761620.html">戳</a></p>
+
+<hr />
+
+<h2>求和</h2>
+
+<p>数组求和最简单的是循环遍历相加，也可以用递归的方法，约定如果数组中个数为0，那么数组和为0，否则就是前n-1个数的和加上最后一个</p>
+
+<pre><code>int sum(int*a, int n)
+{
+     return n ==0?0 : sum(a, n -1) + a[n -1];
+}
+</code></pre>
+
+<hr />
+
+<h2>求最大最小值</h2>
+
+<p>最简单的办法也是全部遍历一边，依次与保存着的max/min值做比较，如果有更大/小的则更新max/min值，也可以用分治的办法来做，先把整个数组分为左右两部分，求得各自的max/min然后再比较一下，以此递归。直到分治到某个数组只有一个元素。</p>
+
+<pre><code>// 求数组的最大值和最小值，返回值在maxValue和minValue
+void MaxandMin(int *a, int l, int r, int&amp; maxValue, int&amp; minValue)
+{
+    //l指数组的最左标记，r是最右标记，maxValue和minValue分别存储最大/最小值
+
+    if(l == r) // l与r之间只有一个元素
+    {
+        maxValue = a[l] ;
+        minValue = a[l] ;
+        return ;
+    }
+
+    if(l + 1 == r) // l与r之间只有两个元素
+    {
+        if(a[l] &gt;= a[r])
+        {
+            maxValue = a[l] ;
+            minValue = a[r] ;
+        }
+        else
+        {
+            maxValue = a[r] ;
+            minValue = a[l] ;
+        }
+        return ;
+    }
+
+    int m = (l + r) / 2 ; // 求中点
+
+    int lmax ; // 左半部份最大值
+    int lmin ; // 左半部份最小值
+    MaxandMin(a, l, m, lmax, lmin) ; // 递归计算左半部份
+
+    int rmax ; // 右半部份最大值
+    int rmin ; // 右半部份最小值
+    MaxandMin(a, m + 1, r, rmax, rmin) ; // 递归计算右半部份
+
+    maxValue = max(lmax, rmax) ; // 总的最大值
+    minValue = min(lmin, rmin) ; // 总的最小值
+}
+</code></pre>
+
+<hr />
+
+<h2>找寻出现次数超过一半的数</h2>
+
+<p>这个我记得《编程之美》里提及过，据说百度曾经考过这个题，如果用暴力办法做可以实现但是显然不巧妙，比较巧妙的办法是把一个数和一个与它不同的数同时从这个数组里去掉，那么最后剩下的一个或者多个一样的数一定是我们要找的出现次数超过一半的数。</p>
+
+<p>实际在代码实现的过程中，大致思路是设置一个当前值和当前值的计数器，初始化当前值为数组首元素，计数器值为1，然后从第二个元素开始遍历整个数组，对于每个被遍历到的值a[i]</p>
+
+<p>1 如果a[i]==currentValue，则计数器值加1</p>
+
+<p>2 如果a[i] != currentValue， 则计数器值减1，如果计数器值小于0，则更新当前值为a[i]，并将计数器值重置为1</p>
+
+<pre><code>// 找出数组中出现次数超过一半的元素
+int Find(int* a, int n)
+{
+    int curValue = a[0] ;
+    int count = 1 ;
+
+    for (int i = 1; i &lt; n; ++i)
+    {
+        if (a[i] == curValue)
+            count++ ;
+        else
+        {
+            count-- ;
+            if (count &lt; 0)
+            {
+                curValue = a[i] ;
+                count = 1 ;
+            }
+        }
+    }
+
+    return curValue ;
+}
+</code></pre>
+
+<p>关于这部分的算法实现，如果是链表，那么做delete操作会比较方便，但如果是数组，delete之后每个元素都要移动，所以不能直接删除，因此用一个计数器来表示是比较好的办法。</p>
+
+<p>另一种做法是把整个序列排序，那么中位数一定就是要求的数，但不如这个办法好</p>
+
+<hr />
+
+<h2>求数组中距离最小的两个数</h2>
+
+<p>给定一个含有n个元素的整型数组，找出数组中的两个元素x和y使得abs(x - y)值最小，这个题显然应该先排序再作遍历即可。</p>
+
+<pre><code>int compare(const void* a, const void* b)
+{
+    return *(int*)a - *(int*)b ;
+}
+
+// 求数组中元素的最短距离
+void MinimumDistance(int* a, int n)
+{
+    // Sort
+    qsort(a, n, sizeof(int), compare) ;
+
+    int i ; // Index of number 1
+    int j ; // Index of number 2
+
+    int minDistance = numeric_limits&lt;int&gt;::max() ;
+    for (int k = 0; k &lt; n - 1; ++k)
+    {
+        if (a[k + 1] - a[k] &lt; minDistance)
+        {
+            minDistance = a[k + 1] - a[k] ;
+            i = a[k] ;
+            j = a[k + 1] ;
+        }
+    }
+
+    cout &lt;&lt; "Minimum distance is: " &lt;&lt; minDistance &lt;&lt; endl ;
+    cout &lt;&lt; "i = " &lt;&lt; i &lt;&lt; " j = " &lt;&lt; j &lt;&lt; endl ;
+}
+</code></pre>
+
+<hr />
+
+<h2>求两个数组的共有元素</h2>
+
+<p>一般都是先做好排序，给定两个含有n个元素的有序（非降序）整型数组a和b，求出其共同元素，比如</p>
+
+<p>a = 0, 1, 2, 3, 4</p>
+
+<p>b = 1, 3, 5, 7, 9</p>
+
+<p>输出 1, 3</p>
+
+<p>充分利用数组有序的性质，用两个指针i和j分别指向a和b，比较a[i]和b[j]，根据比较结果移动指针，则有如下三种情况</p>
+
+<ol>
+<li><p>a[i] &lt; b[j]，则i增加1，继续比较</p></li>
+<li><p>a[i] == b[j]，则i和j皆加1，继续比较</p></li>
+<li><p>a[i] &lt; b[j]，则j加1，继续比较</p></li>
+</ol>
+
+
+<p>重复以上过程直到i或j到达数组末尾。</p>
+
+<pre><code>// 找出两个数组的共同元素
+void FindCommon(int* a, int* b, int n)
+{
+    int i = 0;
+    int j = 0 ;
+
+    while (i &lt; n &amp;&amp; j &lt; n)
+    {
+        if (a[i] &lt; b[j])
+            ++i ;
+        else if(a[i] == b[j])
+        {
+            cout &lt;&lt; a[i] &lt;&lt; endl ;
+            ++i ;
+            ++j ;
+        }
+        else// a[i] &gt; b[j]
+            ++j ;
+    }
+}
+</code></pre>
+
+<p>这到题还有其他的解法，比如对于a中任意一个元素，在b中对其进行Binary Search，因为a中有n个元素，而在b中进行Binary Search需要logn。所以找出全部相同元素的时间复杂度是O(nlogn)。</p>
+
+<p>另外，上面的方法，只要b有序即可，a是否有序无所谓，因为我们只是在b中做Binary Search。如果a也有序的话，那么再用上面的方法就有点慢了，因为如果a中某个元素在b中的位置是k的话，那么a中下一个元素在b中的位置一定位于k的右侧，所以本次的搜索空间可以根据上次的搜索结果缩小，而不是仍然在整个b中搜索。也即如果a和b都有序的话，代码可以做如下修改，记录上次搜索时b中元素的位置，作为下一次搜索的起始点。</p>
+
+<p>小小总结一下，对于在数组中进行查找的问题，可以分如下两种情况处理</p>
+
+<ol>
+<li><p>如果给定的数组有序，那么首先应该想到Binary Search，所需O(logn)</p></li>
+<li><p>如果给定的数组无序，那么首先应该想到对数组进行排序，很多排序算法都能在O(nlogn)时间内对数组进行排序，然后再使用二分搜索，总的时间复杂度仍是O(nlogn)。</p></li>
+</ol>
+
+
+<p>如果能做到以上两点，大多数关于数组的查找问题，都能迎刃而解。</p>
+
+<hr />
+
+<h2>找出出现奇数次的元素</h2>
+
+<p>给定一个含有n个元素的整型数组a，其中只有一个元素出现奇数次，找出这个元素。这道题实际上是一个变种，原题是找出数组中唯一一个出现一次的元素，下面的方法可以同时解决这两道提。所以题目就用这个广义的吧。</p>
+
+<p>因为对于任意一个数k，有k ^ k = 0，k ^ 0 = k，所以将a中所有元素进行<strong><em>异或</em></strong>，那么个数为偶数的元素异或后都变成了0，只留下了个数为奇数的那个元素。</p>
+
+<pre><code>int FindElementWithOddCount(int*a, int n)
+{
+     int r = a[0] ;
+
+     for (int i =1; i &lt; n; ++i)
+     {
+          r ^= a[i] ;
+     }
+
+     return r ;
+}
+</code></pre>
+
+<hr />
+
+<h2>求数组中满足给定和的数对</h2>
+
+<p>这个题在好几个面试中都碰到过，如ebay和EMC，感觉一开始的时候想错方向了，后来仔细回忆了一下，想出来了。</p>
+
+<p>题面是：给定两个有序整型数组a和b，各有n个元素，求两个数组中满足给定和的数对，即对a中元素i和b中元素j，满足i + j = d(d已知)</p>
+
+<p>做法还是先排序，然后用两个指针i和j分别指向数组的首尾，然后从两端同时向中间遍历，直到两个指针交叉。</p>
+
+<p>其实是挺简单的一个题，可惜可惜</p>
+
+<pre><code>// 找出满足给定和的数对
+void FixedSum(int* a, int* b, int n, int d)
+{
+    for (int i = 0, j = n - 1; i &lt; n &amp;&amp; j &gt;= 0)
+    {
+        if (a[i] + b[j] &lt; d)
+            ++i ;
+        else if (a[i] + b[j] == d)
+        {
+            cout &lt;&lt; a[i] &lt;&lt; ", " &lt;&lt; b[j] &lt;&lt; endl ;
+            ++i ;
+            --j ;
+        }
+        else // a[i] + b[j] &gt; d
+            --j ;
+    }
+}
+</code></pre>
+
+<p>如果只有一个数组就更简单一点，把上面代码稍作修改：</p>
+
+<pre><code>void FixedSum(int* a,int n,int d)
+{
+  for(int i=0,j=n-1;i&lt;j)
+  {
+    if(a[i]+a[j] &lt; d)
+      i++;
+    else if(a[i]+a[j]==d)
+      { 
+      cout&lt;&lt;a[i]&lt;&lt;","&lt;&lt;b[j]&lt;&lt;endl;
+      i++;
+      j--;
+       }
+     else //a[i]+a[j]&gt;d
+      j--;
+  }
+
+}
+</code></pre>
+
+<p>其中如果有重复值或者统计对数，那么每次==判断成立的时候左右看一下重复值</p>
+
+<hr />
+
+<h2>寻找数组中绝对值最小的数</h2>
+
+<p>给定一个有序整数序列（非递减序），可能包含负数，找出其中绝对值最小的元素，比如给定序列 -5, -3, -1, 2, 8 则返回1。</p>
+
+<p>由于给定序列是有序的，而这又是搜索问题，所以首先想到二分搜索法，只不过这个二分法比普通的二分法稍微麻烦点，可以分为下面几种情况</p>
+
+<ol>
+<li>如果给定的序列中所有的数都是正数，那么数组的第一个元素即是结果。</li>
+<li>如果给定的序列中所有的数都是负数，那么数组的最后一个元素即是结果。</li>
+<li>如果给定的序列中既有正数又有负数，那么绝对值得最小值一定出现在正数和负数的连接处。</li>
+</ol>
+
+
+<p>为什么？因为对于负数序列来说，右侧的数字比左侧的数字绝对值小，如上面的-5, -3, -1, 而对于整整数来说，左边的数字绝对值小，比如上面的2, 8，将这个思想用于二分搜索，可先判断中间元素和两侧元素的符号，然后根据符号决定搜索区间，逐步缩小搜索区间，直到只剩下两个元素。</p>
+
+<p>单独设置一个函数用来判断两个整数的符号是否相同。只要比较一下头尾两个值是否同号即可</p>
+
+<pre><code>
+bool SameSign(int a, int b)
+{
+    if (a * b &gt; 0)
+        return true;
+    else
+        return false;
+}
+</code></pre>
+
+<p>主函数：</p>
+
+<pre><code>// 找出一个非递减序整数序列中绝对值最小的数
+int MinimumAbsoluteValue(int* a, int n)
+{
+    // Only one number in array
+    if (n ==1)
+    {
+        return a[0] ;
+    }
+
+    // All numbers in array have the same sign
+    if (SameSign(a[0], a[n -1]))
+    {
+        return a[0] &gt;=0? a[0] : a[n -1] ;
+    }
+
+    // Binary search
+    int l =0 ;
+    int r = n -1 ;
+
+    while(l &lt; r)
+    {
+        if (l + 1 == r)
+        {
+            return abs(a[l]) &lt; abs(a[r]) ? a[l] : a[r] ;
+        }
+
+        int m = (l + r) /2 ;//二分查找
+
+        if (SameSign(a[m], a[r]))
+        {
+            r = m;
+            continue;
+        }
+        else
+        {
+            l = m ;
+            continue;
+        }
+    }
+}
+</code></pre>
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>Hadoop之初体验</title>
+      <link href="http://kakack.github.io/2014/03/Hadoop%E4%B9%8B%E5%88%9D%E4%BD%93%E9%AA%8C/"/>
+      <pubDate>2014-03-16T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/03/Hadoop之初体验</guid>
+      <content:encoded><![CDATA[<p><img src="http://t11.baidu.com/it/u=3241559109,3575775197&amp;fm=21&amp;gp=0.jpg" alt="" />
+终于要写Hadoop了，如果说云计算就像teenage sex，大家都在讨论但是很少有人真的接触到，那么Hadoop就像是印度神油，据说效果很好，但是买过的人也不知道自己抹没抹对地方。</p>
+
+<hr />
+
+<h2>概况</h2>
+
+<p>其实Hadoop并不是什么技术，只是一个框架，一个工具，而且是一个入门门槛不高的工具，会用Linux，会点虚拟化，再会一点Java就行。应该说，Hadoop是一个能够对大量数据进行分布式处理的软件框架，它是一种技术的实现，是云计算技术中重要的组成部分，现在用Hadoop或者想用Hadoop的公司很多，包括之后的Spark框架，所以我个人觉得，Hadoop还会是之后大数据处理的主流方式。</p>
+
+<p> 我们现在常说的Hadoop其实是由四个小伙伴组成的，分别是文件系统HDFS，计算框架Hadoop/MapReduce，Hive和Hbase，下面简单介绍一下。</p>
+
+<hr />
+
+<h2>HDFS</h2>
+
+<p> HDFS是一个主/从（Mater/Slave）体系结构，从最终用户的角度来看，它就像传统的文件系统一样，可以通过目录路径对文件执行CRUD（Create、Read、Update和Delete）操作。但由于分布式存储的性质，HDFS集群拥有一个NameNode和一些DataNode。NameNode管理文件系统的元数据，DataNode存储实际的数据。客户端通过同NameNode和DataNodes的交互访问文件系统。客户端联系NameNode以获取文件的元数据，而真正的文件I/O操作是直接和DataNode进行交互的。 下图为HDFS总体结构示意图
+ <img src="http://www.aboutyun.com/data/attachment/forum/201312/11/143556eyy2gyzkszy5sy5v.jpg" alt="" /></p>
+
+<p> HDFS用流式数据访问模式来存储超大文件，运用于商业集群上，其构建思路是一次写入，多次读取。其中数据块block是HDFS读写的最小单元，默认为64MB，比单一磁盘上的文件数据块大的多。HDFS有两大节点，并以管理者-工作者模式运行，即一个namenode（管理者）和多个datanode（工作者）。前者管理文件系统的命名空间，维护着整个文件树和树内所有文件和目录，这些信息以命名空间镜像文件和编辑日志文件形式永久保存，没有namenode整个HDFS将难以运行，所以对namenode的容错能力要很强，一般采用的方法是备份namenode到本地文件或者设置一个辅助namenode。因此，HDFS有以下四个特征：</p>
+
+<ul>
+<li>存储极大数目的信息（terabytes or petabytes），将数据保存到大量的节点当中。支持很大单个文件。</li>
+<li>提供数据的高可靠性，单个或者多个节点不工作，对系统不会造成任何影响，数据仍然可用。</li>
+<li>提供对这些信息的快速访问，并提供可扩展的方式。能够通过简单加入更多服务器的方式就能够服务更多的客户端。</li>
+<li>HDFS是针对MapReduce设计的，使得数据尽可能根据其本地局部性进行访问与计算。</li>
+</ul>
+
+
+<p>1, NameNode</p>
+
+<p>NameNode可以看作是分布式文件系统中的管理者，主要负责管理文件系统的命名空间、集群配置信息和存储块的复制等。NameNode会将文件系统的Meta-data存储在内存中，这些信息主要包括了文件信息、每一个文件对应的文件块的信息和每一个文件块在DataNode的信息等。l Masterl 管理HDFS的名称空间l 管理数据块映射信息l 配置副本策略l 处理客户端读写请求</p>
+
+<p>2, Secondary namenode</p>
+
+<p>并非NameNode的热备； 辅助NameNode，分担其工作量； 定期合并fsimage和fsedits，推送给NameNode； 在紧急情况下，可辅助恢复NameNode。</p>
+
+<p>3, DataNode</p>
+
+<p>DataNode是文件存储的基本单元，它将Block存储在本地文件系统中，保存了Block的Meta-data，同时周期性地将所有存在的Block信息发送给NameNode。
+Slavel 存储实际的数据块 执行数据块读/写</p>
+
+<p>4, Client</p>
+
+<p>文件切分 与NameNode交互，获取文件位置信息； 与DataNode交互，读取或者写入数据； 管理HDFS； 访问HDFS。</p>
+
+<p>5, 文件写入</p>
+
+<p>1) Client向NameNode发起文件写入的请求。 2) NameNode根据文件大小和文件块配置情况，返回给Client它所管理部分DataNode的信息。 3) Client将文件划分为多个Block，根据DataNode的地址信息，按顺序写入到每一个DataNode块中。</p>
+
+<p>6, 文件读取</p>
+
+<p>1) Client向NameNode发起文件读取的请求。 2) NameNode返回文件存储的DataNode的信息。 3) Client读取文件信息。
+HDFS典型的部署是在一个专门的机器上运行NameNode，集群中的其他机器各运行一个DataNode；也可以在运行NameNode的机器上同时运行DataNode，或者一台机器上运行多个DataNode。一个集群只有一个NameNode的设计大大简化了系统架构。</p>
+
+<hr />
+
+<h2>MapReduce</h2>
+
+<p>解释MapReduce有个经典的例子就是统计过去十年计算机刊物上出现最高的词频。</p>
+
+<p>所谓MapReduce，其实是分为Map函数和Reduce函数两个。map函数和reduce函数是交给用户实现的，这两个函数定义了任务本身。</p>
+
+<ul>
+<li><p>map函数：接受一个键值对（key-value pair），产生一组中间键值对。MapReduce框架会将map函数产生的中间键值对里键相同的值传递给一个reduce函数。</p></li>
+<li><p>reduce函数：接受一个键，以及相关的一组值，将这组值进行合并产生一组规模更小的值（通常只有一个或零个值）。</p></li>
+</ul>
+
+
+<pre><code>map(String key, String value): 
+
+　　// key: document name 
+
+　　// value: document contents 
+
+　　for each word w in value: 
+
+　　EmitIntermediate(w, "1"); 
+
+
+reduce(String key, Iterator values): 
+
+　　// key: a word 
+
+　　// values: a list of counts 
+
+　　int result = 0; 
+
+　　for each v in values: 
+
+　　result += ParseInt(v); 
+
+　　Emit(AsString(result)); 
+</code></pre>
+
+<p>在统计词频的例子里，map函数接受的键是文件名，值是文件的内容，map逐个遍历单词，每遇到一个单词w，就产生一个中间键值对&lt;w, "1">，这表示单词w咱又找到了一个；MapReduce将键相同（都是单词w）的键值对传给reduce函数，这样reduce函数接受的键就是单词w，值是一串"1"（最基本的实现是这样，但可以优化），个数等于键为w的键值对的个数，然后将这些“1”累加就得到单词w的出现次数。最后这些单词的出现次数会被写到用户定义的位置，存储在底层的分布式存储系统（GFS或HDFS）。</p>
+
+<p><img src="http://www.aboutyun.com/data/attachment/forum/201311/27/213054tajyxaaqyg1phs01.jpg" alt="" />
+一切都是从最上方的user program开始的，user program链接了MapReduce库，实现了最基本的Map函数和Reduce函数。图中执行的顺序都用数字标记了。</p>
+
+<p>　　1. MapReduce库先把user program的输入文件划分为M份（M为用户定义），每一份通常有16MB到64MB，如图左方所示分成了split0~4；然后使用fork将用户进程拷贝到集群内其它机器上。</p>
+
+<p>　　2. user program的副本中有一个称为master，其余称为worker，master是负责调度的，为空闲worker分配作业（Map作业或者Reduce作业），worker的数量也是可以由用户指定的。</p>
+
+<p>　　3. 被分配了Map作业的worker，开始读取对应分片的输入数据，Map作业数量是由M决定的，和split一一对应；Map作业从输入数据中抽取出键值对，每一个键值对都作为参数传递给map函数，map函数产生的中间键值对被缓存在内存中。</p>
+
+<p>　　4. 缓存的中间键值对会被定期写入本地磁盘，而且被分为R个区，R的大小是由用户定义的，将来每个区会对应一个Reduce作业；这些中间键值对的位置会被通报给master，master负责将信息转发给Reduce worker。</p>
+
+<p>　　5. master通知分配了Reduce作业的worker它负责的分区在什么位置（肯定不止一个地方，每个Map作业产生的中间键值对都可能映射到所有R个不同分区），当Reduce worker把所有它负责的中间键值对都读过来后，先对它们进行排序，使得相同键的键值对聚集在一起。因为不同的键可能会映射到同一个分区也就是同一个Reduce作业（谁让分区少呢），所以排序是必须的。</p>
+
+<p>　　6. reduce worker遍历排序后的中间键值对，对于每个唯一的键，都将键与关联的值传递给reduce函数，reduce函数产生的输出会添加到这个分区的输出文件中。</p>
+
+<p>　　7. 当所有的Map和Reduce作业都完成了，master唤醒正版的user program，MapReduce函数调用返回user program的代码。</p>
+
+<p>　　所有执行完毕后，MapReduce输出放在了R个分区的输出文件中（分别对应一个Reduce作业）。用户通常并不需要合并这R个文件，而是将其作为输入交给另一个MapReduce程序处理。整个过程中，输入数据是来自底层分布式文件系统（GFS）的，中间数据是放在本地文件系统的，最终输出数据是写入底层分布式文件系统（GFS）的。而且我们要注意Map/Reduce作业和map/reduce函数的区别：Map作业处理一个输入数据的分片，可能需要调用多次map函数来处理每个输入键值对；Reduce作业处理一个分区的中间键值对，期间要对每个不同的键调用一次reduce函数，Reduce作业最终也对应一个输出文件。</p>
+
+<p>MapReduce的工作机制　　
+<img src="http://www.aboutyun.com/data/attachment/forum/201312/01/205347vyzpuuh8iq8i2i8z.png" alt="" /></p>
+
+<hr />
+
+<h2>Mapper</h2>
+
+<p>Mapper类有四个主要函数，setup，clearup，map，run，代码如下：</p>
+
+<pre><code>protected void setup(Context context) throws IOException, InterruptedException {
+// NOTHING
+}
+
+protected void map(KEYIN key, VALUEIN value, 
+                     Context context) throws IOException, InterruptedException {
+ context.write((KEYOUT) key, (VALUEOUT) value);
+}
+
+protected void cleanup(Context context) throws IOException, InterruptedException {
+// NOTHING
+}
+
+ public void run(Context context) throws IOException, InterruptedException {
+    setup(context);
+    while (context.nextKeyValue()) {
+      map(context.getCurrentKey(), context.getCurrentValue(), context);
+    }
+    cleanup(context);
+  }
+}
+</code></pre>
+
+<p>当调用到map时，通常会先执行一个setup函数，最后会执行一个cleanup函数。而默认情况下，这两个函数的内容都是nothing。因此，当map方法不符合应用要求时，可以试着通过增加setup和cleanup的内容来满足应用的需求。</p>
+
+<hr />
+
+<h2>Reducer</h2>
+
+<p>Reducer是所有用户定制Reducer类的基类，和Mapper类似，它也有setup，reduce，cleanup和run方法，其中setup和cleanup含义和Mapper相同，reduce是真正合并Mapper结果的地方，它的输入是key和这个key对应的所有value的一个迭代器，同时还包括Reducer的上下文。系统中定义了两个非常简单的Reducer，IntSumReducer和LongSumReducer，分别用于对整形/长整型的value求和。Reducer有四个阶段：</p>
+
+<ol>
+<li><p>Shuffle：Reducer把来自Mapper的已排序的输出数据通过网络经Http拷贝到本地来</p></li>
+<li><p>Sort：MapReduce框架按关键字（key）对Reducer输入进行融合和排序（因为不同的Mapper可能会输出同样的key给某个reducer）。shuffle和sort阶段可以同时进行，例如map输出数据在传输时可以同时被融合。</p></li>
+<li><p>Reduce：在reduce这个阶段会为已排序reduce输入中的每个&lt;key, (collection of values)>调用reduce(Object, Iterable, Context)。通常情况下，reduce任务的输出会通过TaskInputOutputContext.write(Object, Object)写入到一个RecordWriter中，reducer的输出是不会重排序的。</p></li>
+</ol>
+
+
+<p>其中前两步是Redecer中奇迹发生的地方，发生在Map和Reduce之间，将map端的输出和reduce端的输入对接。</p>
+
+<p><img src="http://www.aboutyun.com/data/attachment/forum/201311/30/144823subhi5irb8ufoiqu.png" alt="" /></p>
+
+<ul>
+<li>map 端</li>
+</ul>
+
+
+<p>map函数开始产生输出时，并不是简单地将它输出到磁盘。这个过程更复杂，利用缓冲的方式写到内存，并出于效率的考虑进行预排序。shuffle原理图就看出来。
+每个map任务都有一个环形内存缓冲区，用于存储任务的输出。默认情况是100MB，可以通过io.sort.mb属性调整。一旦缓冲内容达到阀值（io.sort.spill.percent,默认0.80，或者80%），一个后台线程开始把内容写到磁盘中。在写磁盘过程中，map输出继续被写到缓冲区，但如果在此期间缓冲区被填满，map会阻塞直到写磁盘过程完成。在写磁盘之前，线程首先根据数据最终要传送到reducer把数据划分成相应的分区，在每个分区中，后台线程按键进行内排序，如果有一个combiner，它会在排序后的输出上运行。
+reducer通过HTTP方式得到输出文件的分区。用于文件分区的工作线程的数量由任务的tracker.http.threads属性控制，此设置针对每个tasktracker，而不是针对每个map任务槽。默认值是40，在运行大型作业的大型集群上，此值可以根据需要调整。</p>
+
+<ul>
+<li>reducer端</li>
+</ul>
+
+
+<p>map端输出文件位于运行map任务的tasktracker的本地磁盘，现在，tasktracker需要为分区文件运行reduce任务。更进一步，reduce任务需要集群上若干个map任务完成，reduce任务就开始复制其输出。这就是reduce任务的复制阶段。reduce任务有少量复制线程，所以能并行取得map输出。默认值是5个线程，可以通过设置mapred.reduce.parallel.copies属性改变。</p>
+
+<p>在这个过程中我们由于要提到一个问题，reducer如何知道要从那个tasktracker取得map输出呢？</p>
+
+<p>map任务成功完成之后，它们通知其父tasktracker状态已更新，然后tasktracker通知jobtracker。这些通知都是通过心跳机制传输的。因此，对于指定作业，jobtracker知道map输出和tasktracker之间的映射关系。reduce中的一个线程定期询问jobtracker以便获得map输出的位置，直到它获得所有输出位置。
+由于reducer可能失败，因此tasktracker并没有在第一个reducer检索到map输出时就立即从磁盘上删除它们。相反，tasktracker会等待，直到jobtracker告知它可以删除map输出，这是作业完成后执行的。</p>
+
+<p>如果map输出相当小，则会被复制到reduce tasktracker的内存（缓冲区大小由mapred.job.shuffle.input.buffer.percent属性控制），否则，map输出被复制到磁盘。一旦内存缓冲区达到阀值大小（由mapred.job.shuffle.merge.percent决定）或达到map输出阀值(mapred.inmem.merge.threshold控制)，则合并后溢出写到磁盘中。</p>
+
+<p>随着磁盘上副本的增多，后台线程会将它们合并为更大的、排好序的文件。这会为后面的合并节省一些时间。注意，为了合并，压缩的map输出都必须在内存中被解压缩。</p>
+
+<p>复制完所有map输出被复制期间，reduce任务进入排序阶段(sort phase 更恰当的说法是合并阶段，因为排序是在map端进行的)，这个阶段将合并map输出，维持其顺序排序。这是循环进行的。比如，如果有50个map输出，而合并因子是10 (10默认值设置，由io.sort.factor属性设置，与map的合并类似)，合并将进行5趟。每趟将10个文件合并成一个文件，因此最后有5个中间文件。
+在最后阶段，即reduce阶段，直接把数据输入reduce函数，从而省略了一次磁盘往返行程，并没有将5个文件合并成一个已排序的文件作为最后一趟。最后的合并既可来自内存和磁盘片段。</p>
+
+<p>在reduce阶段，对已排序输出中的每个键都要调用reduce函数。此阶段的输出直接写到输出文件系统中。</p>
+
+<hr />
+
+<h2>Hive</h2>
+
+<p>Hive和HBase我现在还接触的不多，简单介绍以下以后有空再仔细学习。
+Hive 是建立在 Hadoop 上的数据仓库基础构架。它提供了一系列的工具，可以用来进行数据提取转化加载（ETL），这是一种可以存储、查询和分析存储在 Hadoop 中的大规模数据的机制。Hive 定义了简单的类 SQL 查询语言，称为 QL，它允许熟悉 SQL 的用户查询数据。同时，这个语言也允许熟悉 MapReduce 开发者的开发自定义的 mapper 和 reducer 来处理内建的 mapper 和 reducer 无法完成的复杂的分析工作。</p>
+
+<p>Hive构建在 Hadoop 之上，</p>
+
+<ul>
+<li><p>HQL 中对查询语句的解释、优化、生成查询计划是由 Hive 完成的</p></li>
+<li><p>所有的数据都是存储在 Hadoop 中</p></li>
+<li><p>查询计划被转化为 MapReduce 任务，在 Hadoop 中执行（有些查询没有 MR 任务，如：select * from table）</p></li>
+<li><p>Hadoop和Hive都是用UTF-8编码的</p></li>
+</ul>
+
+
+<hr />
+
+<h2>HBase</h2>
+
+<p>hbase是bigtable的开源山寨版本。是建立的hdfs之上，提供高可靠性、高性能、列存储、可伸缩、实时读写的数据库系统。</p>
+
+<p>它介于nosql和RDBMS之间，仅能通过主键(row key)和主键的range来检索数据，仅支持单行事务(可通过hive支持来实现多表join等复杂操作)。主要用来存储非结构化和半结构化的松散数据。</p>
+
+<p>与hadoop一样，Hbase目标主要依靠横向扩展，通过不断增加廉价的商用服务器，来增加计算和存储能力。</p>
+
+<p>HBase中的表一般有这样的特点：</p>
+
+<p>1 大：一个表可以有上亿行，上百万列</p>
+
+<p>2 面向列:面向列(族)的存储和权限控制，列(族)独立检索。</p>
+
+<p>3 稀疏:对于为空(null)的列，并不占用存储空间，因此，表可以设计的非常稀疏。</p>
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>当我们聊起c++</title>
+      <link href="http://kakack.github.io/2014/03/%E5%BD%93%E6%88%91%E4%BB%AC%E8%81%8A%E8%B5%B7C%2B%2B/"/>
+      <pubDate>2014-03-13T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/03/当我们聊起C++</guid>
+      <content:encoded><![CDATA[<p><img src="http://ww2.sinaimg.cn/mw690/b03122c9gw1dzc044ys39g.gif" alt="" /></p>
+
+<p>紧张地被通知百度明天下午4：00打电话来面，搜了一下面经吓得屁滚尿流，要不要这样啊亲！还要自备电脑当场写code给他看，于是之前看了Java，今天就看看C++相关的内容。当我们和面试官聊起C++，可能会说些这样的话题</p>
+
+<hr />
+
+<h3>static</h3>
+
+<p>Static是C++中用来控制变量储存方式和可见性的关键字。当我们使用static时是需要一个数据对象为整个类而非某个对象服务,同时又力求不破坏类的封装性,即要求此成员隐藏在类的内部，对外不可见。没有this指针，不能包含虚函数做成员函数，</p>
+
+<p>静态成员使用方法：&lt;类名>::&lt;静态成员名>，静态成员是属于整个类的而不是某个对象，静态成员变量只存储一份供所有对象共用。所以在所有对象中都可以共享它。使用静态成员变量实现多个对象之间的数据共享不会破坏隐藏的原则，保证了安全性还可以节省内存。静态成员函数中不能引用非静态成员。</p>
+
+<h3>this指针</h3>
+
+<p>this 指针是一个隐含于每一个类的成员函数中的特殊指针（包括析构函数和构造函数），它用于指向正在被成员函数操作的对象。不是对象的一部分，不影响sizeof()。</p>
+
+<h3>const</h3>
+
+<p>const关键字修饰的内容不可被改变，被const修饰的东西都受到强制保护，可以预防意外的变动，能提高程序的健壮性。</p>
+
+<ol>
+<li><p>修饰变量，表示类型为Type的变量value是不可变的：</p>
+
+<p>   TYPE const ValueName = value;</p>
+
+<p>   const TYPE ValueName = value;</p></li>
+<li><p>修饰指针：</p>
+
+<ul>
+<li><p>指针是常量：</p>
+
+<p>   char *const cp; //到char的const指针</p></li>
+<li><p>指针指向的内容是常量：</p>
+
+<p>   char const *pc1; //到const char的指针</p>
+
+<p>   const char *pc2; //到const char的指针（这两个声明是等同的）</p></li>
+<li><p>两者都不可变</p>
+
+<p>   const char* const pContent;</p></li>
+</ul>
+</li>
+<li><p>函数中使用：</p>
+
+<ul>
+<li>const修饰函数参数</li>
+<li>const修饰函数返回值</li>
+</ul>
+</li>
+<li>类相关：
+
+<ul>
+<li>const修饰成员变量，表示成员常量，不能被修改，同时它只能在初始化列表中赋值。</li>
+<li>const修饰类的成员函数，则该成员函数不能修改类中任何非const成员函数。一般写在函数的最后来修饰。</li>
+<li>const修饰类对象/对象指针/对象引用，const对象只能访问const的成员函数</li>
+</ul>
+</li>
+</ol>
+
+
+<h3>Reference</h3>
+
+<p>引用是某一个目标变量的别名，不占用储存单元，但是要在一开始初始化。作为函数参数时和指针效果一样。</p>
+
+<p>和指针的关系：引用是对象的别名，操作引用就是操作这个对象，必须在创建的同时有效得初始化（引用一个有效的对象，不可为NULL），初始化完毕就再也不可改变，引用具有指针的效率，又具有变量使用的方便性和直观性，在语言层面上引用和对象的用法一样，在二进制层面上引用一般都是通过指针来实现的，只是编译器帮我们完成了转换。之所以使用引用是为了用适当的工具做恰如其分的事，体现了最小特权原则。</p>
+
+<h3>内存分配</h3>
+
+<pre><code>1）从静态存储区域分配。内存在程序编译的时候就已经分配好，这块内存在程序的整个运行期间都存在，如全局变量，static变量。
+2）在栈上创建。在执行函数时，函数内局部变量的存储单元都可以在栈上创建，函数执行结束时这些存储单元自动被释放。栈内存分配运算内置于处理器的指令集中，效率很高，但是分配的内存容量有限。
+3）从堆上分配（动态内存分配）程序在运行的时候用malloc或new申请任意多少的内存，程序员负责在何时用free或delete释放内存。动态内存的生存期自己决定，使用非常灵活。
+</code></pre>
+
+<p> new/delete与malloc()/free()：都是在堆(heap)上进行动态的内存操作。用malloc函数需要指定内存分配的字节数并且不能初始化对象，new 会自动调用对象的构造函数。delete 会调用对象的destructor，而free 不会调用对象的destructor.</p>
+
+<pre><code>- 操作对象：前者是C++的运算符，后者是C++的标准库函数，对于非内部数据类的对象而言，光用malloc或free无法满足要求，不在编译器控制范围内，所以不能把构造函数和析构函数强加给malloc/free，因此C++需要一个能完成动态内存分配和初始化工作的运算符new，以及一个能完成清理与释放内存工作的运算符delete。
+- 用法上：1、malloc的原型是void * malloc(size_t size); 返回值的类型是void *，所以在调用malloc 时要显式地进行类型转换，将void * 转换成所需要的指针类型。2、 malloc 函数本身并不识别要申请的内存是什么类型，它只关心内存的总字节数。
+</code></pre>
+
+<p>在C++中，内存可以分为以下五个块：</p>
+
+<ul>
+<li>栈区stack：由编译器自动分配和释放，存放函数的参数值、局部变量的值</li>
+<li>堆区heap：由程序员分配和释放，如果不释放则会在程序结束时由操作系统收回，分配类型类似于链表</li>
+<li>全局区（静态区）static：全局变量和静态变量是存放在一起的，初始化的全局变量和静态变量在一块，未初始化的在相邻的另一块区域，程序结束后由系统释放</li>
+<li>文字常量区：存常量字符串，程序结束后系统释放</li>
+<li>程序代码区：存放函数体的二进制代码</li>
+</ul>
+
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>浅谈推荐系统</title>
+      <link href="http://kakack.github.io/2014/03/%E6%B5%85%E8%B0%88%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/"/>
+      <pubDate>2014-03-11T00:00:00+08:00</pubDate>
+      <author>Kaka Chen</author>
+      <guid>http://kakack.github.io/2014/03/浅谈推荐系统</guid>
+      <content:encoded><![CDATA[<p><img src="http://www.asqql.com/upfile/2009pasdfasdfic2009s305985-ts/2010-9/20109259215314784_asqql.com.gif" alt="" />
+<del>实习君，能不能快点收了我</del></p>
+
+<p>前言，之前看了<a href="http://blog.csdn.net/v_july_v/article/details/7184318">july君的推荐引擎算法学习导论</a>与本科室友<a href="http://www.cnblogs.com/flclain/archive/2013/03/03/2941397.html#2626700">懒惰啊我君在博客园的文章自己动手写推荐系统</a>后，也读了一部分有关推荐系统的资料和书籍，仅以此博文当做自己对这段时间学习的记录和温习，如有写的不妥之处欢迎批评纠正。因为自己也刚刚是个半吊子的学生，所以只能先梳理一些浅显易懂的内容，具体的实践和推导之后再写。</p>
+
+<hr />
+
+<h2>Reading Recommend</h2>
+
+<ul>
+<li><a href="http://book.douban.com/subject/3695850/">Recommender Systems Handbook</a>：水平较高，专题性较强，可惜只找到英文版，建议有一定基础后再啃。<del>博主暂时还只能处于看Contents的阶段</del></li>
+<li><a href="http://book.douban.com/subject/3288908/">集体智慧编程</a>：讲究挖掘和分析web上的数据，Python讲解，入门宝典1.0，适合博主这样的菜比</li>
+<li><a href="http://book.douban.com/subject/10769749/">推荐系统实践</a>：最大优点就是短小精悍，比集体智慧编程更进一步，小白最爱2.0</li>
+<li><a href="http://book.douban.com/subject/25837140/">Mahout实战</a>：偏重实践，使用mahout框架，难度较之前基本要大</li>
+</ul>
+
+
+<hr />
+
+<h2>Brief Content</h2>
+
+<p>所谓推荐系统，从字面就能窥得一二，就是“用来做推荐的一组算法或者一个成型的系统”。为什么要推荐？我自己要喜欢什么自己还不知道吗？对，有时候还真不知道，尤其是在数据量巨大的情况下，在一些情况下，用户个人通过搜索引擎来精确定位某一个item或者subject已经是非常困难了，因为很多用户甚至都不知道那些符合自己要求或者兴趣的item的存在，这也是推荐系统（Recommender System，RS）存在的意义。</p>
+
+<p><img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy1/image003.jpg" alt="" /></p>
+
+<p>其中，现在常见的RS可以分成三类：</p>
+
+<ul>
+<li>基于人：根据不同类型的人群进行推荐，颗粒较粗。先将待推荐人的特征记录建模，与已有模型进行比较，选择现有的相似性大的个体感兴趣的item进行推荐。优点是不需要历史数据，没有冷启动问题，同时也不依赖于物品属性。缺点是算法比较粗暴，真实的应用效果一般。</li>
+</ul>
+
+
+<p><img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy1/image005.jpg" alt="" /></p>
+
+<ul>
+<li><p>基于资源：这次把建模的重点放在item上，大致与第一个相同，选择一个或几个相似度高的item，然后推荐给对那些item感兴趣的人。这个就需要有item的历史记录，有冷启动问题，而且物品属性很难全部罗列，比较片面。但是可以更好地对用户兴趣建模，精度可以提高。
+<img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy1/image007.jpg" alt="" /></p></li>
+<li><p>协同过滤（Collaborative Filtering, CF）：这个是现在用的最多的一类，也是技术要求最高，最值得研究的一类。这一类中还能细分为基于用户的CF，基于项目的CF和基于模型的CF三种，更偏重于细颗粒的特征。</p></li>
+</ul>
+
+
+<hr />
+
+<h2>Collaborative Filtering</h2>
+
+<p>概括言之，协同过滤是对一大群人和一大堆待推荐的item进行搜索，将人分成品味相近的若干组，将item分为特征相似的若干组，再将这些组相互组合和排名，行成一份item-to-people的推荐表。整个过程分为<strong><em>数据搜集，相似用户和item分类，进行推荐</em></strong>的三步走。</p>
+
+<ol>
+<li>数据搜集：一般有两种手段，可以是在线读取，如某个用户做了一个对某项item感兴趣的操作，推荐系统就记录一下，还有一种是将大量log文件存在db上，定期读取。读取之后最好还会做一个过滤清洗操作，把一些操作数低于阀值的用户和item的记录去除，或者可以添加一个black/white-list，自定义对一些恶意操作或者无意义操作进行清洗。</li>
+<li>相似用户和item分类：最简单而常用的相似度的计算一般有两种，欧几里得距离和皮尔逊相关度。另外还有Cosine相似度和Tanimoto系数等。
+
+<ul>
+<li>欧式距离：即常见的二维空间两点距离，相似度取其与1的和的倒数，所以其取值范围为0到1，离的越近就认为二者越相似，一般如果有多个共同标记内容，就把这些item的欧式距离求和再去做倒数，但是我在读到这种做法有个问题，就是如果我们不管阀值的情况下有A，B，C三个人，A只对前三个item评分，分别为{2,6,5}，B对前五个item评分，分别为{3,7,7,4,5}，C也对前五个item评分，为{2,6,5,4,4}，如果用简单的欧式距离计算，得到A和B的相似度是1/(1+sqrt(pow(2-3)+pow(6-7)+pow(5-7)))=0.33333，而B和C的相似度是1/(1+sqrt(pow(3-2)+pow(7-6)+pow(7-5)+pow(4-4)+pow(5-4)))=0.3090，不如A与B，但是如果把图像画出来会发现，直观上还是C与B之间的曲线相似度更高，如果之后B和C有更多拟合程度很高的评分出现，这种现象还会更明显，所以欧式计算法对于评分item数量不同的若干人之间的比较效果不好，我不知道有没有深入的解决这问题的办法，回头问一下懒惰啊我。</li>
+</ul>
+
+
+<p> <img src="http://hi.csdn.net/attachment/201201/8/0_13260021604dW2.gif" alt="" /><img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy2/image005.gif" alt="" /></p>
+
+<ul>
+<li>皮尔逊相关度：可能就是从这个角度想到，皮尔逊相关度就是从曲线拟合度下手，虽然比欧式距离复杂，但是效果好很多。一般会找到两位评论者共同评价过的物品，然后计算两者评分总和和平方和以及评分的乘积之和，最后求得皮尔逊相关系数。计算方法类似方差计算。返回值的在-1和1之间，其中1则表示对每样物品都有完全一样的评价</li>
+</ul>
+
+
+<p> <img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy2/image007.gif" alt="" />，</p>
+
+<ul>
+<li>余弦相似度Cosine-based Similarity：将两人对某一组共n个item的评分看做一个n维的向量，向量的内积余弦值即为相似度。
+<img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy2/image009.gif" alt="" /></li>
+<li>Tanimoto 系数：类似内积计算的另一种办法。
+<img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy2/image011.gif" alt="" /></li>
+</ul>
+</li>
+<li>进行推荐：在计算完相似度之后，就可以进行推荐操作了，其中又可以以用户或者item分别作为推荐的主要依据。前者是基于用户根据不同item的评分，找到相邻的k个用户，预测当前用户没有的item进行推荐。</li>
+</ol>
+
+
+<p><img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy2/image015.gif" alt="" /></p>
+
+<p>后者是找到相似度最近的k个物品，根据用户的历史偏好，预测当前用户还没有偏好的item进行推荐。</p>
+
+<p><img src="http://www.ibm.com/developerworks/cn/web/1103_zhaoct_recommstudy2/image017.gif" alt="" /></p>
+
+<hr />
+
+<h2>Data Clustering</h2>
+
+<p>聚类是一种典型的无监督学习方法，没有标准答案，计算目的是将一个巨大冗杂的数据集分割成若干个簇cluster，其中同一个簇内的元素相关程度高，不同簇之间的元素相关程度低。在《集体智慧编程》一书中，介绍的是用分级聚类来构建聚类的树状图，思路就是通过特征向量之间的距离为相似值依据，将最近的两个族群合并为一个新的族群并且以此类推，两两族群合并形成一个层次结构。</p>
+
+<p>一般来说，提到聚类了就不能不提K-means算法了，其思路即在于找到某一个自然聚类的中心，将各个群组之间的均方误差降到最小。大致步骤如下：
+<img src="http://hi.csdn.net/attachment/201201/9/0_1326105670fZz3.gif" alt="" />
+  1. 如果我们要把整个数据集分成两个cluster，那么先随机的选择两个点，作为中心位置；
+  2. 将数据集中所有的点都依次分配给距离较近的那个“中心点”，得到两个簇；
+  3. 根据现有的分布情况，重新计算每个簇的中心位置；
+  3. 然后根据新得到的中心点，把1~3步骤再过一遍，直到得到得到结果与上一次相同或者低于某一个阀值</p>
+
+<p> 除了K-means外，Canopy聚类算法也很常见，的基本原则是：首先应用成本低的近似的距离计算方法高效的将数据分为多个组，这里称为一个Canopy，我们姑且将它翻译为“华盖”，Canopy 之间可以有重叠的部分；然后采用严格的距离计算方式准确的计算在同一Canopy中的点，将他们分配与最合适的簇中。Canopy 聚类算法经常用于 K 均值聚类算法的预处理，用来找合适的k值和簇中心。</p>
+
+<hr />
+
+<h2>Classification</h2>
+
+<p>分类在此的作用就在于要把新获得的item归类到哪一个已有类别的item中，常用的办法是决策树Decision Tree。</p>
+
+<p>其中决策树更像是一个游戏地图，到了某个npc（树节点）处可以和他对话，你的不同的选择会决定你接下去会遇到哪个npc。所以说不同于贝叶斯算法，决策树的构造过程不依赖领域知识，它使用属性选择度量来选择将元组最好地划分成不同的类的属性。所谓决策树的构造就是进行属性选择度量确定各个特征属性之间的拓扑结构。 构造决策树的关键步骤是分裂属性。所谓分裂属性就是在某个节点处按照某一特征属性的不同划分构造不同的分支，其目标是让各个分裂子集尽可能地“纯”。尽可能“纯”就是尽量让一个分裂子集中待分类项属于同一类别。分裂属性分为三种不同的情况：</p>
+
+<pre><code>  1、属性是离散值且不要求生成二叉决策树。此时用属性的每一个划分作为一个分支。
+
+  2、属性是离散值且要求生成二叉决策树。此时使用属性划分的一个子集进行测试，按照“属于此子集”和“不属于此子集”分成两个分支。
+
+  3、属性是连续值。此时确定一个值作为分裂点split_point，按照&gt;split_point和&lt;=split_point生成两个分支。
+</code></pre>
+
+<p>构造决策树的关键性内容是进行属性选择度量，属性选择度量是一种选择分裂准则，是将给定的类标记的训练集合的数据划分D“最好”地分成个体类的启发式方法，它决定了拓扑结构及分裂点split_point的选择。属性选择度量算法有很多，一般使用自顶向下递归分治法，并采用不回溯的贪心策略。常用的建树方法比如ID3，之后祥讲，在此不涉及了。由于决策树的白箱规则，所以可以清晰地看到每个流程的行为，其又是非参数的，可以应付任何连续和类别变量，所以真正使用的时候，很多人都把决策树当做最好的分类算法。</p>
+
+<hr />
+
+<h2>Else Stuff</h2>
+
+<p>其实除了上述一些内容外，一个合格的推荐系统还有很多组成部分，比如要对结果做优化，对item可以做搜索，还可以做一些规则的增加比如广告插入，anti-Spam等，因为博主晚上写这篇博客的时候接到了一个公司电面，结果被吐槽了一通，于是只能继续灰溜溜看Java基础去了，其余的内容之后有空了慢慢补充。</p>
+]]></content:encoded>
+    </item>
+    
+  </channel>
+</rss>

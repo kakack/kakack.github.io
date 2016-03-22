@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="Kaka Chen" />
+    <title>《剑指offer》：单例模式 | Kaka Chen</title>
+<link href="http://cdn.duitang.com/uploads/item/201202/02/20120202154112_UQfCN.jpg" rel="icon" type="image/x-icon" />
+
+    <link href="/feed/" rel="alternate" title="Kaka Chen" type="application/atom+xml" />
+    <link rel="stylesheet" href="/media/css/style.css">
+    <link rel="stylesheet" href="/media/css/highlight.css">
+    <script type="text/javascript" src="/media/js/jquery-1.7.1.min.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <div id="main" role="main">
+        <header>
+        <h1>《剑指offer》：单例模式</h1>
+        </header>
+        <nav>
+        <span><a title="home page" class="" href="/">Home</a></span>
+        <span><a title="about" class="" href="/about/">About</a></span>
+        <span><a title="guestbook" class="" href="/guestbook/">Guestbook</a></span>
+        <span><a title="categories" class="" href="/categories/">Categories</a></span>
+        <span><a title="tags" class="" href="/tags/">Tags</a></span>
+        <span><a title="links" class="" href="/links/">Links</a></span>
+        <span><a title="subscribe by RSS" class="" href="/feed/">Subscribe</a></span>
+        </nav>
+        <article class="content">
+        <section class="post">
+<p>看《剑指offer》时候自己关于这部分写的一个小总结摘抄</p>
+
+<h2>Singleton模式</h2>
+
+<p>设计模式这一块以前遇到的比较少，在面试里被问道总归有点尴尬。在《剑指offer》一书中，有一部分对singleton进行了详细解释描述，简单总结归纳如下。</p>
+
+<p>参考了一下一个<a href="http://www.cnblogs.com/rush/archive/2011/10/30/2229565.html">写的挺好的博客</a></p>
+
+<hr />
+
+<p>我自己对单例这一块的认识也仅仅局限于在整个program中只允许某个类存在一个实例这样低级理解上，一般如果叫我当场简单写一个单例模式，我会这样写（在网上被评为最他妈懒汉的写法，摔！）：</p>
+
+<pre><code> public class Singleton {  
+     private static Singleton instance;  
+      private Singleton (){}   
+      public static Singleton getInstance() {  
+            if (instance == null) {  
+            instance = new Singleton();  
+       }  
+     return instance;  
+     }  
+ }  
+</code></pre>
+
+<p>虽然符合单例模式写法最基础的三个要点：</p>
+
+<ol>
+<li>有一个私有的无参构造函数，这可以防止其他类实例化它，而且单例类也不应该被继承，如果单例类允许继承那么每个子类都可以创建实例，这就违背了Singleton模式“唯一实例”的初衷。</li>
+<li>一个静态的变量用来保存单实例的引用。</li>
+<li>一个公有的静态方法用来获取单实例的引用，如果实例为null即创建一个。</li>
+</ol>
+
+
+<p>*单例类被定义为sealed,就像前面提到的该类不应该被继承，所以为了保险起见可以把该类定义成不允许派生，但没有要求一定要这样定义。</p>
+
+<p>但是这种写法显然会被黑出翔，因为只适合于单线程。在多线程情况下，如果有多个线程同时判断<code>if(instance == null)</code>得到true的回答，那么两个线程都会得到一个实例，不符合单例的要求。所以有了这个写法。</p>
+
+<pre><code>public class Singleton {  
+    private static Singleton instance;  
+    private Singleton (){}
+    public static synchronized Singleton getInstance() {  
+     if (instance == null) {  
+         instance = new Singleton();  
+     }  
+     return instance;  
+    }  
+}  
+</code></pre>
+
+<p>但是这个做法显然效率低，99%情况下不需要同步。</p>
+
+<p>书上给了同步锁的例子，跟加synchronized效果类似，不重复写了。</p>
+
+<p>书上为实现在实例已经创造出来之后不必加锁，可以有这种写法：</p>
+
+<pre><code>public class Singleton {  
+    private Singleton (){}
+    private static object syncObj = new object();
+    private static Singleton instance = null;
+    public static Singleton Instance
+{
+  get
+  {
+    if(instance == null)
+    {
+     lock(syncObj)
+       {
+         if(instance == null)
+            instance = new Singleton();
+       }
+    }
+    return instance;
+  }
+}
+}
+</code></pre>
+
+<p>在C#中，静态构造函数可以确保只被调用一次，在此不举例了。</p>
+
+<p>最后一个例子可以有效解决创建时机过早的问题：</p>
+
+<pre><code>public sealed class Singleton
+{
+    Singleton(){}
+    public static Singleton Instance
+    {
+      get
+      {
+         return Nested.instance;
+      }
+    }
+
+    class Nested
+    {
+     static Nested(){}
+     internal static readonly Singleton instance = new Singleton();
+    }
+
+}
+</code></pre>
+
+<hr />
+
+<h2>总结</h2>
+
+<p>单例模式的优点：</p>
+
+<p>单例模式（Singleton）会控制其实例对象的数量，从而确保访问对象的唯一性。</p>
+
+<p>实例控制：单例模式防止其它对象对自己的实例化，确保所有的对象都访问一个实例。
+伸缩性：因为由类自己来控制实例化进程，类就在改变实例化进程上有相应的伸缩性。</p>
+
+<p>单例模式的缺点：</p>
+
+<p>系统开销。虽然这个系统开销看起来很小，但是每次引用这个类实例的时候都要进行实例是否存在的检查。这个问题可以通过静态实例来解决。
+开发混淆。当使用一个单例模式的对象的时候（特别是定义在类库中的），开发人员必须要记住不能使用new关键字来实例化对象。因为开发者看不到在类库中的源代码，所以当他们发现不能实例化一个类的时候会很惊讶。
+对象生命周期。单例模式没有提出对象的销毁。在提供内存管理的开发语言（比如，基于.NetFramework的语言）中，只有单例模式对象自己才能将对象实例销毁，因为只有它拥有对实例的引用。在各种开发语言中，比如C++，其它类可以销毁对象实例，但是这么做将导致单例类内部的指针指向不明。</p>
+
+<p>单例适用性</p>
+
+<p>使用Singleton模式有一个必要条件：在一个系统要求一个类只有一个实例时才应当使用单例模式。反之，如果一个类可以有几个实例共存，就不要使用单例模式。</p>
+
+<p>不要使用单例模式存取全局变量。这违背了单例模式的用意，最好放到对应类的静态成员中。</p>
+
+<p>不要将数据库连接做成单例，因为一个系统可能会与数据库有多个连接，并且在有连接池的情况下，应当尽可能及时释放连接。Singleton模式由于使用静态成员存储类实例，所以可能会造成资源无法及时释放，带来问题。</p>
+
+</section>
+<section class="meta">
+<span class="author">
+  <a href="http://ellochen.github.com/about">Kaka Chen</a>
+</span>
+<span class="time">
+  /
+  <time datetime="2014-04-03">2014-04-03</time>
+</span>
+<br />
+<span class="license">
+  Published under <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">(CC) BY-NC-SA</a>
+</span>
+
+<span class="categories">
+  in categories
+  
+  <a href="/categories/#interview" title="interview">interview</a>&nbsp;
+  
+</span>
+
+
+<span class="tags">
+  tagged with 
+  
+  <a href="/tags/#algorithm" title="algorithm">algorithm</a>&nbsp;
+  
+  <a href="/tags/#interview" title="interview">interview</a>&nbsp;
+  
+  <a href="/tags/#singleton" title="singleton">singleton</a>&nbsp;
+  
+  <a href="/tags/#design pattern" title="design pattern">design pattern</a>&nbsp;
+  
+</span>
+
+</section>
+<section class="comment">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'kakack'; // required: replace example with your forum shortname
+    var disqus_url = 'http://kakack.github.io/2014/04/%E3%80%8A%E5%89%91%E6%8C%87offer%E3%80%8B%EF%BC%9A%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/';
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = 'http://kakack.github.io/2014/04/%E5%88%86%E5%B8%83%E5%BC%8F%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9A%84%E6%95%85%E4%BA%8B/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+
+        </article>
+      </div>
+
+    <footer>
+        <p><small>Powered by <a href="https://github.com/mojombo/jekyll">Jekyll</a> & <a href="http://pages.github.com">GitHub</a> | Copyright 2008 - 2014 by <a href="http://kakack.github.io/about/">kakack</a> | <span class="label label-info">2014-04-03 21:48:26 CST</span></small></p>
+    </footer>
+
+    </div>
+
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-12936429-2']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  </body>
+</html>
