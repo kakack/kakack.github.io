@@ -124,12 +124,12 @@ Trusty|[Trusty Package](https://archive.cloudera.com/cdh5/one-click-install/trus
 
 OS Version |Command
 -----------|--------
-Debian Wheezy	|$ sudo wget 'https://archive.cloudera.com/cdh5/debian/wheezy/amd64/cdh/cloudera.list' -O /etc/apt/sources.list.d/cloudera.list 
-Ubuntu Precise	|$ sudo wget 'https://archive.cloudera.com/cdh5/ubuntu/precise/amd64/cdh/cloudera.list' -O /etc/apt/sources.list.d/cloudera.list
-Ubuntu Lucid	|$ sudo wget 'https://archive.cloudera.com/cdh5/ubuntu/lucid/amd64/cdh/cloudera.list' -O /etc/apt/sources.list.d/cloudera.list
-Ubuntu Trusty  |$ sudo wget 'https://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/cloudera.list' -O /etc/apt/sources.list.d/cloudera.list
+Ubuntu Trusty (14.04)	|wget https://archive.cloudera.com/cm5/ubuntu/trusty/amd64/cm/cloudera.list -O /etc/apt/sources.list.d/cloudera.list
+Ubuntu Precise (12.04)	|wget https://archive.cloudera.com/cm5/ubuntu/precise/amd64/cm/cloudera.list -O /etc/apt/sources.list.d/cloudera.list
+Ubuntu Lucid (10.04)	|wget https://archive.cloudera.com/cm5/ubuntu/lucid/amd64/cm/cloudera.list -O /etc/apt/sources.list.d/cloudera.list
 
-最后运行`apt-get update`
+
+最后运行`apt-get update`，可能会返回因为没有repo key而不能fetch某些package，可以在完成下一步添加repo key之后，再运行一遍update命令 
 
 *如果是Trusty的操作系统，还需要以下一个附加步骤：*
 
@@ -155,6 +155,7 @@ Ubuntu Trusty|	$ wget https://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/
 然后运行  `$ sudo apt-key add archive.key`
 
 ###三，安装Yarn
+这步可以选装，因为Yarn在之后的节点安装过程中也是自带的。
 
 如果需要运行MapReduce V2，那么需要安装Yarn。
 
@@ -171,19 +172,38 @@ Ubuntu Trusty|	$ wget https://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/
 - All client hosts: `sudo apt-get install hadoop-client`
 
 
+###四，在Cluster中的各个host上安装agent
+在cluster的每个host上都需要安装cloudera-manager-agent，用来开启和结束进程，解压配置文件，触发安装。
+
+安装命令：`sudo apt-get install cloudera-manager-agent cloudera-manager-daemons`
+
+在各个host上安装完成之后，需要修改文件`/etc/cloudera-scm-agent/config.ini`来指定cloudera-manager-server的位置，需要修改两个数值：
+
+Property	|Description
+----------|-----------
+server_host|	Name of the host where Cloudera Manager Server is running.
+server_port|	Port on the host where Cloudera Manager Server is running.
+
+在sever host上，是：
+
+```
+server_host=localhost
+#其他agent host上写server_host的hostname或者ip
+server_port=7182
+```
+
+其他参数信息详见[官方文档Agent Configuration File](http://www.cloudera.com/documentation/enterprise/latest/topics/cm_ag_agent_config.html#cmug_topic_5_16__section_kw3_5rq_wm)
+
+然后启动cloudera-manager-agent服务：`sudo service cloudera-scm-agent start`
+
+启动失败的各个原因参考[官方文档Troubleshooting Installation and Upgrade Problems](http://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_troubleshooting.html)
+
 [官网参考](http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_ig_cdh5_install.html#topic_4_4_1_unique_2__p_44_unique_2)
 
 - - -
 
 #后续Cloudera Manager各个组件
 
-将CDH5的软件源添加到Apt中
-
-```
-curl "http://archive.cloudera.com/cm5/ubuntu/precise/amd64/cm/cloudera.list" -o /etc/apt/sources.list.d/cloudera_precise.list
-curl -s http://archive.cloudera.com/cdh5/ubuntu/precise/amd64/cdh/archive.key | sudo apt-key add -
-apt-get update
-```
 
 安装Cloudera Manager:`apt-get install cloudera-manager-daemons cloudera-manager-server`
 
@@ -218,7 +238,7 @@ cp /usr/bin/python2.7 /usr/lib/cmf/agent/build/env/bin/python
 4，确认进入下载过程，耗时较长，错误信息能即时查看排除，一般问题通常找到命令在终端中反复执行即可解决。
 ![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c5.png)
 
-如果想节约时间，可以事先下载好安装的parcels，放入`/opt/cloudera/parcel-repo`路径，可以节约下载时间，parcels的下载地址可以在[http://archive.cloudera.com/cdh5/parcels/](http://archive.cloudera.com/cdh5/parcels/)找到。需要下载的文件有：`CDH-5.3.9-1.cdh5.3.9.p0.8-el6.parcel.sha，CDH-5.3.9-1.cdh5.3.9.p0.8-precise.parcel，manifest.json`三个，具体版本号可以自行选择下载。
+如果想节约时间，可以事先下载好安装的parcels，放入`/opt/cloudera/parcel-repo`路径，可以节约下载时间，parcels的下载地址可以在[http://archive.cloudera.com/cdh5/parcels/](http://archive.cloudera.com/cdh5/parcels/)找到。需要下载的文件有：`CDH-5.6.0-1.cdh5.6.0.p0.45-trusty.parcel.sha，CDH-5.6.0-1.cdh5.6.0.p0.45-trusty.parcel，manifest.json`三个，具体版本号可以自行选择下载。
 
 在安装完成之后可以看到监控画面，至于各个主机角色的分配和一些Health Issue的解决之后补充。
 ![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c6.png)
