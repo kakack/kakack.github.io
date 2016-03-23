@@ -173,6 +173,12 @@ Ubuntu Trusty|	$ wget https://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/
 
 
 ###四，在Cluster中的各个host上安装agent
+选择一台主机作为cloudera server服务器，在上面安装：loudera-manager-daemons和cloudera-manager-server：`apt-get install cloudera-manager-daemons cloudera-manager-server`
+
+完成之后启动cloudera manager server的服务：`service cloudera-scm-server start `，能看到提示：`Starting cloudera-scm-server: * cloudera-scm-server started `
+
+如果启动失败可以在`tailf -100 /var/log/cloudera-scm-server/cloudera-scm-server.log`或者`/var/log/cloudera-scm-server/cloudera-scm-server.out`看到日志信息反馈
+
 在cluster的每个host上都需要安装cloudera-manager-agent，用来开启和结束进程，解压配置文件，触发安装。
 
 安装命令：`sudo apt-get install cloudera-manager-agent cloudera-manager-daemons`
@@ -202,27 +208,19 @@ server_port=7182
 
 - - -
 
-#后续Cloudera Manager各个组件
+注：
 
-
-安装Cloudera Manager:`apt-get install cloudera-manager-daemons cloudera-manager-server`
-
-完成之后启动cloudera manager server的服务：`service cloudera-scm-server start `，能看到提示：`Starting cloudera-scm-server: * cloudera-scm-server started `
-
-如果启动失败可以在`tailf -100 /var/log/cloudera-scm-server/cloudera-scm-server.log`或者`/var/log/cloudera-scm-server/cloudera-scm-server.out`看到日志信息反馈
-
-然后在各个节点子机器上安装Cloudera-Manager-Agent：`apt-get install cloudera-manager-agent`
-
-如果在安装过程中出现了以下错误“ImportError: No module named _io”，或者如下图中的提示，不用担心，这是一个已知问题。这是因为CDH5使用的Python版本问题。执行完下面的脚本后，点击重试就可以顺利的完成安装了。如果出现打不开CM Agent的log日志提示，那很可能是你的Host配置有问题，请参考本文最初写的Host配置。
+如果在安装过程中出现了以下错误“ImportError: No module named _io”，不用担心，这是一个已知问题。这是因为CDH5使用的Python版本问题。执行完下面的脚本后，点击重试就可以顺利的完成安装了。如果出现打不开CM Agent的log日志提示，那很可能是你的Host配置有问题，请参考本文最初写的Host配置。
 
 ```
 mv /usr/lib/cmf/agent/build/env/bin/python /usr/lib/cmf/agent/build/env/bin/python.bak
 cp /usr/bin/python2.7 /usr/lib/cmf/agent/build/env/bin/python
 ```
+- - -
 
 #页面安装与配置
 
-1，打开`http://Server-address:7180/`开始安装，用户名密码都是admin
+1，打开`http://Server-address:7180/`开始安装，用户名密码都是admin，首次启动需要耗时较长
 
 ![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c1.png)
 
