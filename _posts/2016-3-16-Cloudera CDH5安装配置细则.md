@@ -119,7 +119,22 @@ Trusty|[Trusty Package](https://archive.cloudera.com/cdh5/one-click-install/trus
 
 运行`sudo dpkg -i cdh5-repository_1.0_all.deb`，在运行之前可以先做一下`apt-get update`
 
+然后安装下载器：
 
+`$ wget https://archive.cloudera.com/cm5/installer/latest/cloudera-manager-installer.bin`
+
+更改访问权限：
+
+`$ chmod u+x cloudera-manager-installer.bin`
+
+运行Cloudera Manager Server安装器
+
+- 如果通过网络的repo安装，则直接运行`$ sudo ./cloudera-manager-installer.bin`
+- 如果通过本地repo安装，则运行`$ sudo ./cloudera-manager-installer.bin --skip_repo_package=1`
+
+在安装完成之后，shell端会返回GUI对话框，所有都选accept、next，若无问题则可安装完成，运行一下`sudo service cloudera-scm-server start`
+
+我个人建议用这种办法，因为下面提到的通过apt-get安装需要手动配置一些数据库相关的内容，比较繁琐。
 #####添加CDH5 Repository
 
 OS Version |Command
