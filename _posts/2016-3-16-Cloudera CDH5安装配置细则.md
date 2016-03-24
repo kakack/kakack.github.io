@@ -135,6 +135,7 @@ Trusty|[Trusty Package](https://archive.cloudera.com/cdh5/one-click-install/trus
 在安装完成之后，shell端会返回GUI对话框，所有都选accept、next，若无问题则可安装完成，运行一下`sudo service cloudera-scm-server start`
 
 我个人建议用这种办法，因为下面提到的通过apt-get安装需要手动配置一些数据库相关的内容，比较繁琐。
+
 #####添加CDH5 Repository
 
 OS Version |Command
@@ -239,19 +240,38 @@ cp /usr/bin/python2.7 /usr/lib/cmf/agent/build/env/bin/python
 
 ![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c1.png)
 
-2，选择Cloudera安装的类型之后，进入添加host集群的页面，输入FQDN
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c2.png)
+2，Welcome界面，选择accept license即可。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503241welcome.png)
 
-搜索后之后找到host，确认进入下一步
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c3.png)
+3，Cloudera版本选择，中间的是60天试用版，右侧的是全部功能的收费版，在此先选择左侧的免费版。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503242edition.png)
 
-3，选择连接方式，在此选了用root+密码的形式登录
+4，选择Cloudera安装的类型之后，进入添加host集群的页面，输入FQDN
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503243FQDN.png)
+
+5，点击Search之后找到对应的FQDN的host
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503245searched.png)
+
+6，当前版本的Cloudera所含组件列表
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503244package.png)
+
+7，选择连接方式，在此选了用root+密码的形式登录
 ![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c4.png)
 
-4，确认进入下载过程，耗时较长，错误信息能即时查看排除，一般问题通常找到命令在终端中反复执行即可解决。
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c5.png)
+8，选择cluster的安装方式，一般建议用Parcel进行安装，这样我们可以事先下载好安装的parcels，放入`/opt/cloudera/parcel-repo`路径，可以节约下载时间，parcels的下载地址可以在[http://archive.cloudera.com/cdh5/parcels/](http://archive.cloudera.com/cdh5/parcels/)找到。需要下载的文件有：`CDH-5.6.0-1.cdh5.6.0.p0.45-trusty.parcel.sha，CDH-5.6.0-1.cdh5.6.0.p0.45-trusty.parcel，manifest.json`三个，具体版本号可以自行选择下载。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503246install-detail.png)
 
-如果想节约时间，可以事先下载好安装的parcels，放入`/opt/cloudera/parcel-repo`路径，可以节约下载时间，parcels的下载地址可以在[http://archive.cloudera.com/cdh5/parcels/](http://archive.cloudera.com/cdh5/parcels/)找到。需要下载的文件有：`CDH-5.6.0-1.cdh5.6.0.p0.45-trusty.parcel.sha，CDH-5.6.0-1.cdh5.6.0.p0.45-trusty.parcel，manifest.json`三个，具体版本号可以自行选择下载。
+9，点击下载后自动检测并安装parcels
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503247installing.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503248install-result.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503249install-parcel.png)
 
-在安装完成之后可以看到监控画面，至于各个主机角色的分配和一些Health Issue的解决之后补充。
+10，安装下载完成，显示当前的部署信息。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/15032410Inspect.png)
+
+11，最后需要对数据库做一些配置，建议用custom数据库，并预先创建好需要的db。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/15032411db-setup.png)
+
+12，在安装完成之后可以看到监控画面，至于各个主机角色的分配和一些Health Issue的解决之后补充。下载过程，耗时较长，错误信息能即时查看排除，一般问题通常找到命令在终端中反复执行即可解决。
 ![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c6.png)
