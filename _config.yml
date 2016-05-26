@@ -6,3 +6,5 @@ paginate: 16
 url: http://kakack.github.io
 baseurl: /
 encoding: utf-8
+highlighter: rouge
+name: What a DREAMY Journey
