@@ -71,7 +71,7 @@ Workflow Engine 设计文档
 技术路线
 --------
 
-![workflow server 框架图](resources/workflow-architecture.png)
+![workflow server 框架图](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/workflow-architecture.png)
 
 
 azkaban 是:
@@ -282,7 +282,7 @@ paramList, inputs, outputs中详细指明.
 
 一个可以执行的 flow 的json描述如下, 这个 flow 的拓扑结构如下图所示:
 
-![flow 的拓扑结构](resources/classic-flow-example.png)
+![flow 的拓扑结构](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/classic-flow-example.png)
 
 ```json
 {
