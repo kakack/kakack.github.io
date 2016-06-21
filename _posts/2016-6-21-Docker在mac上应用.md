@@ -17,3 +17,6 @@ Docker的应用场景主要有以下几个：
 - 在服务型环境中部署和调整数据库或其他的后台应用；
 - 从头编译或者扩展现有的OpenShift或Cloud Foundry平台来搭建自己的PaaS环境。
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/16-6-21-WhatIsDocker_3_Containers.png)
+
+![]()
