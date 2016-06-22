@@ -69,6 +69,7 @@ Docker Engine是一个client-sever结构的应用，具有这些组件：
 核心架构
 ---
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/16-6-22-architecture.svg)
 
 
 
