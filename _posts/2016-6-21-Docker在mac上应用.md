@@ -62,14 +62,29 @@ Docker Engine是一个client-sever结构的应用，具有这些组件：
 - 一个REST API用来指定特定的接口，程序可以使用这些接口来和daemon交流并指挥它做一些工作
 - 一个命令行工具client
 
-
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/16-6-22engine-components-flow.png)
 
 
 
 核心架构
 ---
+Docker使用一个client-server架构，Docker client和Docker daemon相互沟通，二者可以在同一个系统上运行，也可以用client连接到一个远程的Docker daemon。
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/16-6-22-architecture.svg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/16-6-22-architecture.png)
+
+Docker Daemon
+---
+Daemon早host machine上运行，用户不必直接和daemon交互，而是由client与之交互。Daemon上进行一些building、运行、分发容器等工作。
+
+Docker Client
+---
+用户操作接口，接受命令，和后端Daemon交互。
+
+Docker内部
+---
+
+
+
 
 
 
