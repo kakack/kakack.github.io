@@ -82,10 +82,9 @@ Docker Client
 
 Docker内部
 ---
-
-
-
-
+- Docker image：一个只读的模板，用来创建Docker容器。是Docker的**build**组件。
+- Docker registries：拥有Docker images，是public或者private的image储存。是Docker的**distribution**组件。
+- Docker containers：类似于一个目录，包含了一个应用要运行的所有需要的内容，每个容器都是由一个image创建出来的。一个容器可以被运行、开始、停止、移动和删除。每一个容器都是一个独立而安全的应用平台。是Docker的**run**组件。
 
 
 在Macbook上的安装和使用
