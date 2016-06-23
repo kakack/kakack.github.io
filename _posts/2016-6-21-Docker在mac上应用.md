@@ -90,6 +90,127 @@ Docker内部
 在Macbook上的安装和使用
 ===
 
+VirtualBox
+---
+在Mac OS上运行Docker需要一个VirtualBox，可直接从官网下载安装。
+
+Docker Toolbox
+---
+关于Docker的核心组件，可直接去[Docker Toolbox](https://www.docker.com/toolbox)直接下载安装
+
+
+Boot2docker
+---
+初始化Docker的工具，因为mac原生上不能像Linux一样运行Docker，所以需要额外安装一层模仿一个Docker host
+
+```
+$ brew update
+$ brew install docker
+$ brew install boot2docker
+
+```
+
+Boot2docker会在VirtualBox中自动设置下载一个ISO
+
+```
+$ boot2docker init
+```
+
+然后启动这个虚拟机
+
+```
+$ boot2docker up
+```
+
+查看所有可用的命令
+
+```
+$ boot2docker
+```
+
+简单操作和测试
+---
+在完成安装和初始化之后，可以用以下一些命令测试和简单使用docker：
+
+```
+$docker version
+
+#查看版本信息
+Client:
+ Version:      1.11.2
+ API version:  1.23
+ Go version:   go1.5.4
+ Git commit:   b9f10c9
+ Built:        Wed Jun  1 21:20:08 2016
+ OS/Arch:      darwin/amd64
+
+Server:
+ Version:      1.11.2
+ API version:  1.23
+ Go version:   go1.5.4
+ Git commit:   b9f10c9
+ Built:        Wed Jun  1 21:20:08 2016
+ OS/Arch:      linux/amd64
+
+```
+
+搜索可用的Docker镜像，如名字中有tutorial的镜像
+
+```
+$docker search tutorial
+
+
+#显示结果
+NAME                                 DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+georgeyord/reactjs-tutorial          This is the backend of the React comment b...   3                    [OK]
+egamas/docker-tutorial               Funny manpages                                  2                    [OK]
+odk211/spree-tutorial                                                                1                    [OK]
+mjansche/tts-tutorial                Software for a Text-to-Speech tutorial          1                    [OK]
+mhausenblas/kairosdb-tutorial        GitHub fetcher for KairosDB tutorial            1                    [OK]
+yellottyellott/docker-tutorial       Doing the silly docker tutorial.                0                    [OK]
+sfilipov/rails-tutorial                                                              0                    [OK]
+jasminenoack/docker-tutorial         website                                         0                    [OK]
+davty/pluralsight-docker-tutorial    tutorial                                        0                    [OK]
+neilellis/weave-multicast-tutorial                                                   0                    [OK]
+sonatar/rails-tutorial               Ruby On Rails Tutorial On Docker                0                    [OK]
+fabioberger/dockerize-tutorial                                                       0                    [OK]
+factoryteam/docker-nodejs-tutorial   Node.js Hello World                             0                    [OK]
+tobegit3hub/tutorial-beego                                                           0                    [OK]
+ohadgk/atwoz-tutorial                Autobuild                                       0                    [OK]
+lukasheinrich/quickana-tutorial      Image for the analysis code built from htt...   0
+fabiosforza/docker-tutorial          First Docker uses                               0                    [OK]
+delta2323/jnns2015-tutorial-gpu                                                      0                    [OK]
+msfuko/nodejs-tutorial                                                               0                    [OK]
+fiware/tutorials.tourguide-app       FIWARE Tour Guide App sample application        0                    [OK]
+camphor/python-tutorial              camphor-/python-tutorial                        0                    [OK]
+biopython/biopython-tutorial         Biopython with Tutorial running on top of ...   0                    [OK]
+paulcos11/docker-tutorial            docker tutorial                                 0                    [OK]
+delta2323/jnns2015-tutorial                                                          0                    [OK]
+cazcade/weave-multicast-tutorial                                                     0                    [OK]
+```
+
+通过docker命令下载tutorial镜像。
+
+```
+$docker pull learn/tutorial
+
+#显示结果
+Using default tag: latest
+Pulling repository docker.io/learn/tutorial
+8dbd9e392a96: Pull complete
+Status: Downloaded newer image for learn/tutorial:latest
+docker.io/learn/tutorial: this image was pulled from a legacy registry.  Important: This registry version will not be supported in future versions of docker.
+
+```
+
+
+然后可以在这个镜像中运行一个hello-world例子
+
+```
+$docker run learn/tutorial echo "hello word"
+
+#hello word
+```
 
 
 
