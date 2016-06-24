@@ -212,6 +212,10 @@ $docker run learn/tutorial echo "hello word"
 #hello word
 ```
 
+在容器中安装新的程序，比如安装一个ping工具比如我们下载的镜像中基于ubuntu，所以可以使用apt-get，这是在mac os中不存在的
 
+```
+$docker run learn/tutorial apt-get install -y ping
+```
 
 
