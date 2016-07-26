@@ -8,6 +8,6 @@ baseurl: /
 encoding: utf-8
 highlighter: rouge
 name: What a DREAMY Journey
-favicon: "_images/favicon.png"
+favicon: favicon.ico
 open_in_new: true
 highlightStyle: xcode
