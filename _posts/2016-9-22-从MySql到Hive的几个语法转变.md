@@ -10,7 +10,8 @@ tags: [Hadoop, Hive]
 
 ---
 
-#Hive不支持行级别的insert
+### Hive不支持行级别的insert
+
 
 这个是使用过程中就最早能感受到的一个区别，hive中插入数据以`load`操作为主，如
 
@@ -40,19 +41,19 @@ select_statement1 FROM from_statement;
 
 ---
 
-#Hive对分号异常敏感
+### Hive对分号异常敏感
 
 虽然MySql和Hive都是用分号结束一句query，但是hive对于分号的敏感程度远超过mysql，缺乏智能识别，所以当语句中出现分号时，需用`\073`代替
 
 ---
 
-#IS [NOT] NULL
+### IS [NOT] NULL
 
 SQL中null代表空值, 值得警惕的是, 在HiveQL中String类型的字段若是空(empty)字符串, 即长度为0, 那么对它进行IS NULL的判断结果是False。
 
 ---
 
-#聚合函数
+### 聚合函数
 
 语句通常跟聚合函数一起使用，按照一个或者多个列对结果进行分组，然后对每个组执行聚合操作。然而在hive中不允许访问非group by的columns，所以如果要在一个有group by的query里查询非group by的属性，会用`collect_set(属性名)[0]`的方法，例如：
 
@@ -61,7 +62,7 @@ select collect_set(id)[0],collect_set(name)[0],salary,avg(salary) \
 from table employee group by salary;
 ```
 ---
-#IN
+### IN
 
 SQL中可以使用IN操作符来规定多个值：
 
@@ -76,7 +77,7 @@ SELECT * FROM Persons WHERE LastName = 'Adams' OR LastName = 'Carter';
 
 ---
 
-#INNER JOIN
+### INNER JOIN
 
 在之前版本的Hive中，下面这种写法是不对的，是只在mysql中支持的：
 
