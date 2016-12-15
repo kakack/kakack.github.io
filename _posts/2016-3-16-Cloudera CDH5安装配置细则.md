@@ -274,4 +274,4 @@ cp /usr/bin/python2.7 /usr/lib/cmf/agent/build/env/bin/python
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/15032411db-setup.png)
 
 12，在安装完成之后可以看到监控画面，至于各个主机角色的分配和一些Health Issue的解决之后补充。下载过程，耗时较长，错误信息能即时查看排除，一般问题通常找到命令在终端中反复执行即可解决。
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c6.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/c6.png)

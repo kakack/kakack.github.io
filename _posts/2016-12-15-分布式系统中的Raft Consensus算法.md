@@ -27,33 +27,35 @@ tags: [Hadoop, Distributed System,  Algorithm]
 
 任何节点都可以成为一个candidate，当需要一个新leader时，可以要求其他节点选自己。
 
-![](http://kakack.github.io/_images/raft/raft1.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft1.jpg)
 
 其他节点同意，返回ok消息。
 
-![](http://kakack.github.io/_images/raft/raft2.png)
+
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft2.jpg)
 
 这个过程中如果有follower宕机，candidate仍可以自己投票给自己。
 
 一旦candidate当选leader，可以向follower们发出指令
 
-![](http://kakack.github.io/_images/raft/raft3.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft3.jpg)
 
 然后通过心跳进行日志复制的通知
 
-![](http://kakack.github.io/_images/raft/raft4.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft4.jpg)
 
 如果当这个leader宕机了，那么Follower中会出现一个candidate，发出选举请求。
 
-![](http://kakack.github.io/_images/raft/raft5.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft5.jpg)
 
 Follower同意之后，成为Leader，继续承担日志复制工作
 
-![](http://kakack.github.io/_images/raft/raft6.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft6.jpg)
 
 整个选举过程中，需要一个时间限制，如果两个candidate同时发出投票邀请，可以通过加时赛来解决。
 
-![](http://kakack.github.io/_images/raft/raft7.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft7.jpg)
 
 ---
 
@@ -61,15 +63,15 @@ Follower同意之后，成为Leader，继续承担日志复制工作
 
 假设Leader已经被选出，这时客户端邀请增加一个日志，叫“Sally”。
 
-![](http://kakack.github.io/_images/raft/raft8.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft8.jpg)
 
 Leader要求各个Follower把日志追加到各自日志中。
 
-![](http://kakack.github.io/_images/raft/raft9.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft9.jpg)
 
 大多数Follower完成操作，追加成功，返回commited OK。
 
-![](http://kakack.github.io/_images/raft/raft10.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/raft/raft10.jpg)
 
 在下一个心跳heartbeat中，Leader会通知所有Follwer更新commited 项目。
 
