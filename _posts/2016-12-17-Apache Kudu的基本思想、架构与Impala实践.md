@@ -159,5 +159,79 @@ ALTER TABLE employee SET TBLPROPERTIES('EXTERNAL' = 'TRUE');
 
 ```
 
+---
 
+## 一个应用
 
+从MySql导出数据到本地txt
+
+```sql
+select * from DAYCACHETBL into outfile '/tmp/DAYCACHETBL.txt'
+     fields terminated by '\t' 
+     lines terminated by '\n';
+```
+
+保存到hdfs中`/data`目录下
+
+```shell
+hdfs dfs -mkdir /data
+hdfs dfs -put /tmp/DAYCACHETBL.txt /data
+```
+
+在hive shell中创建hive表
+
+```sql
+create table DAYCACHETBL (
+	METERID string,
+	SOURCEID int,
+	VB double,
+	DELTA double,
+	DTIME string,
+	UPGUID string,
+	UPBATCH string,
+	level string,
+	YEAR string,
+	MONTH string,
+	QUARTER string,
+	WEEK string,
+	D_DELTA double
+	)
+ROW FORMAT DELIMITED
+fields terminated by '\t'
+lines terminated by '\n'
+stored as textfile
+location '/data';
+```
+
+在impala-shell下创建kudu表
+
+```sql
+create table DAYCACHETBL2 (
+	METERID string,
+	SOURCEID int,
+	VB double,
+	DELTA double,
+	DTIME string,
+	UPGUID string,
+	UPBATCH string,
+	level string,
+	YEAR string,
+	MONTH string,
+	QUARTER string,
+	WEEK string,
+	D_DELTA double
+	)
+DISTRIBUTE BY HASH INTO 16 BUCKETS
+TBLPROPERTIES(
+  'storage_handler' = 'com.cloudera.kudu.hive.KuduStorageHandler',
+  'kudu.table_name' = 'DAYCACHETBL2',
+  'kudu.master_addresses' = 'kudu1:7051,kudu2:7051,kudu3:7051',
+  'kudu.key_columns' = 'METERID'
+);
+```
+
+将hive表中的内容插入kudu表
+
+```sql
+insert into DAYCACHETBL2 select * from DAYCACHETBL;
+```
