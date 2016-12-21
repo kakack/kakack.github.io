@@ -12,6 +12,8 @@ tags: [Hadoop, Apache,  Kudu]
 
 Apache Kudu是一个为了Hadoop系统环境而打造的列存储管理器，与一般的Hadoop生态环境中的其他应用一样，具有能在通用硬件上运行、水平扩展性佳和支持高可用性操作等功能。
 
+在Kudu出现之前，Hadoop生态环境中的储存主要依赖HDFS和HBase，追求高吞吐批处理的用例中使用HDFS，追求低延时随机读取用例下用HBase，而Kudu正好能兼顾这两者。
+
 - Kudu的主要优点：
 
 	- 快速处理OLAP（Online Analytical Processing）任务
@@ -77,6 +79,19 @@ Kudu并是不是在硬盘数据上做复制的，而是采取了逻辑复制的�
 - 尽管insert和update需要通过网络对数据做transmit，但是delete操作不需要移动任何数据。Delete操作的请求会发送到每一个tablet server上，在本地做删除操作。
 - 普通的物理操作，比如数据压缩，并不需要通过网络做数据transmit，但不同于HDFS，每个请求都需要通过网络把请求传送到各个备份节点上来满足操作需要。
 - 每个备份不需要同时进行操作，降低写入压力，避免高延时。
+
+**随机写入效率**
+
+在内存中每个tablet分区维护一个MemRowSet来管理最新更新的数据，当尺寸大于一定大小之后会flush到磁盘上行成DiskRowSet，多个DiskRowSet会在适当的时候做归并操作。
+这些被flush到磁盘的DiskRowSet数据分为两种，一种是Base数据，按列式存储格式存在，一旦生成不再修改，另一种是Delta文件，储存Base中有更新的数据，一个Base文件可以对应多个Delta文件。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/kudu-update.jpg)
+
+Delta文件的存在使得检索过程需要额外的开销，这些Delta文件是根据被更新的行在Base文件中的位移来检索的，而且做合并时也是有选择的进行。
+
+此外DRS（Distributed Resource Scheduler）自身也会合并，为了保障检索延迟的可预测性。Kudu的DRS默认以32MB为单位进行拆分，Compaction过程是为了对内容进行排序重组，减少不同DRS之间key的overlap，进而在检索的时候减少需要参与检索的DRS的数量。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/kudu-update2.jpg)
 
 ---
 
