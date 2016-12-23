@@ -62,6 +62,7 @@ select collect_set(id)[0],collect_set(name)[0],salary,avg(salary) \
 from table employee group by salary;
 ```
 ---
+
 ### IN
 
 SQL中可以使用IN操作符来规定多个值：
