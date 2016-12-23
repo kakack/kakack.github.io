@@ -11,25 +11,15 @@ Hbase是HDFS上面向类列的分布式数据库，适合实时随机访问超�
 ## Feature
 
 - Linear and modular scalability.
-
 - Strictly consistent reads and writes.
-
 - Automatic and configurable sharding of tables
-
 - Automatic failover support between RegionServers.
-
 - Convenient base classes for backing Hadoop MapReduce jobs with Apache HBase tables.
-
 - Easy to use Java API for client access.
-
 - Block cache and Bloom Filters for real-time queries.
-
 - Query predicate push down via server side Filters
-
 - Thrift gateway and a REST-ful Web service that supports XML, Protobuf, and binary data encoding options
-
 - Extensible jruby-based (JIRB) shell
-
 - Support for exporting metrics via the Hadoop metrics subsystem to files or Ganglia; or via JMX
 
 ## Terminology
