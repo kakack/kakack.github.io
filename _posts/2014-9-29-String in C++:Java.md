@@ -15,21 +15,18 @@ tags: [String,C++,Algorithm,STL]
 
 ---
 
-##String in C++
-
+## String in C++
 
 从[C++的库函数手册](https://github.com/kakack/kakack.github.io/blob/master/attachment/C%2B%2B%E5%87%BD%E6%95%B0%E6%89%8B%E5%86%8C%2B(LibraryFunctions).chm)上看，String是表示一系列char的一个对象，是basic_string通过char的模板实例化。
 
 在[这里](http://www.cplusplus.com/reference/string/string/)能找到最权威的解释。
 
 
-###基本操作符
-
-
+### 基本操作符
 
 在C++中， String重载了绝大多数基本操作符，如 +, +=, <, =, , [], <<, >>等。
 
-```
+```C++
 String a = "Hello!";
 
 a+="World!"   
@@ -46,7 +43,7 @@ if(a < "Hello")
 
 String之间可以直接用+相连。而且可以连续+。当系统发现+两段有一个string的时候，会自动把另一个转换成临时的string，执行完之后返回新的string。在对string中某个固定位置的char进行访问的时候，有两种方式，比如`string a="Hello World"`,如果要访问第三个元素，即下标为2的元素，可以用`a[2]`或者`a.at(2)`来访问，前者效率高，后者更稳定。
 
-###find函数
+### find函数
 
 可能是C++ String中用到最多的方法。所以find函数也是有各种各样。
 
@@ -59,7 +56,7 @@ String之间可以直接用+相连。而且可以连续+。当系统发现+两�
 
 这六个函数还会根据不同的参数传入各被重载四次，所以共有24个find方法。
 
-```
+```C++
 size_type find_first_of(const basic_string& s, size_type pos = 0)
 size_type find_first_of(const charT* s, size_type pos, size_type n)
 size_type find_first_of(const charT* s, size_type pos = 0)
@@ -68,7 +65,7 @@ size_type find_first_of(charT c, size_type pos = 0)
 
 另外还有一个`substr()`方法，有两个参数，起始位置`int pos`和子串长度`int length`，如果不指定length则默认到结尾。如
 
-```
+```C++
 String a = "abcdefg";
 
 cout << a.substr(2, 3);
@@ -79,26 +76,27 @@ cout << a.substr(2);
 
 ```
 
-###string insert, replace, erase
+### string insert, replace, erase
 
-######Insert:
+###### Insert:
 用于在已有字符串中插入一个新字符串
 
-```
+```C++
 string a = "1234567890";
 
 a.insert(2, "Hello");
 //12Hello34567890
 
 ```
+
 插入的必须是String类型，不能是单个的
 
-######Replace：
+###### Replace：
 用于替换原有String s中,从int pos开始的int n个内容
 
 `basic _ string& replace( size _ type _Pos1 ,size _ type _Num1 , const value _ type* _Ptr ); `
 
-```
+```C++
 string a = "1234567890";
 
 cout << a.replace(2,3,"abc");
@@ -113,10 +111,10 @@ cout << a.replace(2,2,b,3,3);
 
 ```
 
-######Erase：
+###### Erase：
 用于删除字符
 
-```
+```C++
 string a = "abcdef";
 s.erase(3);
 //abc, 从下标3到之后全部删除
@@ -127,8 +125,10 @@ s.erase(3,2);
 
 ```
 - - -
-###附录
-```
+
+### 附录
+
+```C++
 string 函数列表 函数名 描述
 begin 得到指向字符串开头的Iterator
 end 得到指向字符串结尾的Iterator

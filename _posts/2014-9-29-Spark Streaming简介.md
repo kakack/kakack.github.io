@@ -63,21 +63,21 @@ Spark Streaming的编程和Spark的编程如出一辙，对于编程的理解也
 
 另外，Spark Streaming有特定的窗口操作，窗口操作涉及两个参数：一个是滑动窗口的宽度（Window Duration）；另一个是窗口滑动的频率（Slide Duration），这两个参数必须是batch size的倍数。例如以过去5秒钟为一个输入窗口，每1秒统计一下WordCount，那么我们会将过去5秒钟的每一秒钟的WordCount都进行统计，然后进行叠加，得出这个窗口中的单词统计。 
 
-	`val wordCounts = words.map(x => (x, 1)).reduceByKeyAndWindow(_ + _, Seconds(5s)，seconds(1))`
+`val wordCounts = words.map(x => (x, 1)).reduceByKeyAndWindow(_ + _, Seconds(5s)，seconds(1))`
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1409295.jpg)
 
 但上面这种方式还不够高效。如果我们以增量的方式来计算就更加高效，例如，计算t+4秒这个时刻过去5秒窗口的WordCount，那么我们可以将t+3时刻过去5秒的统计量加上[t+3，t+4]的统计量，在减去[t-2，t-1]的统计量（如图5所示），这种方法可以复用中间三秒的统计量，提高统计的效率。 
 
-	`val wordCounts = words.map(x => (x, 1)).reduceByKeyAndWindow(_ + _, _ - _, Seconds(5s)，seconds(1))`
+`val wordCounts = words.map(x => (x, 1)).reduceByKeyAndWindow(_ + _, _ - _, Seconds(5s)，seconds(1))`
 
 - Spark Streaming的输入操作：对于输出操作，Spark提供了将数据打印到屏幕及输入到文件中。在WordCount中我们将DStream wordCounts输入到HDFS文件中。
 
-	`wordCounts = saveAsHadoopFiles(“WordCount”)`
+`wordCounts = saveAsHadoopFiles(“WordCount”)`
 
 - Spark Streaming启动：经过上述的操作，Spark Streaming还没有进行工作，我们还需要调用Start操作，Spark Streaming才开始监听相应的端口，然后收取数据，并进行统计。
 
-	`ssc.start()`
+`ssc.start()`
     
 
 ## Spark Streaming案例分析 
