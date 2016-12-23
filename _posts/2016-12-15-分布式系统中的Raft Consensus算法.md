@@ -6,7 +6,7 @@ tags: [Hadoop, Distributed System,  Algorithm]
 
 ---
 
-#分布式系统中的Raft Consensus算法
+# 分布式系统中的Raft Consensus算法
 
 以Kudu为例子，在复制和更替Partition的时候，常用的算法就是Raft Consensus。其中Consensus是指在多个服务器正常工作状态下，出现一个或若干个节点宕机，影响整个系统功能和稳定，因此需要有一些替换策略将宕机了的节点功能转移到其他节点，来保证整个系统的容错性和稳定性。整个替换策略中，只要有半数的节点达成一致就能完成替换。
 
