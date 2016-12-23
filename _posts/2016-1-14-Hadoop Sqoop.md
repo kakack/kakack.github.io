@@ -8,17 +8,17 @@ tags: [Big Data, Hadoop, Distributed System, Sqoop]
 
 Sqoop 是 apache 下用于 RDBMS 和 HDFS 互相导数据的工具。安装过程懒得说了。主要use case是从关系型数据库中把数据导入到HDFS上。
 
-##架构
+## 架构
 
 Sqoop的架构很简单，如下：
 
-![image](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/161141.jpg)
+![image](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/161141.jpg)
 
 其整合了Hive、Hbase和Oozie，通过map-reduce任务来传输数据，从而提供并发特性和容错。sqoop主要通过JDBC和关系数据库进行交互。理论上支持JDBC的database都可以使用sqoop和hdfs进行数据交互。
 
 - - -
 
-##可用命令
+## 可用命令
 
 Available commands:
 
@@ -40,7 +40,7 @@ Available commands:
 
 - - -
 
-##Import操作
+## Import操作
 
 用的最多的一条命令。数据导入有以下一些特点：
 
@@ -57,7 +57,7 @@ Sqoop在import时，需要制定split-by参数。Sqoop根据不同的split-by参
 
 - - -
 
-##例子
+## 例子
 
 源数据库地址：`jdbc:db2://10.37.146.111:5912/c99`
 

@@ -6,11 +6,10 @@ tags: [Linux, workflow]
 
 ---
 
-Workflow Engine 设计文档
-==================
+# Workflow Engine 设计文档
 
-背景
-----
+## 背景
+
 
 在大数据的背景下, 我们部署了hadoop生态圈中一系列的组件, 但离真正的用户可用还有
 很长的距离, 这其中就包含了如何让不懂编程的用户可以方便的进行工作流的管理和执行.
@@ -23,8 +22,7 @@ Workflow Engine 设计文档
 * 一次设计, 多次重用
 * 可以为一个工作流设置运行周期(每天1点执行...), 定时执行
 
-需求
------
+## 需求
 
 针对数据分析师这类人群, 他们熟悉的是各种机器学习算法而非算法的实现细节, 
 所以他们需要的是一种能够方便他们调参的工具, 不必关心代码的细节. 具体的需求
@@ -40,8 +38,7 @@ Workflow Engine 设计文档
 * 新增的数据会需要经过相同的处理后才能导入仓库中
 * 需要一些可视化的报表来追踪当前仓库的状态
 
-开发目标
---------
+## 开发目标
 
 针对需求，我们的目标是实现一个基于模版的DAG工作流调度引擎WorkFlow, 工作流引擎需要包含如下的功能:
 
@@ -68,8 +65,7 @@ Workflow Engine 设计文档
 
 
 
-技术路线
---------
+# 技术路线
 
 ![workflow server 框架图](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/workflow-architecture.png)
 
@@ -109,8 +105,7 @@ Workflow Server 通过提供一系列的 RESTful API 来供客户端调用, 包�
 * 增删查改特定资源(flow, job, schema, file...)
 
 
-设计思路
---------
+# 设计思路
 
 ### 总体设计
 

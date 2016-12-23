@@ -9,11 +9,12 @@ tags: [Big Data, Distributed System, Spark Streaming]
 不管是Spark还是Hadoop，似乎每个工具一出来之后第一个例子往往是WordCount，就像是每个语言学习第一个程序HelloWorld一样。其作用可能仅仅是跑通整个计算流程，然后介绍一些在计算过程中所必须的结构、变量、包等等。于是我们今次也是从Spark Streaming的NetworkWordCount开始，一步步窥探究竟。
 
 - - -
-##NetworkWordCount
+
+## NetworkWordCount
 
 首个例子，Code：
 
-```
+```scala
 object NetworkWordCount {
   def main(args: Array[String]) {
     if (args.length < 2) {
@@ -48,7 +49,7 @@ object NetworkWordCount {
 
 运行结果：
 
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/Screen%20Shot%202015-10-21%20at%2013.58.24.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/Screen%20Shot%202015-10-21%20at%2013.58.24.png)
 
 其中需要先在另一个Term上运行`nc -lk 9999`作为strea的输入方才行。
 
@@ -58,7 +59,7 @@ object NetworkWordCount {
 
 - **SparkContext**相当于是程序入口的main，来负责所有Spark有关的操作。其参数是SparkConf，用来描述应用的配置信息。
 
-```
+```scala
 /**
  * Main entry point for Spark functionality. 
  * A SparkContext represents the connection to a Spark
@@ -77,7 +78,7 @@ class SparkContext(config: SparkConf) extends Logging
 
 - **SparkConf**是一组以key-value形式存在的键值对，通常需要通过`new SparkConf()`方法来创建， 可以从其他spark.*的Java系统属性集中载入参数，自设的SC会比系统默认的SC有更高的优先级，这个配置信息一旦传递给Spark之后，就不能再被修改了。
 
-```
+```scala
 /*
  * @param loadDefaults whether to also load values from Java system properties
  */
@@ -108,11 +109,11 @@ private[spark] def updatedConf(
 
 关于这个例子整个步骤如图：
 
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/Z7naE3.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/Z7naE3.jpg)
 
 而在这个例子中StreamingContext封装了SparkContext。
 
-```
+```scala
 //StreamingContext 里面包装的还是一个SparkContext
 class StreamingContext private[streaming] (
   sc_ : SparkContext,
@@ -147,7 +148,7 @@ private[streaming] def createNewSparkContext(
 
 StreamingContext.SocketTextStream方法如下，返回的是一个ReceiverInputDStreaming：
 
-```
+```scala
 def socketTextStream(
   hostname: String,
   port: Int,
@@ -180,9 +181,9 @@ def socketTextStream(
 - 基本源：由StreamingContext API直接提供的源：file system、Socket connection、Akka actors
 - 高级源：像kafka、flume、kinesis、twitter等，需要linking外部依赖。
 
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/1408795343_7070.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1408795343_7070.jpg)
 
-```
+```scala
 abstract class DStream[T: ClassTag] (
  @transient private[streaming] var ssc: StreamingContext
   ) extends Serializable with Logging {
@@ -194,7 +195,7 @@ abstract class DStream[T: ClassTag] (
 
 generatedRDDS是DStream的一根成员变量HashMap，Key是时间片，Value是RDD，即DStream从本质上来说是以时间片为标签存储的一系列RDD。
 
-```
+```scala
 /*
  * Retrieve a precomputed RDD of this DStream, or computes the RDD. This is an internal
  * method that should not be called directly.
@@ -239,7 +240,7 @@ private[streaming] def getOrCompute(time: Time): Option[RDD[T]] = {
 
 在WC例子中，从StreamingContext获取一根ReceiverInputDStream，封装了SocketReceiver对象，用来读取流数据，然后按时间片将离散化的储存在DStream定义的HashMap里。
 
-```
+```scala
 def socketTextStream(
   hostname: String,
   port: Int,
@@ -259,7 +260,7 @@ new SocketInputDStream[T](this, hostname, port, converter, storageLevel)
 
 以上便是整个WC example的过程，获取SocketTextStream。以下介绍一下StreamingContext启动。在启动过程中，直接或间接触发了JobScheduler、StreamingListenerBus、ReceiverTracker和JobGenerator。
 
-```
+```scala
 def start(): Unit = synchronized {
     
     //首先生成一个eventActor，类型是Akka Actor
@@ -288,7 +289,7 @@ def start(): Unit = synchronized {
 
 最后补一份关于RDD的transformation的列表：
 
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/Screen%20Shot%202015-10-22%20at%2010.17.13.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/Screen%20Shot%202015-10-22%20at%2010.17.13.png)
 
 - - -
 
@@ -298,7 +299,7 @@ def start(): Unit = synchronized {
 `val lines = ssc.socketTextStream(args(0), args(1).toInt, StorageLevel.MEMORY_AND_DISK_SER)`
 在此new创建了一个receiverStream然后封装了一个CustomReceiver类。作为一个用户自定义的CustomReceiver类，必须继承Receiver，并且实现`onStart()`和`onStop()`两个方法
 
-```
+```scala
 class CustomReceiver(host: String, port: Int)
   extends Receiver[String](StorageLevel.MEMORY_AND_DISK_2) with Logging {
 
@@ -348,7 +349,7 @@ class CustomReceiver(host: String, port: Int)
 
 另外还有个例子叫RecoverableNetworkWordCount，意思是可恢复的NWC，这也是Streaming相对于Storm而言比较优秀的一点。
 
-```
+```scala
 object RecoverableNetworkWordCount {
 
 def createContext(ip: String, port: Int, outputPath: String, checkpointDirectory: String)
@@ -386,7 +387,7 @@ def createContext(ip: String, port: Int, outputPath: String, checkpointDirectory
 
 解释一下这个example大致意思，输入参数从之前的ip port变成ip port <checkpoit> <output>，前两者的含义不变，依然是Socket数据传输过来的位置，<checkpoint>是一个兼容HDFS文件系统上的绝对路径，这个路径上，<output>会继续上一次的计算。方法`StreamingContext.getOrCreate(checkpointDir, CreateFunc)`方法可以做到，如果在checkpointDir路径下有已check了的StreamingContext，则重新载入恢复到已有的SC，如果没有则用CreateFunc创建一个新的SC，这个创建方法在这个例子中如下：
 
-```
+```scala
   def createContext(ip: String, port: Int, outputPath: String, checkpointDirectory: String)
     : StreamingContext = {
 
@@ -419,7 +420,7 @@ def createContext(ip: String, port: Int, outputPath: String, checkpointDirectory
 
 最后另一个例子是StatefulWordCount，特点是利用RDD的可重用性，保存中间计算状态，在有新的输入传进来之后，计算结果根据已有的状态再做累加。
 
-```
+```scala
 object StatefulNetworkWordCount {
   def main(args: Array[String]) {
     if (args.length < 2) {
@@ -473,4 +474,4 @@ object StatefulNetworkWordCount {
 
 终端演示结果：
 
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/Screen%20Shot%202015-10-22%20at%2017.16.11.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/Screen%20Shot%202015-10-22%20at%2017.16.11.png)

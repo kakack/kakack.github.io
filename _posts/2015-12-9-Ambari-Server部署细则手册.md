@@ -6,7 +6,8 @@ tags: [Big Data, Hadoop, Distributed System, Apache Ambari]
 
 ---
 
-#Ambari-Server部署细则手册
+# Ambari-Server部署细则手册
+
 - - -
 
 预期平台：Ubuntu 14（全新）
@@ -17,7 +18,7 @@ tags: [Big Data, Hadoop, Distributed System, Apache Ambari]
 
 - - -
 
-##前置安装
+## 前置安装
 
 - 开发环境：
 
@@ -35,7 +36,7 @@ sudo apt-get install oracle-java7-set-default
 
 - 数据库：MySQL：`sudo apt-get install mysql-server`
 
-```
+```sql
 create database ambari;
 use ambari;
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'youpassword' WITH GRANT OPTION;
@@ -43,7 +44,7 @@ FLUSH PRIVILEGES;
 exit;
 ```
 
-修改/etc/mysql/my.conf
+修改`/etc/mysql/my.conf`
 
 将skip-external-locking注释掉，并将bind-address = 0.0.0.0
 
@@ -60,7 +61,8 @@ exit;
 
 - - -
 
-##安装Apache Ambari
+## 安装Apache Ambari
+
 对于Ubuntu 14用户来说，首先进入Ambari repository下载
 
 `cd /etc/apt/sources.list.d`
@@ -92,7 +94,8 @@ java.lang.ClassNotFoundException:oracle.jdbc.driver.OracleDriver
 
 
 - - -
-##部署和启动
+
+## 部署和启动
 
 用户设置：`ambari-server setup`
 
@@ -112,7 +115,7 @@ java.lang.ClassNotFoundException:oracle.jdbc.driver.OracleDriver
 
 - - -
 
-##启动后页面配置
+## 启动后页面配置
 
 通过浏览器访问`http://ip:8080`来访问，初始的账号密码都是admin
 

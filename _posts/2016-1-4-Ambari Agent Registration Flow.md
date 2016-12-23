@@ -12,11 +12,11 @@ Registration：一个Agent host向服务器注册的行为。
 
 - - -
 
-##Bootstrap操作流
+## Bootstrap操作流
 
 **SSH Bootstrap:**
 
-![image](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/16141.png)
+![image](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/16141.png)
 
 **步骤：**
 
@@ -33,15 +33,15 @@ Ambari Server通过调用bootstrap.py来初始化整个bootstrap进程
 
 **人工手动Bootstrap**
 
-![image](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/16142.png)
+![image](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/16142.png)
 
 具体步骤内容基本同上
 
 - - -
 
-#Agent注册#
+## Agent注册
 
-![image](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/16143.png)
+![image](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/16143.png)
 
 **步骤**
 
@@ -58,7 +58,8 @@ Ambari Server通过调用bootstrap.py来初始化整个bootstrap进程
 - Agent心跳程序启动：Ambari Agent向Ambari Server开启心跳程序，确认各种命令的执行
 
 - - -
-##Reference##
+
+## Reference##
 
 [Using Custom Hostnames](http://docs.hortonworks.com/HDPDocuments/HDP1/HDP-1.2.1/bk_using_Ambari_book/content/ambari-chap7a.html)
 

@@ -9,49 +9,45 @@ tags: [Interview,Spark,Big Data]
 Analytics BU Prime-Beijing
 
 
-###1，Spark较之Hadoop有什么优势（扩展：请简要描述一下Hadoop, Spark, MPI三种计算框架的特点以及分别适用于什么样的场景）
+### 1，Spark较之Hadoop有什么优势（扩展：请简要描述一下Hadoop, Spark, MPI三种计算框架的特点以及分别适用于什么样的场景）
 
 总体而言：
-1,Hadoop是离线计算，基于磁盘，每次运算之后的结果需要存储在HDFS里面，下次再用的话，还需要读出来进行一次计算，磁盘IO开销比较大。底层基于HDFS存储文件系统。适用于离线数据处理和不需要多次迭代计算的场景,并且Hadoop只有Map和Reduce两种接口，相对于Spark来说太少了。  
-2,Spark是内存计算框架，适用于多次迭代的计算模型，诸如各种机器学习算法 ,Spark里面的一个核心的概念就是RDD，弹性分布式数据集。Spark支持内存计算模型，用户可以指定存储的策略，当内存不够的时候，可以放置到磁盘上。并且Spark提供了一组RDD的接口，Tran敏感词ormations和Action。Tran敏感词ormations是把一个RDD转换成为另一个RDD以便形成Lineage血统链，这样当数据发生错误的时候可以快速的依靠这种继承关系恢复数据。Action操作是启动一个Job并开始真正的进行一些计算并把返回的结果可以给Driver或者是缓存在worker里面。
-3,MPI是消息传递接口，可以理解为是更原生的一种分布式模型
+
+1. Hadoop是离线计算，基于磁盘，每次运算之后的结果需要存储在HDFS里面，下次再用的话，还需要读出来进行一次计算，磁盘IO开销比较大。底层基于HDFS存储文件系统。适用于离线数据处理和不需要多次迭代计算的场景,并且Hadoop只有Map和Reduce两种接口，相对于Spark来说太少了。 
+2. Spark是内存计算框架，适用于多次迭代的计算模型，诸如各种机器学习算法 ,Spark里面的一个核心的概念就是RDD，弹性分布式数据集。Spark支持内存计算模型，用户可以指定存储的策略，当内存不够的时候，可以放置到磁盘上。并且Spark提供了一组RDD的接口，Tran敏感词ormations和Action。Tran敏感词ormations是把一个RDD转换成为另一个RDD以便形成Lineage血统链，这样当数据发生错误的时候可以快速的依靠这种继承关系恢复数据。Action操作是启动一个Job并开始真正的进行一些计算并把返回的结果可以给Driver或者是缓存在worker里面。
+3. MPI是消息传递接口，可以理解为是更原生的一种分布式模型
 
 
 就作业而言：
-1，Hadoop中的作业，一段编好能运行的程序被称为MapReduce程序，也就是一个Job，每个Job下还能有若干个task，可区分为MapTask和ReduceTask。
+1. Hadoop中的作业，一段编好能运行的程序被称为MapReduce程序，也就是一个Job，每个Job下还能有若干个task，可区分为MapTask和ReduceTask。
 ![](http://www.raincent.com/uploadfile/2014/1121/20141121050949944.jpg)
+2. 在Spark中，作业有很复杂的层级划分
 
-2，在Spark中，作业有很复杂的层级划分
-
-	- Application：用户在Spark上部署的程序，由集群上的驱动程序和执行器组成
-	- Task：被发送到一个执行器的工作单元
-	- Job：一个由多个由Spark action引起的反应task组成的并行计算的单元
-	- Stage：每个Job可以被划分成多个task的集合，成为stage，它们之间互相关联
-
+- Application：用户在Spark上部署的程序，由集群上的驱动程序和执行器组成
+- Task：被发送到一个执行器的工作单元
+- Job：一个由多个由Spark action引起的反应task组成的并行计算的单元
+- Stage：每个Job可以被划分成多个task的集合，成为stage，它们之间互相关联
 
 ![](http://www.raincent.com/uploadfile/2014/1121/20141121051047349.jpg)
 
 一个Application和一个SparkContext相关联，每个Application中可以有一个或多个Job，可以并行或者串行运行Job。Spark中的一个Action可以触发一个Job的运行。在Job里面又包含了多个Stage，Stage是以Shuffle进行划分的。在Stage中又包含了多个Task，多个Task构成了Task Set。
 
-###2，为什么要在Spark Streaming之前加一个Apache Kafka
+### 2，为什么要在Spark Streaming之前加一个Apache Kafka
 
-#####使用背景：流数据。
+##### 使用背景：流数据。
+
 活动流数据是几乎所有站点在对其网站使用情况做报表时都要用到的数据中最常规的部分。活动数据包括页面访问量（Page View）、被查看内容方面的信息以及搜索情况等内容。这种数据通常的处理方式是先把各种活动以日志的形式写入某种文件，然后周期性地对这些文件进行统计分析。运营数据指的是服务器的性能数据（CPU、IO使用率、请求时间、服务日志等等数据)。运营数据的统计方法种类繁多。
 
-#####Kafka是一种分布式的，基于发布/订阅的消息系统。主要设计目标如下：
+##### Kafka是一种分布式的，基于发布/订阅的消息系统。主要设计目标如下：
 
 - 以时间复杂度为O(1)的方式提供消息持久化能力，即使对TB级以上数据也能保证常数时间复杂度的访问性
-
 - 高吞吐率。即使在非常廉价的商用机器上也能做到单机支持每秒100K条以上消息的传输
-
 - 支持Kafka Server间的消息分区，及分布式消费，同时保证每个Partition内的消息顺序传输
-
 - 同时支持离线数据处理和实时数据处理
-
 - Scale out：支持在线水平扩展
 
 
-#####使用Kafka的原因：
+##### 使用Kafka的原因：
 
 **解耦**
 
@@ -87,7 +83,7 @@ Analytics BU Prime-Beijing
 
 
 
-#####常用Message Queue对比：
+##### 常用Message Queue对比：
 
 **RabbitMQ**
 
@@ -110,6 +106,6 @@ ActiveMQ是Apache下的一个子项目。 类似于ZeroMQ，它能够以代理�
 Kafka是Apache下的一个子项目，是一个高性能跨语言分布式发布/订阅消息队列系统，而Jafka是在Kafka之上孵化而来的，即Kafka的一个升级版。具有以下特性：快速持久化，可以在O(1)的系统开销下进行消息持久化；高吞吐，在一台普通的服务器上既可以达到10W/s的吞吐速率；完全的分布式系统，Broker、Producer、Consumer都原生自动支持分布式，自动实现负载均衡；支持Hadoop数据并行加载，对于像Hadoop的一样的日志数据和离线分析系统，但又要求实时处理的限制，这是一个可行的解决方案。Kafka通过Hadoop的并行加载机制统一了在线和离线的消息处理。Apache Kafka相对于ActiveMQ是一个非常轻量级的消息系统，除了性能非常好之外，还是一个工作良好的分布式系统。
 
 
-###3，简单描述介绍Spark、HDFS、HBase、Kafka等所提及工具的应用场景和优劣之处
+### 3，简单描述介绍Spark、HDFS、HBase、Kafka等所提及工具的应用场景和优劣之处
 
 

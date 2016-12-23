@@ -21,7 +21,8 @@ Test Case名称为：KafkaSparkStreamingSpec。测试内容是，开一个Stream
 - Downstream processing parallelism：相对于读取数据的线程，希望有更多的线程来对数据进行处理，可以通过多个读取线程shuffling来实现。
 
 - - -
-##读取
+
+## 读取
 
 Spark Streaming中的KafkaInputDStream（kafka连接器）使用了kafka的[high-level consumer API](https://cwiki.apache.org/confluence/display/KAFKA/Consumer+Group+Example)，意味这这里用两种办法能控制Spark从kafka读取的parallelism：
 
@@ -30,9 +31,9 @@ Spark Streaming中的KafkaInputDStream（kafka连接器）使用了kafka的[high
 
 由于受到网络传输/NIC的影响，事实上在同一个主机上即便运行多个线程也不一定能明显增加吞吐量，另外从kafka中读取也会受到cpu瓶颈的限制。另外，多个读取线程在推送数据到block的时候，有可能会产生锁竞争，所以方法1是更好的选择。
 
-######控制input DStream的实践：
+###### 控制input DStream的实践：
 
-```
+```scala
 val ssc: StreamingContext = ……
 // 创建SSC
 
@@ -46,11 +47,11 @@ val kafkaDStreams = (1 to numInputDStreams).map { _ => KafkaUtils.createStream(.
 
 ```
 
-######控制每个input DStream上小线程的数目
+###### 控制每个input DStream上小线程的数目
 
 这个例子中只有一个input DStream，但有3个消费者线程
 
-```
+```scala
 val ssc: StreamingContext = ???
  // ignore for now
 
@@ -62,13 +63,11 @@ val consumerThreadsPerInputDstream = 3
 
 val topics = Map("zerg.hydra" -> consumerThreadsPerInputDstream)
 val stream = KafkaUtils.createStream(ssc, kafkaParams, topics, ...)
-
-
 ```
 
-######结合起来
+###### 结合起来
 
-```
+```scala
 val ssc: StreamingContext = ???
 val kafkaParams: Map[String, String] = Map("group.id" -> "terran", ...)
 
@@ -83,7 +82,7 @@ val kafkaDStreams = (1 to numDStreams).map { _ =>
 
 - - -
 
-##对并行Downstream的处理
+## 对并行Downstream的处理
 
 Spark环境下本身是用RDD来处理并行化的任务的，因此Kafka中的parallelism跟RDD的数目有关。控制的方法也有两个：
 
@@ -92,7 +91,7 @@ Spark环境下本身是用RDD来处理并行化的任务的，因此Kafka中的p
 
 总的来说repartition是从processing parallelism解耦read parallelism的主要途径。在这个过程中一个关键的transformation是union操作，这个操作会将多个DStream压缩到一个DStream或者RDD当中。例如可以在5 read parallelism的topic中，将processing parallelism提升到20：
 
-```
+```scala
 val ssc: StreamingContext = ???
 val kafkaParams: Map[String, String] = Map("group.id" -> "terran", ...)
 val readParallelism = 5
@@ -115,7 +114,7 @@ val processingDStream = unionDStream(processingParallelism)
 
 - - -
 
-##写入到Kafka
+## 写入到Kafka
 
 写入到Kafka需要从foreachRDD输出操作进行，通用的输出操作往往让每个RDD都由DStream生成，这个函数需要将每个RDD中的数据推送到一个外部系统，比如保存到文件系统，或者写入数据库，或者通过socket发送等。需要注意的是，这里的功能函数将在驱动中执行，同时其中通常会伴随RDD行为，它将会促使流RDDs的计算。
 
@@ -123,7 +122,7 @@ val processingDStream = unionDStream(processingParallelism)
 
 如下：
 
-```
+```scala
 val producerPool = {
   // See the full code on GitHub for details on how the pool is created
   val pool = createKafkaProducerPool(kafkaZkCluster.kafka.brokerList, outputTopic.name)
@@ -150,7 +149,7 @@ Spark Streaming每分钟都会建立起多个RDD，每个都会包括很多parti
 
 - - -
 
-##完整示例
+## 完整示例
 
 流程：
 
@@ -158,7 +157,7 @@ Spark Streaming每分钟都会建立起多个RDD，每个都会包括很多parti
 2. 并行化Avro-encoded数据到pojos中，然后将他们并行写到binary，序列化可以通过 Twitter Bijection执行。
 3. 通过Kafka生产者池将结果写回一个不同的Kafka topic。
 
-```
+```scala
 // Set up the input DStream to read from Kafka (in parallel)
 val kafkaStream = {
   val sparkStreamingConsumerGroup = "spark-streaming-consumer-group"
@@ -219,6 +218,6 @@ ssc.awaitTermination()
 
 - - -
 
-##终端测试输出
+## 终端测试输出
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/Screen%20Shot%202015-11-04%20at%2010.39.04.png)

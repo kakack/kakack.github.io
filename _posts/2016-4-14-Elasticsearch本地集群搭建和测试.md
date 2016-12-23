@@ -6,7 +6,7 @@ tags: [Linux, ElasticSearch]
 
 ---
 
-#Elastic Search
+# Elastic Search
 
 建立在全文搜索引擎[Apache Lucene(TM)](https://lucene.apache.org/core/)基础上，被誉为当今最先进高效的全功能开源搜索引擎框架。
 
@@ -15,7 +15,7 @@ tags: [Linux, ElasticSearch]
 - 可以扩展到上百台服务器，处理PB级别的结构化或非结构化数据。
 
 
-#安装Elastic Search
+# 安装Elastic Search
 
 前置安装：jdk1.7+，maven；
 
@@ -34,7 +34,7 @@ $ ./bin/elasticsearch
 
 ---
 
-#安装IK Analysis for ElasticSearch
+# 安装IK Analysis for ElasticSearch
 
 IK Analysis是ES的一个插件，用来支持用户自定义的dictionary。
 
@@ -55,7 +55,8 @@ $ mvn package
 最后手动重启elasticsearch服务
 
 ---
-#测试
+
+# 测试
 
 创建一个index
 
@@ -78,7 +79,8 @@ $ curl -XPUT http://localhost:9200/index
 ```
 
 - - -
-#请求JSON
+
+# 请求JSON
 
 其他的语言可以通过9200端口与 Elasticsearch 的 RESTful API 进行通信。事实上，如你所见，你甚至可以使用行命令 curl 来与 Elasticsearch 通信。
 
@@ -101,7 +103,7 @@ curl -XGET 'http://localhost:9200/_count?pretty' -d '
 - <5> 一个 JSON 编码的请求主体（如果需要的话
 
 
-####Example
+#### Example
 
 创建一个index：
 

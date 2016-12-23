@@ -6,7 +6,7 @@ tags: [Big Data, Hadoop, Distributed System, Cloudera]
 
 ---
 
-#CDH
+# CDH
 
 
 CDH一个对Apache Hadoop的集成环境的封装，可以使用Cloudera Manager进行自动化安装。相对于Apache而言，CDH对于Hadoop的版本标识划分地更清晰，如CDH3、CDH4、CDH5等。提供对多个操作系统的支持，可以用apt-get或者yum等命令进行安装和依赖下载。
@@ -16,7 +16,7 @@ CDH一个对Apache Hadoop的集成环境的封装，可以使用Cloudera Manager
 
 主要功能：管理、监控、诊断、集成。
 
-###主要组件：
+### 主要组件：
 
 - HTTPFS：HDFS的一个HTTP借口，通过WebHDFS REST API可以对HDFS进行读写访问，不需要客户端可以访问Hadoop每个节点，镶嵌在tomcat中
 - HBase：建立在HDFS上的额列存储数据库。
@@ -34,9 +34,9 @@ CDH一个对Apache Hadoop的集成环境的封装，可以使用Cloudera Manager
 
 - - -
 
-#各个节点前期准备工作
+# 各个节点前期准备工作
  
-###设置Hosts
+### 设置Hosts
 
 在`/etc/hosts`中做修改，添加自身和其他子节点的ip、FQDN、hostname，如下：
 
@@ -50,19 +50,19 @@ CDH一个对Apache Hadoop的集成环境的封装，可以使用Cloudera Manager
 10.10.245.123 cloudera-node2.cci.com cloudera-node2
 ```
 
-###设置Hostname
+### 设置Hostname
 
 运行`su hostname cloudera-node2`
 
 再在`/etc/hostname`里写入`cloudera-node2`
 
-###关闭防火墙
+### 关闭防火墙
 
 关闭防火墙：`ufw disable`
 
 卸载防火墙：`apt-get remove iptables`
 
-###安装JDK（至少需要Oracle JDK7及以上）
+### 安装JDK（至少需要Oracle JDK7及以上）
 
 ```
 java -version
@@ -86,7 +86,7 @@ export PATH=$JAVA_HOME/bin:$JAVA_HOME/jre/bin:$PATH
 
 保存后`source ~/.bashrc`，通过命令`echo $JAVA_HOME`查看是否成功。
 
-###安装Mysql并设置远程登录
+### 安装Mysql并设置远程登录
 
 `sudo apt-get install mysql-server`
 
@@ -94,20 +94,20 @@ export PATH=$JAVA_HOME/bin:$JAVA_HOME/jre/bin:$PATH
 
 重启MySQL 服务`/etc/init.d/mysql restart`
 
-###安装ntp
+### 安装ntp
 
 `sudo apt-get install ntp`，重启服务`sudo service ntp restart`
 
 
 - - -
 
-#安装Cloudera Manager
+# 安装Cloudera Manager
 
-###一，创建新的CDH5 Repository或者下载1-click Install Package
+### 一，创建新的CDH5 Repository或者下载1-click Install Package
 在Ubuntu上安装有两种不同的方法，一种是下载 "1-click Install" Package，一键安装，另一种是将CDH5 repository加入本地repo
 
 
-#####通过1-click Install Package安装
+##### 通过1-click Install Package安装
 
 下载Package：
 
@@ -136,7 +136,7 @@ Trusty|[Trusty Package](https://archive.cloudera.com/cdh5/one-click-install/trus
 
 我个人建议用这种办法，因为下面提到的通过apt-get安装需要手动配置一些数据库相关的内容，比较繁琐。
 
-#####添加CDH5 Repository
+##### 添加CDH5 Repository
 
 OS Version |Command
 -----------|--------
@@ -159,7 +159,7 @@ Pin: release o=Cloudera, l=Cloudera
 Pin-Priority: 501
 ```
 
-###二，添加一个Repository Key
+### 二，添加一个Repository Key
 
 OS Version|	Command
 ----------|--------
@@ -170,25 +170,21 @@ Ubuntu Trusty|	$ wget https://archive.cloudera.com/cdh5/ubuntu/trusty/amd64/cdh/
 
 然后运行  `$ sudo apt-key add archive.key`
 
-###三，安装Yarn
+### 三，安装Yarn
+
 这步可以选装，因为Yarn在之后的节点安装过程中也是自带的。
 
 如果需要运行MapReduce V2，那么需要安装Yarn。
 
 - 在Resource Manager host上运行：`sudo apt-get update; sudo apt-get install hadoop-yarn-resourcemanager`
-
 - 在NameNode Host上运行`sudo apt-get install hadoop-hdfs-namenode`
-
 - 在Secondary NameNode host上运行`sudo apt-get install hadoop-hdfs-secondarynamenode`
-
 - All cluster hosts except the Resource Manager :`sudo apt-get install hadoop-yarn-nodemanager hadoop-hdfs-datanode hadoop-mapreduce`
-
 - One host in the cluster: `sudo apt-get install hadoop-mapreduce-historyserver hadoop-yarn-proxyserver`
-
 - All client hosts: `sudo apt-get install hadoop-client`
 
+### 四，在Cluster中的各个host上安装agent
 
-###四，在Cluster中的各个host上安装agent
 选择一台主机作为cloudera server服务器，在上面安装：loudera-manager-daemons和cloudera-manager-server：`apt-get install cloudera-manager-daemons cloudera-manager-server`
 
 完成之后启动cloudera manager server的服务：`service cloudera-scm-server start `，能看到提示：`Starting cloudera-scm-server: * cloudera-scm-server started `
@@ -234,11 +230,11 @@ cp /usr/bin/python2.7 /usr/lib/cmf/agent/build/env/bin/python
 ```
 - - -
 
-#页面安装与配置
+# 页面安装与配置
 
 1，打开`http://Server-address:7180/`开始安装，用户名密码都是admin，首次启动需要耗时较长
 
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c1.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/c1.png)
 
 2，Welcome界面，选择accept license即可。
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503241welcome.png)
@@ -257,7 +253,7 @@ cp /usr/bin/python2.7 /usr/lib/cmf/agent/build/env/bin/python
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503244package.png)
 
 7，选择连接方式，在此选了用root+密码的形式登录
-![](https://raw.githubusercontent.com/kkkelsey/kkkelsey.github.io/master/_images/c4.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/c4.png)
 
 8，选择cluster的安装方式，一般建议用Parcel进行安装，这样我们可以事先下载好安装的parcels，放入`/opt/cloudera/parcel-repo`路径，可以节约下载时间，parcels的下载地址可以在[http://archive.cloudera.com/cdh5/parcels/](http://archive.cloudera.com/cdh5/parcels/)找到。需要下载的文件有：`CDH-5.6.0-1.cdh5.6.0.p0.45-trusty.parcel.sha，CDH-5.6.0-1.cdh5.6.0.p0.45-trusty.parcel，manifest.json`三个，具体版本号可以自行选择下载。
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/1503246install-detail.png)
