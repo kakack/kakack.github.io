@@ -9,7 +9,8 @@ tags: [ACM,MicroSoft,Algorithm]
 录四个之前做MS家Online test的题，AC掉了两个，之后有空把剩下的两个做了
 
 
-##Q1
+## Q1
+
 ```
 Time Limit: 10000ms
 Case Time Limit: 1000ms
@@ -30,21 +31,21 @@ Your program should output string “<invalid input string>” when the input co
 
 
 
-###Input
+### Input
 
 ```
 Input consists of multiple cases, one case per line. Each case is one string consisting of ASCII characters.
 ```
 
 
-###Output
+### Output
 
 ```
 For each case, print exactly one line with the reordered string based on the criteria above.
 ```
 
 
-###Sample In
+### Sample In
 
 ```
 aabbccdd
@@ -53,7 +54,7 @@ aabbccdd
 abcdefabcdefabcdefaaaaaaaaaaaaaabbbbbbbddddddee
 ```
 
-###Sample Out
+### Sample Out
 
 ```
 abcdabcd
@@ -64,7 +65,7 @@ abcdefabcdefabcdefabdeabdeabdabdabdabdabaaaaaaa
 
 ---
 
-##Q2
+## Q2
 
 ```
 Time Limit: 10000ms
@@ -78,20 +79,20 @@ Description
 Consider a string set that each of them consists of {0, 1} only. All strings in the set have the same number of 0s and 1s. Write a program to find and output the K-th string according to the dictionary order. If s​uch a string doesn’t exist, or the input is not valid, please output “Impossible”. For example, if we have two ‘0’s and two ‘1’s, we will have a set with 6 different strings, {0011, 0101, 0110, 1001, 1010, 1100}, and the 4th string is 1001.
 
 
-###Input
+### Input
 
 ```
 The first line of the input file contains a single integer t (1 ≤ t ≤ 10000), the number of test cases, followed by the input data for each test case.
 Each test case is 3 integers separated by blank space: N, M(2 <= N + M <= 33 and N , M >= 0), K(1 <= K <= 1000000000). N stands for the number of ‘0’s, M stands for the number of ‘1’s, and K stands for the K-th of string in the set that needs to be printed as output.
 ```
 
-###Output
+### Output
 
 ```
 For each case, print exactly one line. If the string exists, please print it, otherwise print “Impossible”. 
 ```
 
-###Sample In
+### Sample In
 
 ```
 3
@@ -100,7 +101,7 @@ For each case, print exactly one line. If the string exists, please print it, ot
 4 7 47
 ```
 
-###Sample Out
+### Sample Out
 
 ```
 0101
@@ -109,7 +110,7 @@ Impossible
 ```
 
 ---
-##Q3
+## Q3
 
 ```
 Time Limit: 10000ms
@@ -133,26 +134,26 @@ InversionCountOfSwap({3, 1, 2})=>
 }
 
 
-###Input
+### Input
 
 ```
 Input consists of multiple cases, one case per line.Each case consists of a sequence of integers separated by comma.
 ```
 
-###Output
+### Output
 
 ```
 For each case, print exactly one line with the new inversion count or the original inversion count if it cannot be reduced.
 ```
 
-###Sample In
+### Sample In
 
 ```
 3,1,2
 1,2,3,4,5
 ```
 
-###Sample Out
+### Sample Out
 
 ```
 1
@@ -176,19 +177,19 @@ Also we have a) logs are all the same with each other produced by a certain form
 Your program will be dealing with lots of logs, so please try to keep the time cost close to O(nl), where n is the number of logs, and l is the average log length.
 Note edit distance is the minimum number of operations (insertdeletereplace a character) required to transform one string into the other, please refer to httpen.wikipedia.orgwikiEdit_distance for more details.
 
-###Input
+### Input
 
 ```
 Multiple lines of non-empty strings.
 ```
 
-###Output
+### Output
 
 ```
 The count of the most frequent logs.
 ```
 
-###Sample In
+### Sample In
 
 ```
 Logging started for id:1
@@ -198,7 +199,7 @@ Logging started for id:10
 Module ? has completed its job
 ```
 
-###Sample Out
+### Sample Out
 
 ```
 3
