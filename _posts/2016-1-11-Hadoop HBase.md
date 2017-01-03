@@ -128,12 +128,14 @@ Client写入 -> 存入MemStore，一直到MemStore满 -> Flush成一个StoreFile
 由此过程可知，HBase只是增加数据，有所得更新和删除操作，都是在Compact阶段做的，所以，用户写操作只需要进入到内存即可立即返回，从而保证I/O高性能。
 
 ### HLog
+
 引入HLog原因：
 在分布式系统环境中，无法避免系统出错或者宕机，一旦HRegionServer以外退出，MemStore中的内存数据就会丢失，引入HLog就是防止这种情况
 工作机制：
 每个HRegionServer中都会有一个HLog对象，HLog是一个实现Write Ahead Log的类，每次用户操作写入Memstore的同时，也会写一份数据到HLog文件，HLog文件定期会滚动出新，并删除旧的文件(已持久化到StoreFile中的数据)。当HRegionServer意外终止后，HMaster会通过Zookeeper感知，HMaster首先处理遗留的HLog文件，将不同region的log数据拆分，分别放到相应region目录下，然后再将失效的region重新分配，领取到这些region的HRegionServer在Load Region的过程中，会发现有历史HLog需要处理，因此会Replay HLog中的数据到MemStore中，然后flush到StoreFiles，完成数据恢复。
 
 ### HBase存储格式
+
 HBase中的所有数据文件都存储在Hadoop HDFS文件系统上，格式主要有两种：
 1 HFile HBase中KeyValue数据的存储格式，HFile是Hadoop的二进制格式文件，实际上StoreFile就是对HFile做了轻量级包装，即StoreFile底层就是HFile
 2 HLog File，HBase中WAL（Write Ahead Log） 的存储格式，物理上是Hadoop的Sequence File
@@ -167,6 +169,22 @@ Value部分没有这么复杂的结构，就是纯粹的二进制数据
 HLog文件就是一个普通的Hadoop Sequence File，Sequence File 的Key是HLogKey对象，HLogKey中记录了写入数据的归属信息，除了table和region名字外，同时还包括 sequence number和timestamp，timestamp是“写入时间”，sequence number的起始值为0，或者是最近一次存入文件系统中sequence number。
 HLog Sequece File的Value是HBase的KeyValue对象，即对应HFile中的KeyValue
 
+### 写入机制
+
+写操作预先写入预写式日志（write-ahead log，WAL，HLog）和MemStore（内存缓冲区），保持数据持久化，两处的变化数据合并后才算写入动作真正完成。MemStore填满后会flush到硬盘成为一个HFile，一个列族有多个HFile，一个HFile不能存储多个列族信息。
+
+### 读取机制
+
+从HBase读取行首先检查MemStore待修改的队列，然后检查BlockCache，最后访问HFile。
+
+### 删除机制
+
+在被删除的内容标记tomstone，直到一次major compaction，真正释放存储空间。
+
+### 合并机制Compaction
+
+分为Minorco Compaction和Major Compaction两种，目的是限制HFile数量，保证IO访问效率。Minorco把多个小HFile合并成一个大的HFile，激活新的HFile，删除原有的小HFile；Major处理给定的region的一个列族的所有HFile，完成后该列族所有HFile合并为一个。
+
 - - -
 
 ## Shell指令
@@ -192,7 +210,7 @@ hbase(main):001:0> create 'test', 'info'
 4, 显示现有的所有表名
 
 ```
-hbase(main):002:0> list
+hbase(main):002:0> list 
 TABLE
 test
 test_info
@@ -268,6 +286,219 @@ hbase(main):030:0> drop 'scores_3'
 0 row(s) in 1.0390 seconds
 
 ```
+
+---
+
+## HBase API 访问
+
+```java
+/**
+ * Created by kakack on 2016/12/28.
+ */
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.KeyValue;
+
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class HBaseTest {
+	
+	//配置信息
+    private static Configuration conf = HBaseConfiguration.create();
+    static {
+        conf.set("hbase.zookeeper.quorum", "datanode04");
+        conf.set("hbase.zookeeper.property.clientPort", "2181");
+        conf.set("hbase.master", "resourcemanager:60000");
+    }
+
+
+    //创建数据库表
+    public static void createTable(String tableName, String[] columnFamilys)
+            throws Exception {
+        // 新建一个数据库管理员
+        HBaseAdmin hAdmin = new HBaseAdmin(conf);
+
+        if (hAdmin.tableExists(tableName)) {
+            System.out.println("表已经存在");
+            System.exit(0);
+        } else {
+            // 新建一个 scores 表的描述
+            HTableDescriptor tableDesc = new HTableDescriptor(tableName);
+            // 在描述里添加列族
+            for (String columnFamily : columnFamilys) {
+                tableDesc.addFamily(new HColumnDescriptor(columnFamily));
+            }
+            // 根据配置好的描述建表
+            hAdmin.createTable(tableDesc);
+            System.out.println("创建表成功");
+        }
+    }
+
+    // 删除数据库表
+    public static void deleteTable(String tableName) throws Exception {
+        // 新建一个数据库管理员
+        HBaseAdmin hAdmin = new HBaseAdmin(conf);
+
+        if (hAdmin.tableExists(tableName)) {
+            // 关闭一个表
+            hAdmin.disableTable(tableName);
+            // 删除一个表
+            hAdmin.deleteTable(tableName);
+            System.out.println("删除表成功");
+
+        } else {
+            System.out.println("删除的表不存在");
+            System.exit(0);
+        }
+    }
+
+    // 添加一条数据
+    public static void addRow(String tableName, String row,
+                              String columnFamily, String column, String value) throws Exception {
+        HTable table = new HTable(conf, tableName);
+        Put put = new Put(Bytes.toBytes(row));
+        // 参数出分别：列族、列、值
+        put.add(Bytes.toBytes(columnFamily), Bytes.toBytes(column),
+                Bytes.toBytes(value));
+        table.put(put);
+    }
+
+    // 删除一条数据
+    public static void delRow(String tableName, String row) throws Exception {
+        HTable table = new HTable(conf, tableName);
+        Delete del = new Delete(Bytes.toBytes(row));
+        table.delete(del);
+    }
+
+    // 删除多条数据
+    public static void delMultiRows(String tableName, String[] rows)
+            throws Exception {
+        HTable table = new HTable(conf, tableName);
+        List<Delete> list = new ArrayList<Delete>();
+
+        for (String row : rows) {
+            Delete del = new Delete(Bytes.toBytes(row));
+            list.add(del);
+        }
+
+        table.delete(list);
+    }
+
+    // get row
+    public static void getRow(String tableName, String row) throws Exception {
+        HTable table = new HTable(conf, tableName);
+        Get get = new Get(Bytes.toBytes(row));
+        Result result = table.get(get);
+        // 输出结果
+        for (KeyValue rowKV : result.raw()) {
+            System.out.print("Row Name: " + new String(rowKV.getRow()) + " ");
+            System.out.print("Timestamp: " + rowKV.getTimestamp() + " ");
+            System.out.print("column Family: " + new String(rowKV.getFamily()) + " ");
+            System.out.print("Row Name:  " + new String(rowKV.getQualifier()) + " ");
+            System.out.println("Value: " + new String(rowKV.getValue()) + " ");
+        }
+    }
+
+    // get all records
+    public static void getAllRows(String tableName) throws Exception {
+        HTable table = new HTable(conf, tableName);
+        Scan scan = new Scan();
+        ResultScanner results = table.getScanner(scan);
+        // 输出结果
+        for (Result result : results) {
+            for (KeyValue rowKV : result.raw()) {
+                System.out.print("Row Name: " + new String(rowKV.getRow()) + " ");
+                System.out.print("Timestamp: " + rowKV.getTimestamp() + " ");
+                System.out.print("column Family: " + new String(rowKV.getFamily()) + " ");
+                System.out
+                        .print("Row Name:  " + new String(rowKV.getQualifier()) + " ");
+                System.out.println("Value: " + new String(rowKV.getValue()) + " ");
+            }
+        }
+    }
+
+
+    public static void main(String[] args) throws IOException {
+        try {
+            String tableName = "HBaseJava";
+
+            // 第一步：创建数据库表：“users2”
+            String[] columnFamilys = { "info", "course" };
+            HBaseTest.createTable(tableName, columnFamilys);
+
+            HBaseTest.addRow(tableName, "tht", "info", "age", "20");
+
+            System.out.println("获取一条数据");
+            HBaseTest.getRow(tableName, "tht");
+
+            HBaseTest.addRow(tableName, "tht", "info", "age","24");
+            HBaseTest.getRow(tableName, "tht");
+
+            System.out.println("删除数据库");
+            //HBaseTest.deleteTable(tableName);
+
+        } catch (Exception err) {
+            err.printStackTrace();
+        }
+    }
+}
+
+
+```
+
+```xml
+<dependency>
+	<groupId>org.apache.hadoop</groupId>
+   <artifactId>hadoop-core</artifactId>
+   <version>1.0.3</version>
+</dependency>
+<dependency>
+	<groupId>org.apache.hbase</groupId>
+   <artifactId>hbase-client</artifactId>
+   <version>1.2.2</version>
+</dependency>
+
+```
+
+
+`hbase-client`的`version`需要跟实际的`hbase version`一样
+
+
+
+# 过滤Scan
+
+```java
+
+//过滤scan
+
+Scan s = new Scan();
+Filter f =new ValueFilter(
+		CompareFilter.CompareOp.EQUAL,
+		new RegexStringComparator("(2)(\\d)")
+	);
+s.setFilter(f);
+```
+
+- - -
+
+# Mapreduce和HBase
+
+从MR应用访问HBase有三种方式：
+
+- 作业开始时用HBase作为数据源：Mapreduce mapper作业从HBase中取得region作为输入源，每个region默认建立一个mapper
+- 作业结束时用HBase接受数据：reduce任务写入HBase region
+- 任务过程中用HBase共享资源
 
 
 
