@@ -21,6 +21,10 @@ mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 ```
 其中`mnist`是一个轻量级的类，以`Numpy arrays`的形式保存了训练、验证和测试集
 
+下载下来的数据集被分成两部分：60000行的训练数据集`（mnist.train）`和10000行的测试数据集`（mnist.test）`。
+
+其中每个数据单元都由两部分组成，一张手写数字图片和一个对应标签，将图片设为`xs`，标签设为`ys`
+
 ---
 
 # 启动TensorFlow InteractiveSession
