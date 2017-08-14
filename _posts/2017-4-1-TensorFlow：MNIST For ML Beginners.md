@@ -25,6 +25,55 @@ mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
 其中每个数据单元都由两部分组成，一张手写数字图片和一个对应标签，将图片设为`xs`，标签设为`ys`
 
+可以用以下方法画9张图像，然后在下面显示预测类别和真实类别
+
+```Python
+def plot_images(images, cls_true, cls_pred=None):
+    assert len(images) == len(cls_true) == 9
+    
+    # Create figure with 3x3 sub-plots.
+    fig, axes = plt.subplots(3, 3)
+    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+
+    for i, ax in enumerate(axes.flat):
+        # Plot image.
+        ax.imshow(images[i].reshape(img_shape), cmap='binary')
+
+        # Show true and predicted classes.
+        if cls_pred is None:
+            xlabel = "True: {0}".format(cls_true[i])
+        else:
+            xlabel = "True: {0}, Pred: {1}".format(cls_true[i], cls_pred[i])
+
+        # Show the classes as the label on the x-axis.
+        ax.set_xlabel(xlabel)
+        
+        # Remove ticks from the plot.
+        ax.set_xticks([])
+        ax.set_yticks([])
+    
+    # Ensure the plot is shown correctly with multiple plots
+    # in a single Notebook cell.
+    plt.show()
+```
+
+然后绘制几张看看效果
+
+```python
+# Get the first images from the test-set.
+images = data.test.images[0:9]
+# Get the true classes for those images.
+cls_true = data.test.labels[0:9]
+# Plot the images and labels using our helper-function above.
+plot_images(images=images, cls_true=cls_true)
+```
+
+![img](https://pic1.zhimg.com/v2-842b6427471fa494db8748943d5ee91c_b.png)
+
+
+
+
+
 ---
 
 # 启动TensorFlow InteractiveSession
@@ -127,7 +176,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 ```python
 print(accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
 ```
---- 
+---
 
 # 构建多层卷积网络
 
@@ -135,7 +184,7 @@ print(accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
 
 ### 权重初始化
 
-要创建这个模型，我们将需要创建很多权重和偏差。通常应该用少量的噪声来初始化重量以进行对称断裂symmetry breaking，并且防止0梯度。由于我们使用ReLU神经元，所以用一个轻微的初始化它们初始偏移量以避免“死神经元”也是一个很好的尝试。而不是在构建模型时反复执行，我们创建两个方便的函数：
+要创建这个模型，我们将需要创建很多权重`weight`和偏差`bias`。通常应该用少量的噪声来初始化重量以进行对称断裂`symmetry breaking`，并且防止0梯度。由于我们使用`ReLU`神经元，所以用一个轻微的初始化它们初始偏移量以避免“死神经元”也是一个很好的尝试。而不是在构建模型时反复执行，我们创建两个方便的函数：
 
 ```python
 def weight_variable(shape):
