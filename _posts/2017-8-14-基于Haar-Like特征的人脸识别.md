@@ -126,9 +126,9 @@ End for
  
  - - -
  
- ## OpenCV-Python中的例子
- 
- ```Python
+## OpenCV-Python中的例子
+
+```Python
 import cv2
 
 imagepath ='./catface2.jpg'
