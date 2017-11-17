@@ -236,3 +236,5 @@ The accuracy of the xgb classifier
 	is 0.98 out of 1 on test data
 ```
 ![](http://ope2etmx1.bkt.clouddn.com/Figure_3.png)
+
+在测试集上，KNN表现最好，而在训练集上，SVM和XGB表现更加优越。
