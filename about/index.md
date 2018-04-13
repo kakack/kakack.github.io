@@ -3,10 +3,8 @@ title: About me
 layout: page
 comments: yes
 ---
-  
-![](http://img4.duitang.com/uploads/item/201305/06/20130506224101_rxQFe.thumb.600_0.jpeg)
 
-
+![](http://ope2etmx1.bkt.clouddn.com/48888608_p0.jpg)
 
 
      Coder In Zhejiang University.Working on Cloud，Hadoop，ML
