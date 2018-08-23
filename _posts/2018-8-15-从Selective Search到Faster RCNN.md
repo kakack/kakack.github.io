@@ -31,14 +31,14 @@ Jasper R. R. Uijlings, Koen E. A. van de Sande, Theo Gevers, Arnold W. M. Smeuld
 
 ![](http://ope2etmx1.bkt.clouddn.com/2018822-1.jpg)
 
-- 使用[Efficient GraphBased Image Segmentation](http://cs.brown.edu/people/pfelzens/segment/)中的方法来得到初始化region
+- 使用[Efficient GraphBased Image Segmentation](http://cs.brown.edu/people/pfelzens/segment/)中的方法来得到初始化region（Kinds of greedy method）
 - 得到所有region之间两两的相似度
 - 合并最像的两个region
 - 重新计算新合并region与其他region的相似度
 - 重复上述过程直到整张图片都聚合成一个大的region
 - 使用一种随机的计分方式给每个region打分，按照分数进行ranking，取出top k的子集，获取每个区域的Bounding Boxes，就是selective search的结果
 
-其中涉及到的相似度有：颜色相似度、纹理相似度、大小相似度、吻合相似度
+其中涉及到的相似度有：颜色相似度、纹理相似度、大小相似度、吻合相似度、综合各种距离
 
 ## Object Recognition
 
@@ -55,11 +55,37 @@ Jasper R. R. Uijlings, Koen E. A. van de Sande, Theo Gevers, Arnold W. M. Smeuld
 
 # IOU
 
-IOU，aka Intersection-over-Union
+IOU，aka ***Intersection-over-Union***，简单来讲就是模型产生的目标窗口和原来标记窗口的交叠率。具体我们可以简单的理解为： 即检测结果(DetectionResult)与 Ground Truth 的交集比上它们的并集，即为检测的准确率 IoU :
+
+<center><img src="http://latex.codecogs.com/gif.latex?IOU=\frac{DetectionResult&space;\bigcap&space;GroundTruth}{DetectionResult&space;\bigcup&space;GroundTruth}"/></center>
+
+或者
+
+<center><img src="http://latex.codecogs.com/gif.latex?IOU=\frac{AreaOfOverlap}{AreaOfUnion}"/></center>
+
+其中所谓的ground truth即正确的标注物体位置。
+
+IoU是一个简单的测量标准，只要是在输出中得出一个预测范围(bounding boxex)的任务都可以用IoU来进行测量。为了可以使IoU用于测量任意大小形状的物体检测，我们需要：
+ 
+1. ground-truth bounding boxes（人为在训练集图像中标出要检测物体的大概范围）； 
+
+2. 我们的算法得出的结果范围。
+
+也就是说，这个标准用于测量真实和预测之间的相关度，相关度越高，该值越高。
 
 ---
 
 # SSP
+
+[Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition](https://arxiv.org/pdf/1406.4729.pdf)
+
+SSP，aka ***Spatial Pyramid Pooling***，需要解决的问题有二：
+
+1. 现有的CNN做图像识别要求输入图像尺寸固定，因此在喂入数据时会对图像做crop或wrap等操作，丢失一定图像信息。
+2. 一个CNN通常分为卷基层conv和全连接层fc两部分，其中前半部分计算量大，所以事实上单张图片只需要计算一遍卷积特征就可以。
+
+![](http://ope2etmx1.bkt.clouddn.com/2018822-3.jpg)
+
 
 ---
 
