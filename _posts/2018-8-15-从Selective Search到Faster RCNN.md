@@ -131,6 +131,8 @@ RCNN所解决的两个问题：
 
 # Fast RCNN
 
+[Fast R-CNN Ross Girshick](https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Girshick_Fast_R-CNN_ICCV_2015_paper.pdf)
+
 Fast R-CNN主要解决R-CNN的以下问题：
 
 1. 训练、测试时速度慢: R-CNN的一张图像内候选框之间存在大量重叠，提取特征操作冗余。而Fast R-CNN将整张图像归一化后直接送入深度网络，紧接着送入从这幅图像上提取出的候选区域。这些候选区域的前几层特征不需要再重复计算。
@@ -138,18 +140,103 @@ Fast R-CNN主要解决R-CNN的以下问题：
 
 ![](http://ope2etmx1.bkt.clouddn.com/2018822-5.png)
 
+训练过程：
+
+1. 网络首先用几个卷积层（conv）和最大池化层处理整个图像以产生conv特征图，同时利用selective search在任意尺寸的图像上提取约2k个region proposals。
+2. 然后，对于每个对象建议框（object proposals ），感兴趣区域（region of interest——RoI）池层从特征图提取固定长度H*W的特征向量。
+3. 每个H*W大小的特征向量被输送到分支成两个同级输出层的全连接（fc）层序列中（由SVD分解实现）。
+4. 其中一层进行分类，对 目标关于K个对象类（包括全部“背景background”类）产生softmax概率估计，即输出每一个RoI的概率分布；
+5. 另一层进行bbox regression，输出K个对象类中每一个类的四个实数值。每4个值编码K个类中的每个类的精确边界盒（bounding-box）位置，即输出每一个种类的的边界盒回归偏差。
+
+整个结构是使用多任务损失的端到端训练（trained end-to-end with a multi-task loss）。
+
+![](http://ope2etmx1.bkt.clouddn.com/2018822-7.jpg)
+
+其中Fast RCNN最重要的创新点在于：
+
+1. 规避R-CNN中冗余的特征提取操作，只对整张图像全区域进行一次特征提取；
+2. 用RoI pooling层取代最后一层max pooling层，同时引入建议框信息，提取相应建议框特征；
+3. Fast R-CNN网络末尾采用并行的不同的全连接层，可同时输出分类结果和窗口回归结果，实现了end-to-end的多任务训练【建议框提取除外】，也不需要额外的特征存储空间【R-CNN中这部分特征是供SVM和Bounding-box regression进行训练的】；
+4. 采用SVD对Fast R-CNN网络末尾并行的全连接层进行分解，减少计算复杂度，加快检测速度。
+
 
 ---
 
 # Faster RCNN
 
+[Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks Shaoqing Ren Kaiming He Ross Girshick Jian Sun](http://papers.nips.cc/paper/5638-faster-r-cnn-towards-real-time-object-detection-with-region-proposal-networks.pdf)
+
+
+Faster R-CNN可以简单地看做“区域生成网络RPNs + Fast R-CNN”的系统，用区域生成网络代替FastR-CNN中的Selective Search方法。Faster R-CNN这篇论文着重解决了这个系统中的三个问题：
+
+1. 如何设计区域生成网络；
+2. 如何训练区域生成网络；
+3. 如何让区域生成网络和Fast RCNN网络共享特征提取网络。
+
+在整个Faster R-CNN算法中，有三种尺度：
+
+1. 原图尺度：原始输入的大小。不受任何限制，不影响性能。
+2. 归一化尺度：输入特征提取网络的大小，在测试时设置，源码中opts.test_scale=600。anchor在这个尺度上设定。这个参数和anchor的相对大小决定了想要检测的目标范围。
+3. 网络输入尺度：输入特征检测网络的大小，在训练时设置，源码中为224*224。
+
+流程概要：输入图片-生成region proposal-特征提取-分类-位置精修
+
 ![](http://ope2etmx1.bkt.clouddn.com/2018822-6.png)
+
+主要由PRN候选框提取模块和Fast R-CNN检测模块组成。其中，RPN是全卷积神经网络，用于提取候选框；Fast R-CNN基于RPN提取的proposal检测并识别proposal中的目标。
+
+## RPN
+
+RPN，aka Region Proposal Network，是一个全卷积神经网络，用来提取检测区域，它能和整个检测网络共享全图的卷积特征，使得区域建议几乎不花时间，大大提高了原先用SSP net做区域建议时的计算效率。RPN可以针对生成检测建议框的任务端到端地训练，能够同时预测出object的边界和分数。只是在CNN上额外增加了2个卷积层（全卷积层cls和reg）。
+
+- reg层：预测proposal的anchor对应的proposal的（x,y,w,h）
+- cls层：判断该proposal是前景（object）还是背景（non-object）
+
+![](http://ope2etmx1.bkt.clouddn.com/2018822-8.png)
+
+RPN的具体流程如下：使用一个小网络在最后卷积得到的特征图上进行滑动扫描，这个滑动网络每次与特征图上n*n（论文中n=3）的窗口全连接（图像的有效感受野很大，ZF是171像素，VGG是228像素），然后映射到一个低维向量（256d for ZF / 512d for VGG），最后将这个低维向量送入到两个全连接层，即bbox回归层（reg）和box分类层（cls）。sliding window的处理方式保证reg-layer和cls-layer关联了conv5-3的全部特征空间。
+
+## Bounding-Box Regression
+
+
+![](http://ope2etmx1.bkt.clouddn.com/2018822-9.png)
+
+如图所示，绿色的框为飞机的Ground Truth，红色的框是提取的Region Proposal。那么即便红色的框被分类器识别为飞机，但是由于红色的框定位不准(IoU<0.5)，那么这张图相当于没有正确的检测出飞机。如果我们能对红色的框进行微调，使得经过微调后的窗口跟Ground Truth更接近，这样岂不是定位会更准确。确实，Bounding-box regression 就是用来微调这个窗口的。
+
+
+![](http://ope2etmx1.bkt.clouddn.com/2018822-10.png)
+
+## RPN与Fast R-CNN特征共享
+
+Faster-R-CNN算法由两大模块组成：PRN候选框提取模块；Fast R-CNN检测模块。
+
+RPN和Fast R-CNN都是独立训练的，要用不同方式修改它们的卷积层。因此需要开发一种允许两个网络间共享卷积层的技术，而不是分别学习两个网络。注意到这不是仅仅定义一个包含了RPN和Fast R-CNN的单独网络，然后用反向传播联合优化它那么简单。原因是Fast R-CNN训练依赖于固定的目标建议框，而且并不清楚当同时改变建议机制时，学习Fast R-CNN会不会收敛。
+
+RPN在提取得到proposals后，作者选择使用Fast-R-CNN实现最终目标的检测和识别。RPN和Fast-R-CNN共用了13个VGG的卷积层，显然将这两个网络完全孤立训练不是明智的选择，作者采用交替训练（Alternating training）阶段卷积层特征共享：
+
+第一步，我们依上述训练RPN，该网络用ImageNet预训练的模型初始化，并端到端微调用于区域建议任务；
+
+第二步，我们利用第一步的RPN生成的建议框，由Fast R-CNN训练一个单独的检测网络，这个检测网络同样是由ImageNet预训练的模型初始化的，这时候两个网络还没有共享卷积层；
+
+第三步，我们用检测网络初始化RPN训练，但我们固定共享的卷积层，并且只微调RPN独有的层，现在两个网络共享卷积层了；
+
+第四步，保持共享的卷积层固定，微调Fast R-CNN的fc层。这样，两个网络共享相同的卷积层，构成一个统一的网络。
+
 
 
 ---
 
 # Conclusion
 
+RCNN、Fast RCNN和Faster RCNN三者关系：
+
+![](http://ope2etmx1.bkt.clouddn.com/2018822-11.png)
+
+|     |	使用方法    | 缺点 |	改进	|
+| --- | ------------ |-----|---------|
+| <br>R-CNN<br>(Region-based ConvolutionalNeural Networks) |<br>1、SS提取RP；<br>2、CNN提取特征；<br>3、SVM分类；<br>4、BB盒回归。|<br>1、 训练步骤繁琐（微调网络+训练SVM+训练bbox）；<br>2、 训练、测试均速度慢 ；<br>3、 训练占空间|<br>1、 从DPM HSC的34.3%直接提升到了66%（mAP）；<br>2、 引入RP+CNN|
+| <br>Fast R-CNN<br /><br>(Fast Region-based Convolutional Neural Networks)<br /> |<br>1、SS提取RP；<br>2、CNN提取特征；<br>3、softmax分类；<br>4、多任务损失函数边框回归。|<br>1、 依旧用SS提取RP(耗时2-3s，特征提取耗时0.32s)；<br>2、 无法满足实时应用，没有真正实现端到端训练测试；<br>3、 利用了GPU，但是区域建议方法是在CPU上实现的。|<br>1、 由66.9%提升到70%；<br>2、 每张图像耗时约为3s。|
+| <br>Faster R-CNN<br /><br>(Fast Region-based Convolutional Neural Networks)<br /> |<br>1、RPN提取RP；<br>2、CNN提取特征；<br>3、softmax分类；<br>4、多任务损失函数边框回归。|<br>1、 还是无法达到实时检测目标；<br>2、 获取region proposal，再对每个proposal分类计算量还是比较大。|<br>1、 提高了检测精度和速度；<br>2、  真正实现端到端的目标检测框架；<br>3、  生成建议框仅需约10ms。|
 
 
 
