@@ -416,4 +416,6 @@ print(re.split(r"[,;\.]", "a;b,c.d;e"))
 
 # 总结图 
 
+[cheat table online](https://regexr.com/3g1v7)
+
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/regEX.png)
