@@ -416,4 +416,4 @@ print(re.split(r"[,;\.]", "a;b,c.d;e"))
 
 # 总结图 
 
-![](http://ope2etmx1.bkt.clouddn.com/regEx.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/regEX.png)

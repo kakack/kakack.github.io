@@ -56,7 +56,7 @@ tags: [Computer Graphic, OpenCV, Face Detection]
 
 ##### Haar-like特征：
 
-![](http://ope2etmx1.bkt.clouddn.com/23115756-851f494ea9994b6e90006949a2150c5f.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/haarlike0.png)
 
 一个矩形哈尔特征可以定义为矩形中几个区域的像素和的差值，可以具有任意的位置和尺寸。这种特质也被称为2矩形特征（2-rectangle feature）。 维奥拉和琼斯也定义了3矩形特征和4矩形特征。这个值表明了图像的特定区域的某些特性。每一个特征可以描述图像上特定特性的存在或不存在，比如边缘或者纹理的变化。
 
@@ -71,7 +71,7 @@ haar-like feature = sum(white) - 2*sum(black)
 
 其他一些特征模板
 
-![](http://ope2etmx1.bkt.clouddn.com/206_761_537.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/haarlike1.png)
 
 矩阵特征值根据*特征模板的大小、位置和模板类型*的不同而不同，因此是关于这三个因素的函数。
 
@@ -81,7 +81,7 @@ haar-like feature = sum(white) - 2*sum(black)
 
 利用积分图可以只查询4次就求得一个2矩阵特征的值：
 
-![](http://ope2etmx1.bkt.clouddn.com/211_fb0_159.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/haarlike2.png)
 
 如图所示白色部分计算结果即`B(5)+B(1)-B(2)-B(6)`，黑色部分计算结果即`B(4)+B(2)-B(3)-B(5)`，二者的差即所示矩阵的特征值。
 
@@ -116,13 +116,13 @@ End for
 
 其中<img src="https://latex.codecogs.com/gif.latex?\alpha_{t}=log\frac{1}{\beta_{t}}"/>
 
-![](http://ope2etmx1.bkt.clouddn.com/573f177219528.gif)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/haarlike3.gif)
 
 ##### Cascade级联分类器
 
 就是讲几个通过AdaBoost方法得到的强分类器进行排序，简单的在左复杂的在右，因为认为一般照片中人脸所占部分较小，可以较为大胆地去除很大一部分非人脸的内容
 
-![](http://ope2etmx1.bkt.clouddn.com/20150805233022701.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/haarlike4.png)
  
  - - -
  
