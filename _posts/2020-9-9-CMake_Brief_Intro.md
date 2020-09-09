@@ -12,9 +12,9 @@ tags: [C++]
 
 可以直接在[`cmake`官网](https://cmake.org/download/)上下载含GUI的app，直接本地安装后，用以下三种方法安装`Command Line Use`：
 
-> - One may add CMake to the PATH: `PATH="/Applications/CMake.app/Contents/bin":"$PATH"`
-> - Or, to install symlinks to '/usr/local/bin', run: `sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install`
-> - Or, to install symlinks to another directory, run: `sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install=/path/to/bin`
+- One may add CMake to the PATH: `PATH="/Applications/CMake.app/Contents/bin":"$PATH"`
+- Or, to install symlinks to '/usr/local/bin', run: `sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install`
+- Or, to install symlinks to another directory, run: `sudo "/Applications/CMake.app/Contents/bin/cmake-gui" --install=/path/to/bin`
 
 # 组件描述
 在 linux 平台下使用 CMake 生成 Makefile 并编译的流程如下：
