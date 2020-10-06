@@ -36,12 +36,20 @@ tags: [Deep SORT, Tracking]
 
 对于卡尔曼滤波而言，目标物体在任意时间点下都有一个状态，和速度、位置相关，且假设变量p位置和v速度都符合随机高斯分布，<a href="https://www.codecogs.com/eqnedit.php?latex=N(\mu,\sigma^2)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?N(\mu,\sigma^2)" title="N(\mu,\sigma^2)" /></a>。卡尔曼滤波通过协方差矩阵来描述速度与位置之间的相关性，即矩阵的ij位置上元素的值描述了第i个和第j个变量之间的相关程度。
 
-因此，在完成建模之前还需要补充两个信息，即$k$时刻下，目标物的最佳估计值$\hat{x}_k$和协方差矩阵$P_k$：
+因此，在完成建模之前还需要补充两个信息，即$k$时刻下，目标物的最佳估计值$和协方差矩阵：
 
 <p><img src="https://i.upmath.me/svg/%5Chat%7Bx%7D_k%3D%5Cbegin%7Bbmatrix%7Dposition%5C%5Cvelocity%5Cend%7Bbmatrix%7D" alt="\hat{x}_k=\begin{bmatrix}position\\velocity\end{bmatrix}" />
 <img src="https://i.upmath.me/svg/P_k%3D%5Cbegin%7Bbmatrix%7D%5CSigma_%7Bpp%7D%20%5C%20%5CSigma_%7Bpv%7D%5C%5C%5CSigma_%7Bvp%7D%5C%20%5CSigma_%7Bvv%7D%5Cend%7Bbmatrix%7D" alt="P_k=\begin{bmatrix}\Sigma_{pp} \ \Sigma_{pv}\\\Sigma_{vp}\ \Sigma_{vv}\end{bmatrix}" /></p>
 
+在△t的时间间隔后，假设将位置和速度有如下更新方法：
 
+<a href="https://www.codecogs.com/eqnedit.php?latex=p_k=p_{k-1}&plus;\Delta&space;tv_{k-1}" target="_blank"><img src="https://latex.codecogs.com/svg.latex?p_k=p_{k-1}&plus;\Delta&space;tv_{k-1}" title="p_k=p_{k-1}+\Delta tv_{k-1}" /></a>
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=v_k=v_{k-1}" target="_blank"><img src="https://latex.codecogs.com/svg.latex?v_k=v_{k-1}" title="v_k=v_{k-1}" /></a>
+
+用矩阵形式表示：
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\hat{x}_k=\begin{bmatrix}&space;1&space;&&space;\Delta{t}\\&space;0&space;&&space;1&space;\end{bmatrix}\hat{x}_{k-1}\\&space;=F_k\hat{x}_{k-1}" target="_blank"><img src="https://latex.codecogs.com/svg.latex?\hat{x}_k=\begin{bmatrix}&space;1&space;&&space;\Delta{t}\\&space;0&space;&&space;1&space;\end{bmatrix}\hat{x}_{k-1}\\&space;=F_k\hat{x}_{k-1}" title="\hat{x}_k=\begin{bmatrix} 1 & \Delta{t}\\ 0 & 1 \end{bmatrix}\hat{x}_{k-1}\\ =F_k\hat{x}_{k-1}" /></a>
 
 - - -
 
