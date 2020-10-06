@@ -38,8 +38,8 @@ tags: [Deep SORT, Tracking]
 
 因此，在完成建模之前还需要补充两个信息，即$k$时刻下，目标物的最佳估计值$\hat{x}_k$和协方差矩阵$P_k$：
 
-$$\hat{x}_k=\begin{bmatrix}position\\velocity\end{bmatrix}$$
-$$P_k=\begin{bmatrix}\Sigma_{pp} \ \Sigma_{pv}\\\Sigma_{vp}\ \Sigma_{vv}\end{bmatrix}$$
+<p><img src="https://i.upmath.me/svg/%5Chat%7Bx%7D_k%3D%5Cbegin%7Bbmatrix%7Dposition%5C%5Cvelocity%5Cend%7Bbmatrix%7D" alt="\hat{x}_k=\begin{bmatrix}position\\velocity\end{bmatrix}" />
+<img src="https://i.upmath.me/svg/P_k%3D%5Cbegin%7Bbmatrix%7D%5CSigma_%7Bpp%7D%20%5C%20%5CSigma_%7Bpv%7D%5C%5C%5CSigma_%7Bvp%7D%5C%20%5CSigma_%7Bvv%7D%5Cend%7Bbmatrix%7D" alt="P_k=\begin{bmatrix}\Sigma_{pp} \ \Sigma_{pv}\\\Sigma_{vp}\ \Sigma_{vv}\end{bmatrix}" /></p>
 
 
 
