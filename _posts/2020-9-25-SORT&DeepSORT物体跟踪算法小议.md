@@ -49,7 +49,40 @@ tags: [Deep SORT, Tracking]
 
 用矩阵形式表示：
 
-<a href="https://www.codecogs.com/eqnedit.php?latex=\hat{x}_k=\begin{bmatrix}&space;1&space;&&space;\Delta{t}\\&space;0&space;&&space;1&space;\end{bmatrix}\hat{x}_{k-1}\\&space;=F_k\hat{x}_{k-1}" target="_blank"><img src="https://latex.codecogs.com/svg.latex?\hat{x}_k=\begin{bmatrix}&space;1&space;&&space;\Delta{t}\\&space;0&space;&&space;1&space;\end{bmatrix}\hat{x}_{k-1}\\&space;=F_k\hat{x}_{k-1}" title="\hat{x}_k=\begin{bmatrix} 1 & \Delta{t}\\ 0 & 1 \end{bmatrix}\hat{x}_{k-1}\\ =F_k\hat{x}_{k-1}" /></a>
+<a href="https://www.codecogs.com/eqnedit.php?latex=\hat{x}_k=\begin{bmatrix}&space;1&space;&&space;\Delta{t}\\&space;0&space;&&space;1&space;\end{bmatrix}\hat{x}_{k-1}&space;=F_k\hat{x}_{k-1}" target="_blank"><img src="https://latex.codecogs.com/svg.latex?\hat{x}_k=\begin{bmatrix}&space;1&space;&&space;\Delta{t}\\&space;0&space;&&space;1&space;\end{bmatrix}\hat{x}_{k-1}&space;=F_k\hat{x}_{k-1}" title="\hat{x}_k=\begin{bmatrix} 1 & \Delta{t}\\ 0 & 1 \end{bmatrix}\hat{x}_{k-1} =F_k\hat{x}_{k-1}" /></a>
+
+根据协方差矩阵性质，可得：
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\hat{x}_k=F_k\hat{x}_{k-1}\\&space;P_k=F_kP_{k-1}F^T_k" target="_blank"><img src="https://latex.codecogs.com/svg.latex?\hat{x}_k=F_k\hat{x}_{k-1}\\&space;P_k=F_kP_{k-1}F^T_k" title="\hat{x}_k=F_k\hat{x}_{k-1}\\ P_k=F_kP_{k-1}F^T_k" /></a>
+
+引入外部影响：
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\hat{x}_k=F_k\hat{x}_{k-1}&plus;\begin{bmatrix}\frac{\Delta&space;t^2}{2}\\\Delta&space;t\end{bmatrix}a=F_k\hat{x}_{k-1}&plus;B_k\overrightarrow{u}_k" target="_blank"><img src="https://latex.codecogs.com/svg.latex?\hat{x}_k=F_k\hat{x}_{k-1}&plus;\begin{bmatrix}\frac{\Delta&space;t^2}{2}\\\Delta&space;t\end{bmatrix}a=F_k\hat{x}_{k-1}&plus;B_k\overrightarrow{u}_k" title="\hat{x}_k=F_k\hat{x}_{k-1}+\begin{bmatrix}\frac{\Delta t^2}{2}\\\Delta t\end{bmatrix}a=F_k\hat{x}_{k-1}+B_k\overrightarrow{u}_k" /></a>
+
+其中B为控制矩阵，u为控制变量，如果外部环境异常简单，则可忽略不计。
+
+引入外部不确定性（噪声）Q_k：
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\hat{x}_k=F_k\hat{x}_{k-1}&plus;B_k\overrightarrow{u}_k" target="_blank"><img src="https://latex.codecogs.com/svg.latex?\hat{x}_k=F_k\hat{x}_{k-1}&plus;B_k\overrightarrow{u}_k" title="\hat{x}_k=F_k\hat{x}_{k-1}+B_k\overrightarrow{u}_k" /></a>
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=P_k=F_kP_{k-1}F^T_k&plus;Q_k" target="_blank"><img src="https://latex.codecogs.com/svg.latex?P_k=F_kP_{k-1}F^T_k&plus;Q_k" title="P_k=F_kP_{k-1}F^T_k+Q_k" /></a>
+
+概况而言就是：
+
+- `新的最佳估计`是基于`原最佳估计`和`已知外部影响`校正后得到的预测。
+- `新的不确定性`是基于`原不确定性`和`外部环境的不确定性`得到的预测。
+
+- - -
+
+# SORT
+
+SORT的目标建模是一个八维的模型：
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=X=\begin{bmatrix}\mu&space;&&space;\upsilon&space;&&space;r&space;&&space;h&space;&&space;\dot{x}&space;&&space;\dot{y}&space;&&space;\dot{r}&space;&&space;\dot{h}\end{bmatrix}^T" target="_blank"><img src="https://latex.codecogs.com/gif.latex?X=\begin{bmatrix}\mu&space;&&space;\upsilon&space;&&space;r&space;&&space;h&space;&&space;\dot{x}&space;&&space;\dot{y}&space;&&space;\dot{r}&space;&&space;\dot{h}\end{bmatrix}^T" title="X=\begin{bmatrix}\mu & \upsilon & r & h & \dot{x} & \dot{y} & \dot{r} & \dot{h}\end{bmatrix}^T" /></a>
+
+前三个变量分别表示当前目标在坐标轴的横轴值、纵轴值、BBox的尺寸比例和高，后四个变量为下一帧预测的位置横坐标、纵坐标和BBox尺寸上的相对速度。
+
+SORT使用匈牙利指派算法进行数据关联，使用的cost矩阵为原有目标在当前帧中的预测位置和当前帧目标检测框之间的IOU。当然小于指定IOU阈值的指派结果是无效的。作者发现使用IOU能够解决目标的短时被遮挡问题。这是因为目标被遮挡时，检测到了遮挡物，没有检测到原有目标，假设把遮挡物和原有目标进行了关联。那么在遮挡结束后，因为在相近大小的目标IOU往往较大，因此很快就可以恢复正确的关联。这是建立在遮挡物面积大于目标的基础上的。如果连续`T_lost`帧没有实现已追踪目标预测位置和检测框的IOU匹配，则认为目标消失。实验中设置 `T_lost=1`，原因有二，一是匀速运动假设不合理，二是作者主要关注短时目标追踪。另外，尽早删除已丢失的目标有助于提升追踪效率。
 
 - - -
 
