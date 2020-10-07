@@ -132,6 +132,11 @@ Deep SORT相比SORT，通过集成表观信息来提升SORT的表现。通过这
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20200928-3.png)
 
+- - -
+
+# 实验结论
+
+
 
 - - -
 
@@ -142,5 +147,3 @@ Deep SORT相比SORT，通过集成表观信息来提升SORT的表现。通过这
 - [Deep SORT多目标跟踪算法代码解析(下)](https://zhuanlan.zhihu.com/p/133689982)
 - [Deep SORT论文阅读总结](https://mp.weixin.qq.com/s?__biz=MzA4MjY4NTk0NQ==&mid=2247485748&idx=1&sn=eb0344e1fd47e627e3349e1b0c1b8ada&chksm=9f80b3a2a8f73ab4dd043a6947e66d0f95b2b913cdfcc620cfa5b995958efe1bb1ba23e60100&scene=126&sessionid=1587264986&key=1392818bdbc0aa1829bb274560d74860b77843df4c0179a2cede3a831ed1c279c4603661ecb8b761c481eecb80e5232d46768e615d1e6c664b4b3ff741a8492de87f9fab89805974de8b13329daee020&ascene=1&uin=NTA4OTc5NTky&devicetype=Windows+10+x64&version=62090069&lang=zh_CN&exportkey=AeR8oQO0h9Dr%2FAVfL6g0VGE%3D&pass_ticket=R0d5J%2BVWKbvqy93YqUC%2BtoKE9cFI22uY90G3JYLOU0LtrcYM2WzBJL2OxnAh0vLo)
 - [图解卡尔曼滤波](https://zhuanlan.zhihu.com/p/39912633)
-- []()
-- []()
