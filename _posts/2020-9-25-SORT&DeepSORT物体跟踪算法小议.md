@@ -98,9 +98,28 @@ Deep SORT相比SORT，通过集成表观信息来提升SORT的表现。通过这
 
 表示第j个检测结果和第i条轨迹之间的运动匹配度，其中S_i是轨迹由卡尔曼滤波器预测得到的在当前时刻观测空间的协方差矩阵，y_i是轨迹在当前时刻的预测观测量，d_j是第j个检测结果的状态(u, v, r, h)。
 
+可以用一个指示器的形式描述实际马氏距离跟阈值之间的关系：
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=b_{i,j}^{(1)}=1[d^{(1)}(i,j)\leqslant&space;t^{(1)}]" target="_blank"><img src="https://latex.codecogs.com/gif.latex?b_{i,j}^{(1)}=1[d^{(1)}(i,j)\leqslant&space;t^{(1)}]" title="b_{i,j}^{(1)}=1[d^{(1)}(i,j)\leqslant t^{(1)}]" /></a>
+
+论文中默认阈值t^(1)=9.4877，如果当前马氏距离小于该值则表示匹配成功。
+
 为弥补不确定性较高的时候马氏距离度量失效的问题，会使用第i个轨迹和第j个轨迹之间的最小余弦距离作为第二个度量衡：
 
 <a href="https://www.codecogs.com/eqnedit.php?latex=d^{(2)}(i,j)=min\{1-r_j^Tr_k^{(i)}|r_k^{(i)}\in&space;R_i\}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?d^{(2)}(i,j)=min\{1-r_j^Tr_k^{(i)}|r_k^{(i)}\in&space;R_i\}" title="d^{(2)}(i,j)=min\{1-r_j^Tr_k^{(i)}|r_k^{(i)}\in R_i\}" /></a>
+
+余弦距离也有一个指示器：
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=b_{i,j}^{(2)}=1[d^{(2)}(i,j)\leqslant&space;t^{(2)}]" target="_blank"><img src="https://latex.codecogs.com/gif.latex?b_{i,j}^{(2)}=1[d^{(2)}(i,j)\leqslant&space;t^{(2)}]" title="b_{i,j}^{(2)}=1[d^{(2)}(i,j)\leqslant t^{(2)}]" /></a>
+
+默认阈值t^(2)=0.2。
+
+综合匹配程度可以将上述二者加权求和：
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=c_{i,j}=\lambda&space;d^{(1)}(i,j)&plus;(1-\lambda)d^{(2)}(i,j)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?c_{i,j}=\lambda&space;d^{(1)}(i,j)&plus;(1-\lambda)d^{(2)}(i,j)" title="c_{i,j}=\lambda d^{(1)}(i,j)+(1-\lambda)d^{(2)}(i,j)" /></a>
+
+对于每一个轨迹，都计算当前帧距离上次匹配成功的差值。如果产生新的检测结果和现有轨迹无法匹配，则初始化生成一组新的轨迹，新生成的轨迹赋予`不确定态`。而当新轨迹连续三帧都匹配成功，则转换为`确定态`，当某一个轨迹生命周期超过一个最大阈值后认为轨迹离开了画面区域，或连续多帧未匹配成功，则转换为`删除态`，从当前轨迹集合中删除。
+
 
 
 
