@@ -10,9 +10,9 @@ tags: [Detection, Deep Learning]
 
 Anchor Box最早是在Faster-R-CNN中被提到使用，此后在SSD、YOLOv2、YOLOv3等一系列目标检测网络中被普遍使用。Anchor Boxes实质上是一组人为预先设定的检测尺寸框，各个anchor box之间都有各自不同的尺寸和长宽比，以适应不同的被检物体类别。
 
-```
+`
 For each sliding window, the networks make multiple simultaneous proposals, where is the number of proposals for each sliding window location is k. The reg layer gives 4k outputs containing the coordinates of the k boxes and the cls layer had 2k scores that estimate the probability of being an object or not object for each proposal. These k proposals are estimated from k reference boxes, which are called anchors. An anchor for a given sliding window, has a scale and aspect ratio associated with it, in their paper Ren et. al have used 3 scales and 3 aspect ratios, this yields 9 anchors at each sliding window location. For a convolutional feature map of size w×h the total number of anchors = w×h×k.
-```
+`
 
 ---
 
