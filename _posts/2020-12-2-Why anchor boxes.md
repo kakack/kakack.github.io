@@ -30,6 +30,10 @@ For each sliding window, the networks make multiple simultaneous proposals, wher
 
 但是无论哪种方法，都无法很好解决两个问题：1，一个窗口只能检测一个目标；2，无法检测尺寸很大或者长宽比很极端的物体。
 
+![](https://github.com/kakack/kakack.github.io/blob/master/_images/20201202-1.jpg?raw=true)
+
+如上图作为输入，如果我们用3x3网格，而需要被检测的人和汽车的中心恰好都落在同一个网格中。假设我们用y作为这个格子的输出向量，y=[p_c, b_x, b_y, b_h, b_w, c_1, c_2, c_3]^T，其中p_c表示检测置信度，[b_x, b_y, b_h, b_w]表示物体bounding box位置（左上角x、y和高h、宽w），[c_1, c_2, c_3]是以one-hot编码形式表示的三种类别（如人、汽车、摩托车）中的一种。因此从一个输出向量y中我们只能选择一种类型作为检测输出。
+
 那么anchor box的尺寸该怎么选择？目前anchor box的选择主要有三种方式：
 
 - 人为经验选取
