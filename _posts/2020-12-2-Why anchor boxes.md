@@ -72,3 +72,79 @@ Anchor Box会在训练和预测的阶段被使用到。
 
 首先在图像中生成多个anchor box，然后根据训练好的模型参数去预测这些anchor box的类别和偏移量，进而得到预测的边界框。由于阈值和anchor box数量选择的问题，同一个目标可能会输出多个相似的预测边界框，这样不仅不简洁，而且会增加计算量，为了解决这个问题，常用的措施是使用非极大值抑制(non-maximum suppression，NMS)。
 
+--- 
+
+### 附：非极大值抑制NMS
+
+非极大值抑制(Non-Maximum Suppression, NMS), 顾名思义就是抑制那些不是极大值的元素, 可以理解为局部最大值搜索。对于目标检测来说, 非极大值抑制的含义就是对于重叠度较高的一部分同类候选框来说, 去掉那些置信度较低的框, 只保留置信度最大的那一个进行后面的流程, 这里的重叠度高低与否是通过 NMS 阈值来判断的。
+
+其中两个box之间的IOU计算可以是：
+
+```
+  - x_1 = max(x1_box1, x1_box2)  // 右边界
+  - y_1 = max(y1_box1, y1_box2)  // 下边界
+  - x_2 = min(x2_box1, x2_box2)  // 左边界
+  - y_2 = min(y2_box1, y2_box2)  // 上边界
+  - area1 = (x1_box1 - x2_box1 + 1) * (y1_box1 - y2_box1 + 1)  // box1面积
+  - area2 = (x1_box2 - x2_box2 + 1) * (y1_box2 - y2_box2 + 1)  // box1面积
+  - intersection = (x_2 - x_1 + 1) * (y_2 - y_1 + 1)  // 相交区域面积
+  - IOU = intersection / (area1 + area2 - intersection)  // 计算IOU
+```
+
+算法逻辑:
+- 输入: n 行 4 列的候选框数组, 以及对应的 n 行 1 列的置信度数组.
+- 输出: m 行 4 列的候选框数组, 以及对应的 m 行 1 列的置信度数组, m 对应的是去重后的候选框数量
+
+算法流程:
+- 计算 n 个候选框的面积大小
+- 对置信度进行排序, 获取排序后的下标序号, 即采用argsort
+- 将当前置信度最大的框加入返回值列表中
+- 获取当前置信度最大的候选框与其他任意候选框的相交面积
+- 利用相交的面积和两个框自身的面积计算框的交并比, 将交并比大于阈值的框删除.
+- 对剩余的框重复以上过程
+
+```python
+import cv2
+import numpy as np
+
+def nms(bounding_boxes, confidence_score, threshold):
+    if len(bounding_boxes) == 0:
+        return [], []
+    bboxes = np.array(bounding_boxes)
+    score = np.array(confidence_score)
+
+    # 计算 n 个候选框的面积大小
+    x1 = bboxes[:, 0]
+    y1 = bboxes[:, 1]
+    x2 = bboxes[:, 2]
+    y2 = bboxes[:, 3]
+    areas =(x2 - x1 + 1) * (y2 - y1 + 1)
+
+    # 对置信度进行排序, 获取排序后的下标序号, argsort 默认从小到大排序
+    order = np.argsort(score)
+
+    picked_boxes = [] # 返回值
+    picked_score = [] # 返回值
+    while order.size > 0:
+        # 将当前置信度最大的框加入返回值列表中
+        index = order[-1]
+        picked_boxes.append(bounding_boxes[index])
+        picked_score.append(confidence_score[index])
+
+        # 获取当前置信度最大的候选框与其他任意候选框的相交面积
+        x11 = np.maximum(x1[index], x1[order[:-1]])
+        y11 = np.maximum(y1[index], y1[order[:-1]])
+        x22 = np.minimum(x2[index], x2[order[:-1]])
+        y22 = np.minimum(y2[index], y2[order[:-1]])
+        w = np.maximum(0.0, x22 - x11 + 1)
+        h = np.maximum(0.0, y22 - y11 + 1)
+        intersection = w * h
+
+        # 利用相交的面积和两个框自身的面积计算框的交并比, 将交并比大于阈值的框删除
+        ratio = intersection / (areas[index] + areas[order[:-1]] - intersection)
+        left = np.where(ratio < threshold)
+        order = order[left]
+
+    return picked_boxes, picked_score
+
+```
