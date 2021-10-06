@@ -20,7 +20,7 @@ $e = m c^2$
 
 3
 
-$$e = m c^2$$
+$$ e = m c^2 $$
 ---
 
 # Reference
