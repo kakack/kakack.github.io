@@ -32,6 +32,10 @@ BN的整体思路其实是一种*whiten（白化）*操作，即将输入的数�
  - Standardization：对m个$x$进行标准化得到zero mean unit variance的$\hat{x}$
  - scale and shift：对$\hat{x}$进行缩放和平移，得到最终的分布$y$，具有新的均值$\beta$和方差$\gamma$
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-1.jpg)
+
+针对Batch Normalization Transform，总体可以写为如下公式，所以，无论$x_i$原本的均值和方差是多少，通过Batch Norm后其均值和方差分别变为待学习的$\beta$和$\gamma$。
+
 ---
 
 # Reference
