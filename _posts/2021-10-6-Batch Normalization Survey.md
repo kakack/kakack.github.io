@@ -44,7 +44,7 @@ $y^{(b)}_i=BN(x_i)^{b}=\gamma\cdot(\frac{x_i^{b}-\mu(x_i)}{\sqrt{}\sigma(x_i)^2}
 
 在训练时，$\mu$，$\sigma$是当前mini batch的统计量，随着batch的不同一直在变化。在预测阶段，我们希望模型的输出只和输入相关，所以$\mu$，$\sigma$应该固定，可以采用移动平均来计算$\mu$，$\sigma$。
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-2.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-2.jpeg)
 
 
 
