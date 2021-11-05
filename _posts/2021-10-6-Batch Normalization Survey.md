@@ -46,7 +46,7 @@ $y^{(b)}_i=BN(x_i)^{b}=\gamma\cdot(\frac{x_i^{b}-\mu(x_i)}{\sqrt{}\sigma(x_i)^2}
 
 # Training & Testing
 
-在训练时，$\mu$，$\sigma$是当前mini batch的统计量，随着batch的不同一直在变化。在预测阶段，我们希望模型的输出只和输入相关，所以$\mu$，$\sigma$应该固定，可以采用移动平均来计算$\mu$，$\sigma$。
+在训练时，$\mu$，$\sigma$是当前mini batch的统计量，随着batch的不同一直在变化。在testing阶段，我们希望模型的输出只和输入相关，所以$\mu$，$\sigma$应该固定，可以采用移动平均来计算$\mu$，$\sigma$。简单说就是在训练过程中不断记录下当前mini-batch中的$\mu$和$\sigma$，最后用它们各自的全局平均值来作为testing过程中所需要的$\mu$和$\sigma$值。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-2.jpg)
 
@@ -59,7 +59,11 @@ $y^{(b)}_i=BN(x_i)^{b}=\gamma\cdot(\frac{x_i^{b}-\mu(x_i)}{\sqrt{}\sigma(x_i)^2}
 3. **对权重初始化不再敏感**，通常权重采样自0均值某方差的高斯分布，以往对高斯分布的方差设置十分重要，有了Batch Normalization后，对与同一个输出节点相连的权重进行放缩，其标准差σσ也会放缩同样的倍数，相除抵消。
 4. **对权重的尺度不再敏感**，理由同上，尺度统一由$\gamma$参数控制，在训练中决定。
 5. **深层网络可以使用sigmoid和tanh了**，理由同上，BN抑制了梯度消失。
-6. **Batch Normalization具有某种正则作用**，不需要太依赖dropout，减少过拟合。
+6. **Batch Normalization具有某种正则作用，从而去掉droupout过程**，不需要太依赖dropout，减少过拟合。
+7. **加速学习率衰减**，因为可以比inception更快训练，所以可以将学习率衰减速率增加到其6倍。
+8. **去掉局部响应归一化Local Response Normalization**，这货本身就不太稳定，在inception和其他一些网络中被用到，但是用了BN就不需要它了。
+9. **更彻底地shuffle训练样本**，BN更受益于样本内部更大的随机性。
+10. **减少光度畸变photometric distirtions**，由于BN的网络训练更快且更少observe每一个训练样本，因此可以让训练器更注重真实图片本身而不是它们的畸变结果。
 
 ---
 
