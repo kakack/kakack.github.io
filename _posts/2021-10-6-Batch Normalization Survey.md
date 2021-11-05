@@ -12,7 +12,7 @@ tags: [Deep Learning, Batch Normalization]
 
 # Introduce BN
 
-BN的整体思路其实是一种*whiten（白化）*操作，即将输入的数据分布转换到均值$\mu=0$，方差$\sigma=1$的正态分布，能有效加快整个network的收敛，即用较少的学习步骤获得相同的推理精度。直观上的现象就是缓解梯度消失，支持更大的学习率。因为大学习率往往导致反向时梯度困在局部最小值处，BN可以避免神经网络层中很小的参数变动在层数加深的过程中会积聚造成很大的影响。
+BN的整体思路其实是一种*whiten白化*操作，即将输入的数据分布转换到均值$\mu=0$，方差$\sigma=1$的正态分布，能有效加快整个network的收敛，即用较少的学习步骤获得相同的推理精度。直观上的现象就是缓解梯度消失，支持更大的学习率。因为大学习率往往导致反向时梯度困在局部最小值处，BN可以避免神经网络层中很小的参数变动在层数加深的过程中会积聚造成很大的影响。
 
 一般会有以下两种对不同阶段BN的操作方法：
 
@@ -30,13 +30,17 @@ BN的整体思路其实是一种*whiten（白化）*操作，即将输入的数�
 如果batch size为m，则在前向传播时每个节点都有m个输出，对每个节点的m个输出进行归一化。实现如下图所示，可以分为两步：
 
  - Standardization：对m个$x$进行标准化得到zero mean unit variance的$\hat{x}$
- - Scale and shift：对$\hat{x}$进行缩放和平移，得到最终的分布$y$，具有新的均值$\beta$和方差$\gamma$
+ - Scale and shift：对$\hat{x}$进行缩放和平移，得到最终的分布$y$，具有新的均值$\beta$和方差$\gamma$，其中$\beta$和$\gamma$是作为网络训练过程中需要被训练的参数形式出现，其最终取值会在训练过程中不断变化得到。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-1.jpg)
 
 针对Batch Normalization Transform，总体可以写为如下公式，所以，无论$x_i$原本的均值和方差是多少，通过Batch Norm后其均值和方差分别变为待学习的$\beta$和$\gamma$。
 
 $y^{(b)}_i=BN(x_i)^{b}=\gamma\cdot(\frac{x_i^{b}-\mu(x_i)}{\sqrt{}\sigma(x_i)^2})+\beta$
+
+整体变化流程如下图所示：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-3.jpg)
 
 ---
 
