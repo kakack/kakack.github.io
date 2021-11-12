@@ -8,7 +8,7 @@ tags: [Deep Learning, Batch Normalization]
 
 # Rethinking BatchNorm
 
-在BatchNorm广泛应用之后，关于BN的一些思考也被提出，希望能从bacth本身的采样等方法里探讨，不同的batch会有什么样的不同效果。详见[ref[1]](#1)。
+在BatchNorm广泛应用之后，关于BN的一些思考也被提出，希望能从bacth本身的采样等方法里探讨，不同的batch会有什么样的不同效果。详见ref[1]。
 
 本文简述其中涉及的四大实验，每个实验涉及一些子结论。
 
@@ -36,9 +36,9 @@ BN中统计量的计算默认使用EMA方法，但是作者实验发现EMA会导
 
 EMA，exponential moving average，指数移动平均，可以用来有效地计算总体统计，但是可能会存在一些不良情况。
 
-$\mu_{EMA}\leftarrow\lambda\mu_{EMA}+(1-\lambda)\mu_\beta$
+$$\mu_{EMA}\leftarrow\lambda\mu_{EMA}+(1-\lambda)\mu_\beta$$
 
-$\sigma^2_{EMA}\leftarrow\lambda\sigma^2_{EMA}+(1-\lambda)\sigma^2_{\beta}$
+$$\sigma^2_{EMA}\leftarrow\lambda\sigma^2_{EMA}+(1-\lambda)\sigma^2_{\beta}$$
 
 不难看出$\mu_{EMA}$和$\sigma^2_{EMA}$根据权重值$\lambda$不断更新，但是导致次优解的原因也是在于：
 
@@ -52,9 +52,9 @@ $\sigma^2_{EMA}\leftarrow\lambda\sigma^2_{EMA}+(1-\lambda)\sigma^2_{\beta}$
 
 比如有N个样本需要通过数量为的Bmini-batch进行PreciseBN统计量计算，那么需要计算$k=\frac{N}{B}$次，统计量聚合公式为：
 
-$\mu_{pop}=E[\mu_\beta]$
+$$\mu_{pop}=E[\mu_\beta]$$
 
-$\sigma^2_{pop}=E[\mu^2_\beta+\sigma^2_\beta]-E[\mu_\beta]^2$
+$$\sigma^2_{pop}=E[\mu^2_\beta+\sigma^2_\beta]-E[\mu_\beta]^2$$
 
 
 相比于EMA，PreciseBN有两点重要的属性：
@@ -130,15 +130,13 @@ BN在使用中还存在一种information leakage现象，因为BN是对mini-batc
 
 实验结果表明，shuffling和SyncBN都能有效地处理信息泄漏，使得head在测试时能够很好地泛化。在速度方面，我们注意到shuffling需要更少的跨gpu同步，但是shuffling每次传输的数据比SyncBN多。因此，shuffling和SyncBN的相对效率跟具体模型架构相关。
 
-
-
 ---
 
 # Group Normalization
 
 ---
 
-# <p id="1">Reference </p>
+# Reference
 
 - [Rethinking "Batch" in BatchNorm - arXiv](https://arxiv.org/abs/2105.07576)
 - [Group Normalization - arXiv](https://arxiv.org/abs/1803.08494)
