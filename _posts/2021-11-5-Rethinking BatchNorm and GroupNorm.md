@@ -62,13 +62,19 @@ $\sigma^2_{pop}=E[\mu^2_\beta+\sigma^2_\beta]-E[\mu_\beta]^2$
 1. PreciseBN的统计量是通过相同模型计算得到的，而EMA是通过多个历史模型计算得到的。
 2. PreciseBN的所有样本的权重是相同的，而EMA不同样本的权重是不同的。
 
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-2.jpeg)
+
 最后实验得出结论：
 
 1. 推理时使用PreciseBN会更加稳定。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-3.jpeg)
 2. 大batch训练对EMA影响更大。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-4.jpeg)
 3. PreciseBN只需要$10^3$~$10^4$个样本可以得到近似最优。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-5.jpeg)
 4. 小batch会产生统计量积累错误。
-
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-6.jpeg)
 ## Batch in Training & Testing
 
 BN在训练和测试中行为不一致：训练时，BN的统计量来自mini-batch；测试时，BN的统计量来自population。这部分主要探讨了BN行为不一致对模型性能的影响，并且提出消除不一致的方法提升模型性能。
@@ -77,6 +83,8 @@ BN在训练和测试中行为不一致：训练时，BN的统计量来自mini-ba
 
 normalization batch size对training noise和train-test inconsistency有着直接影响：使用更大的batch，mini-batch统计量越接近population统计量，从而降低training noise和train-test inconsistency。
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-7.jpeg)
+
 - **Training noise**：当normalization batch size非常小时，单个样本会受到同一个min-batch样本的严重影响，导致训练精度较差，优化困难。
 - **Generalization gap**：随着normalization batch size的增加，mini-batch的验证集和训练集的之间的泛化误差会增大，这可能是由于training noise和train-test inconsistency没有正则化。
 - **Train-test inconsistency**：在小batch下，mini-batch统计量和population统计量的不一致是影响性能的主要因素。当normalization batch size增大时，细微的不一致可以提供正则化效果减少验证误差。在mini-batch为32~128之间时，正则化达到平衡，模型性能最优。
@@ -84,7 +92,9 @@ normalization batch size对training noise和train-test inconsistency有着直接
 为了保持train和test的BN统计量一致，作者提出了两种方法来解决不一致问题:
 
 1. 一种是推理的时候使用mini-batch统计量，
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-8.jpeg)
 2. 另一种是训练的时候使用population batch统计量。这里作者采用FrozenBN的方法，先选择第80个epoch模型，然后将所有BN替换成FrozenBN，然后训练20个epoch。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-9.jpeg)
 
 ## Batch from different Domain
 
@@ -96,20 +106,27 @@ BN的训练过程分为：
 
 实验主要探究了两种使用场景：
 1. 模型在一个domain上进行训练，然后在其他domain上进行测试；
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-10.jpeg)
 2. 模型在多个domain上进行训练。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-11.jpeg)
 
 结论：
 1. 当存在显著的domain shift时，模型使用评估domain的population统计量会得到更好的结果，可以缓解训练测试的不一致。
 2. SGD training、population statistics training和testing保持一致是非常重要的，并且全部使用domain-specific能取得最好的效果。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-12.jpeg)
 ## Information Leaking within a Batch
 
 BN在使用中还存在一种information leakage现象，因为BN是对mini-batch的样本计算统计量的，导致在样本进行独立预测时，会利用mini-batch内其他样本的统计信息。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-13.jpeg)
 
 作者实验发现，当使用random采样的mini-batch统计量时，验证误差会增加，当使用population统计量时，验证误差会随着epoch的增加逐渐增大，验证了BN信息泄露问题的存在。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-14.jpeg)
 
 解决方法：
 1. 使用SyncBN，来弱化mini-batch内样本之间的相关性。
 2. 在进入head之前在GPU之间随机打乱RoI features，这给每个GPU分配了一个随机的样本子集来进行归一化，同时也削弱了min-batch样本之间的相关性。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-15.jpeg)
 
 实验结果表明，shuffling和SyncBN都能有效地处理信息泄漏，使得head在测试时能够很好地泛化。在速度方面，我们注意到shuffling需要更少的跨gpu同步，但是shuffling每次传输的数据比SyncBN多。因此，shuffling和SyncBN的相对效率跟具体模型架构相关。
 
