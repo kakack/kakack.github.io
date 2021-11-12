@@ -136,12 +136,68 @@ BN在使用中还存在一种information leakage现象，因为BN是对mini-batc
 
 由于BN存在于上文所提到的一些基于batch的问题，所以Group Normalization是Face book AI research（FAIR）吴育昕-何恺明联合推出用于改进和替代BN的方法。
 
+## What is GN
+
 GN本质上仍是归一化，但是它灵活的避开了BN的问题，同时又不同于Layer Norm，Instance Norm，四者的关系如下：
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-16.jpeg)
 
+从左到右以此是BN，LN，IN，GN。
+深度网络中的数据维度一般是[N, C, H, W]或者[N, H, W，C]格式，N是batch size，H/W是feature的高/宽，C是feature的channel，压缩H/W至一个维度，其三维的表示如上图，假设单个方格的长度是1，那么其表示的是[6, 6，*, * ]。
 
+- **BN**在batch的维度上norm，归一化维度为[N，H，W]，对batch中对应的channel归一化；
+- **LN**避开了batch维度，归一化的维度为[C，H，W]；
+- **IN**归一化的维度为[H，W]；
+- 而**GN**介于LN和IN之间，其首先将channel分为许多组（group），对每一组做归一化，及先将feature的维度由[N, C, H, W]reshape为[N, G，C//G , H, W]，归一化的维度为[C//G , H, W]
 
+事实上，GN的极端情况就是LN和I N，分别对应G等于C和G等于1，作者在论文中给出G设为32较好。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-17.jpeg)
+
+给出的实践代码：
+
+    def GroupNorm(x, gamma, beta, G, eps=1e-5):
+        # x: input features with shape [N,C,H,W]
+        # gamma, beta: scale and offset, with shape [1,C,1,1]
+        # G: number of groups for GN
+        N, C, H, W = x.shape
+        x = tf.reshape(x, [N, G, C // G, H, W])
+        mean, var = tf.nn.moments(x, [2, 3, 4], keep dims=True)
+        x = (x - mean) / tf.sqrt(var + eps)
+        x = tf.reshape(x, [N, C, H, W])
+        return x * gamma + beta
+
+其中$\beta$和$\gamma$参数是norm中可训练参数，表示平移和缩放因子。
+
+## Why GN works？
+
+传统角度来讲，在深度学习没有火起来之前，提取特征通常是使用SIFT，HOG和GIST特征，这些特征有一个共性，都具有按group表示的特性，每一个group由相同种类直方图的构建而成，这些特征通常是对在每个直方图（histogram）或每个方向（orientation）上进行组归一化（group-wise norm）而得到。而更高维的特征比如VLAD和Fisher Vectors(FV)也可以看作是group-wise feature，此处的group可以被认为是每个聚类（cluster）下的子向量sub-vector。
+
+从深度学习上来讲，完全可以认为卷积提取的特征是一种非结构化的特征或者向量，拿网络的第一层卷积为例，卷积层中的的卷积核filter1和此卷积核的其他经过transform过的版本filter2（transform可以是horizontal flipping等），在同一张图像上学习到的特征应该是具有相同的分布，那么，具有相同的特征可以被分到同一个group中，按照个人理解，每一层有很多的卷积核，这些核学习到的特征并不完全是独立的，某些特征具有相同的分布，因此可以被group。
+
+导致分组（group）的因素有很多，比如频率、形状、亮度和纹理等，HOG特征根据orientation分组，而对神经网络来讲，其提取特征的机制更加复杂，也更加难以描述，变得不那么直观。另在神经科学领域，一种被广泛接受的计算模型是对cell的响应做归一化，此现象存在于浅层视觉皮层和整个视觉系统。
+
+作者基于此，提出了组归一化（Group Normalization）的方式，且效果表明，显著优于BN、LN、IN等。
+
+GN的归一化方式避开了batch size对模型的影响，特征的group归一化同样可以解决Internal Covariate Shift的问题，并取得较好的效果。
+
+## How it works？
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-18.jpeg)
+
+以resnet50为base model，batchsize设置为32在imagenet数据集上的训练误差（左）和测试误差（右）。GN没有表现出很大的优势，在测试误差上稍大于使用BN的结果。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-19.jpeg)
+
+可以很容易的看出，GN对batch size的鲁棒性更强。
+
+同时，作者以VGG16为例，分析了某一层卷积后的特征分布学习情况，分别根据不使用Norm 和使用BN，GN做了实验，实验结果如下：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-20.jpeg)
+
+统一batch size设置的是32，最左图是不使用norm的conv5的特征学习情况，中间是使用了BN结果，最右是使用了GN的学习情况，相比较不使用norm，使用norm的学习效果显著，而后两者学习情况相似，不过更改小的batch size后，BN是比不上GN的。
+
+作者同时做了实验展示了GN在object detector/segmentation 和video classification上的效果，详情可见原文，此外，作者在paper最后一节中大致探讨了discussion and future work , 实乃业界良心。
 
 ---
 
