@@ -134,6 +134,15 @@ BN在使用中还存在一种information leakage现象，因为BN是对mini-batc
 
 # Group Normalization
 
+由于BN存在于上文所提到的一些基于batch的问题，所以Group Normalization是Face book AI research（FAIR）吴育昕-何恺明联合推出用于改进和替代BN的方法。
+
+GN本质上仍是归一化，但是它灵活的避开了BN的问题，同时又不同于Layer Norm，Instance Norm，四者的关系如下：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211106-16.jpeg)
+
+
+
+
 ---
 
 # Reference
