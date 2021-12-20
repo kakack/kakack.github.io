@@ -18,7 +18,25 @@ tags: [Detection, Deep Learning]
 
 但是在图像层面，输入神经网络的往往都是一整张图片，只有像素之间相互位置信息，并没有如NLP中语序先后顺序，而且从人类理解能力角度来看，并没有什么可以模式化或者规则化的观察手段，且观察顺序也会因人而异，因此很难用固定规则的形式来确定图片中信息理解顺序。因此在原有RNN基础上需要进行一定的改造。
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-1.png)
 
+# Attention on RNN
+
+对于端到端的RNN来说，在NLP领域又被称为Sequence to Sequence（seq2seq），即输入一句话，输出另一句话，中间包括encoder和decoder两个部分。可以总结为：
+
+1. 建立一个编码器encoder和一个解码器decoder的非线性模型，具有足够多的Neural Network Parameters可以存储足够多的信息；
+2. 在关注句子整体信息时，每次翻译到下一个词语时，需要对不同词语赋予不同的权重weight，这样在再解码的时候可以同时考虑到整体和局部的信息。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-2.png)
+
+# Different kinds of Attention
+
+现在常见的注意力方法有两类：
+
+1. 基于强化学习Reinforcement Learning的方法，通过收益函数Rewarding来反馈激励，让模型更加关注某个局部的细节；
+2. 基于梯度下降Gradient Decent的方法，通过目标函数objective function和相应的优化函数optimization function来做。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-3.png)
 ---
 
 # Reference 
