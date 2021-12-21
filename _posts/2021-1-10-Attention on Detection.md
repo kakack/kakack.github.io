@@ -60,8 +60,14 @@ tags: [Detection, Deep Learning]
 
 # Multiple Granularity Descriptors for Fine-grained Categorization
 
+本文的工作同样是鸟类分类，不过使用了更贴近生物学的分层分类方法，通常把鸟类分作科、属、种三类，对应三个不同层级的网络。
+
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-7.png)
+
+从前往后的顺序是检测网络（Detection Network），区域发现（Region Discovery），描述网络（Description Network）。并行的结构是 Family-grained CNN + Family-grained Descriptor，Genus-grained CNN + Genus-grained Descriptor，Species-grained CNN + Species-grained Descriptor。而在区域发现的地方，作者使用了 energy 的思想，让神经网络分别聚焦在图片中的不同部分，最终的到鸟类的预测结果。
+
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-8.png)
+
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-9.png)
 
 ---
