@@ -37,10 +37,39 @@ tags: [Detection, Deep Learning]
 2. 基于梯度下降Gradient Decent的方法，通过目标函数objective function和相应的优化函数optimization function来做。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-3.png)
+
+# Look Closer to See Better
+
+这是一篇非常经典的attention on cv的文章，工作的目的是给图像中的鸟类进行分类，包括种类识别和属性识别等内容。既然是针对图片中的鸟类，那么算法需要着重关注的局部信息自然集中在针对鸟的像素上，包括鸟的各个身体部分、整体形态、颜色等信息。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-4.png)
+
+本文提出了一个基于CNN的attention mechanism，称为recurrent attention convolutional neural network（RA-CNN），该模型递归地分析局部信息，从局部的信息中提取必要的特征。同时，在 RA-CNN 中的子网络（sub-network）中存在分类结构，也就是说从不同区域的图片里面，都能够得到一个对鸟类种类划分的概率。这种从局部得到信息的方法也称作Attention Proposal Sub-Network（APN）。这个 APN 结构是从整个图片（full-image）出发，迭代式地生成子区域，并且对这些子区域进行必要的预测，并将子区域所得到的预测结果进行必要的整合，从而得到整张图片的分类预测概率。
+
+图像整体输入network后，首先经过第一个conv blob会得到一个分类概率，同时输出一个坐标值表示子图的中心点位置和子图的scale size，然后将对应表示的子图输入下一个conv blob得到新的分类概率和子图位置尺寸，以此不断迭代得到越来越细致的子图以聚焦到核心关键区域，最终将所有分类概率整合得到整图的识别结果。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-5.png)
+
+由此可见，其中的关键点在于：
+
+1. 分类概率的计算，也就是最终loss function的设计；
+2. 从上一张图到下一张图的坐标和尺寸大小缩放计算方法。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-6.png)
+
+
+# Multiple Granularity Descriptors for Fine-grained Categorization
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-7.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-8.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-9.png)
+
 ---
 
 # Reference 
 
 - [Spatial Transformer Networks（STN）](https://arxiv.org/pdf/1506.02025.pdf)
 - [Squeeze-and-Excitation Networks](https://arxiv.org/pdf/1709.01507.pdf)
-- 
+- [Look Closer to See Better：Recurrent Attention Convolutional Neural Network for Fine-grained Image Recognition](https://openaccess.thecvf.com/content_cvpr_2017/papers/Fu_Look_Closer_to_CVPR_2017_paper.pdf)
+- [Multiple Granularity Descriptors for Fine-grained Categorization
+](https://openaccess.thecvf.com/content_iccv_2015/papers/Wang_Multiple_Granularity_Descriptors_ICCV_2015_paper.pdf)
