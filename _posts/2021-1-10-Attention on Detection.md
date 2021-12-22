@@ -88,6 +88,19 @@ tags: [Detection, Deep Learning]
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-12.png)
 
+# Squeeze-and-Excitation Networks（SENet）
+
+SENet是一个非常通用的模块化结构，可以嵌入当今各种主流网络。其主旨是基于channel的注意力机制。根据输入图像池化得到feature map后，对每个其中每一个channel赋予一个权重值，将当前channel值和对应权重值的乘积作为真正参与计算的feature map，以此区分各个channel的重要性，针对其中重要性较高的channel进行更多的信息关注。如下图所示，不同重要性channel在最终的feature map中用不同颜色的块表示：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-13.png)
+
+SENet block处理的过程可以理解为两部分：Squeeze和Excitation。其中$c*1*1$的global pooling称之为squeeze，而之后的两个fully connect layer称为excitation，最终用sigmod将输出限制在$[0, 1]$范围内，把这个值作为scale权重乘到各个channel上，作为下一级的输入。这么做的原理就是通过控制权重scale的大小把重要channel的特征增强，无关channel的特征削弱。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-14.png)
+
+
+# Convolutional Block Attention Module（CBAM）
+
 ---
 
 # Reference 
@@ -95,6 +108,7 @@ tags: [Detection, Deep Learning]
 - [Spatial Transformer Networks（STN）](https://arxiv.org/pdf/1506.02025.pdf)
 - [Squeeze-and-Excitation Networks](https://arxiv.org/pdf/1709.01507.pdf)
 - [Look Closer to See Better：Recurrent Attention Convolutional Neural Network for Fine-grained Image Recognition](https://openaccess.thecvf.com/content_cvpr_2017/papers/Fu_Look_Closer_to_CVPR_2017_paper.pdf)
-- [Multiple Granularity Descriptors for Fine-grained Categorization
-](https://openaccess.thecvf.com/content_iccv_2015/papers/Wang_Multiple_Granularity_Descriptors_ICCV_2015_paper.pdf)
+- [Multiple Granularity Descriptors for Fine-grained Categorization](https://openaccess.thecvf.com/content_iccv_2015/papers/Wang_Multiple_Granularity_Descriptors_ICCV_2015_paper.pdf)
 - [Recurrent Models of Visual Attention](https://arxiv.org/pdf/1406.6247.pdf)
+- [Squeeze-and-Excitation Networks](https://arxiv.org/pdf/1709.01507.pdf)
+- [CBAM: Convolutional Block Attention Module](https://arxiv.org/pdf/1807.06521.pdf)
