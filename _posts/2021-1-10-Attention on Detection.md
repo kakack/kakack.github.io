@@ -70,6 +70,24 @@ tags: [Detection, Deep Learning]
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-9.png)
 
+# Recurrent Models of Visual Attention
+
+这是最早利用强化学习方式在cv中引入attention的手段之一，使用收益函数来进行模型训练，从整体和局部两方面提取到必要信息。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-10.png)
+
+整体而言其结构是RNN，每一个阶段都会将得到的信息和坐标传递给下一阶段，但是与RA-CNN不同的是，只会在最后一步对分类概率进行计算。这本质上还是将整图以某种时间序列分步输入网络，一次只处理整图一部分信息，并在处理过程中计算出接下去需要处理的位置和之前已经处理完的任务内容。
+
+# Multiple Object Recognition with Visual Attention
+
+与上文中的RMVA不同的是，这个模型提供了两层RNN，并在最上层输入原始整图。其中enc是编码网络encoder，$r_i^{(1)}$是解码网络decoder，$r_i^{(2)}$是注意力网络，输出概率在解码网络的最后一个unit输出。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-11.png)
+
+在门牌识别里面，该网络是按照从左到右的顺序来进行图片扫描的，这与人类识别物品的方式极其相似。除了门牌识别之外，该论文也对手写字体进行了识别，同样取得了不错的效果。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-12.png)
+
 ---
 
 # Reference 
@@ -79,3 +97,4 @@ tags: [Detection, Deep Learning]
 - [Look Closer to See Better：Recurrent Attention Convolutional Neural Network for Fine-grained Image Recognition](https://openaccess.thecvf.com/content_cvpr_2017/papers/Fu_Look_Closer_to_CVPR_2017_paper.pdf)
 - [Multiple Granularity Descriptors for Fine-grained Categorization
 ](https://openaccess.thecvf.com/content_iccv_2015/papers/Wang_Multiple_Granularity_Descriptors_ICCV_2015_paper.pdf)
+- [Recurrent Models of Visual Attention](https://arxiv.org/pdf/1406.6247.pdf)
