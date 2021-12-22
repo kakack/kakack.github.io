@@ -98,8 +98,23 @@ SENet block处理的过程可以理解为两部分：Squeeze和Excitation。其�
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-14.png)
 
-
 # Convolutional Block Attention Module（CBAM）
+
+CBAM相对于SENet的区别就在于其即关注不同channel的重要性，也关注某个channel中不同位置pixel的重要性。Convolutional Block Attention Module (CBAM) 表示卷积模块的注意力机制模块。是一种结合了空间（spatial）和通道（channel）的注意力机制模块。相比于senet只关注通道（channel）的注意力机制可以取得更好的效果。它相对于SE多了一个空间attension，这个空间其实就是宽高对应的方形或者说是一个通道对应的feature map，SE只关注通道，它既关注通道，也关注宽高。
+
+基于传统vgg结构的CBAM模块：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-15.png)
+
+基于如Resnet等shortcut结构的CBAM模块：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-17.png)
+
+与SENet不同的是，一开始的pooling分为MaxPool和AvgPool两条支线，再将两个输出结果相加后做sigmod控制在$[0, 1]$范围内，最后跟feature map相乘。两种不同的polling意味着提取的高层次特征更加丰富，这是通道上的attention。
+
+之后还会进一步做空间上的attention。首先将基于channel attention的feature结果再做一次MaxPool和AvgPool，但这次是在channel这个维度进行，即把所有输入channel全部pooling到2个实数，由$(h*w*c)$的形状transfer到两个$(h*w*1)$的feature map，紧接着使用一个$7*7$的conv kernel形成新的$(h*w*1)$的feature map。最后也是相同的scale操作，注意力模块特征与得到的新特征图相乘得到经过双重注意力调整的特征图。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-16.png)
 
 ---
 
