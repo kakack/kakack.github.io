@@ -21,6 +21,15 @@ tags: [Deep Learning, Model Compression]
 - 框架层加速：编译优化、缓存优化、稀疏存储和计算、NEON指令应用、算子优化等；
 - 硬件层加速：AI硬件芯片层加速，如GPU、FPGA、ASIC等多种方案。
 
+简单总结一下常被提及的四种方法：
+
+|Theme Name|Description|Application|More Details|Drawback|
+|:----:|:----:|:----:|----|----|
+|参数剪枝和共享（Parameter Pruning and Sharing）|减少对性能不敏感的冗余参数|卷积层和全连接层|对不同设置有鲁棒性，能够实现好的性能，能支持脚本（Scratch）和预训练模型的训练||
+||||||
+||||||
+||||||
+
 # Parameter Pruning and Sharing
 
 # Low-Rank Factorization and Sparsity
