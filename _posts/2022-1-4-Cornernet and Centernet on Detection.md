@@ -41,14 +41,14 @@ CornerNet的文章取名为`Detecting Objects as Paired Keypoints`，言下之�
 
 ### Network Architecture
 
-cornerNet的网络结构主要分为以下几个部分
+CornerNet的网络结构主要分为以下几个部分
 
 1. Backbone: Hourglass Network；
 2. Head: 二分支输出 Top-left corners 和 Bottom-right corners，每个分支包含了各自的corner pooling以及三分支输出。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-3.png)
 
-cornerNet借用了hourglass network作为他的backbone特征提取网络，这个hourglass network通常被用在姿态估计任务中，是一种呈沙漏状的downsampling 和 upsampling组合，为两个沙漏模块（hourglass module）头尾相连的效果。
+CornerNet借用了hourglass network作为他的backbone特征提取网络，这个hourglass network通常被用在姿态估计任务中，是一种呈沙漏状的downsampling 和 upsampling组合，为两个沙漏模块（hourglass module）头尾相连的效果。
 
 在原有hourglass的基础上，作者做了以下的改进：
 
