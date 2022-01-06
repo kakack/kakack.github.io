@@ -12,7 +12,7 @@ tags: [Detection, Deep Learning]
 
 - Anchor amount过大，导致计算复杂度过高，对于绝大部分情况，只有其中很小一部分anchor能成功匹配到ground truth，而大量anchor作为负样本被丢弃。
 
-- 整体引入大量hyper-parameters，影响模型性能。
+- 整体引入大量hyper-parameters，以及针对anchor得到的bounding box所做的NMS操作，都会影响模型性能。
 
 ---
 
@@ -89,6 +89,90 @@ $$L_{off}=\frac{1}{N}\sum_{k=1}^{N}{SmoothL1Loss}(o_k, \hat{o_k})$$
 
 # CenterNet
 
+但是CornerNet仍存在group环节带来了较大计算量，因此在此基础上出现了CenterNet。
+
+CenterNet直接预测bbx的中心点，其他特征如大小、3D位置、方向，甚至姿态可以使用中心点位置的图像特征进行回归。将目标检测当成了关键点估计得任务来做，使用FCN将图像变成heatmap，峰值处就是我们想要的关键点。CenterNet的输出分辨率的下采样因子是4，比起其他的目标检测框架算是比较小的，因为centernet没有采用FPN结构，因此所有中心点要在一个Feature map上出，因此分辨率不能太低。
+
+总之，CenterNet结构十分简单，直接检测目标的中心点和大小，是真正意义上的anchor-free。
+
+## Network Architecture
+
+论文中CenterNet提到了三种用于目标检测的网络，这三种网络都是编码解码(encoder-decoder)的结构：
+
+1. Resnet-18 with up-convolutional layers : 28.1% coco and 142 FPS
+2. DLA-34 : 37.4% COCOAP and 52 FPS
+3. Hourglass-104 : 45.1% COCOAP and 1.4 FPS
+
+每个网络内部的结构不同，但是在模型的最后输出部分都是加了三个网络构造来输出预测值，默认是80个类、2个预测的中心点坐标、2个中心点的偏置。
+
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-4.png)
+
+在整个训练的流程中，CenterNet学习了CornerNet的方法。对于每个标签图(ground truth)中的某一类，我们要将真实关键点(true keypoint) 计算出来用于训练，中心点的计算方式：$p=(\frac{x_1+x_2}{2}, \frac{y_1+y_2}{2})$，对于下采样后的坐标设为：$\tilde{p}=\left \lfloor \frac{p}{R} \right \rfloor$，，其中 R 是文中提到的下采样因子4。所以我们最终计算出来的中心点是对应低分辨率的中心点。
+
+然后我们对图像进行标记，在下采样的[128,128]图像中将ground truth point以下采样的形式，用一个高斯滤波：
+
+$$Y_{xyc}=exp(-\frac{(x-\tilde{p}_x)^2+(y-\tilde{p}_y)^2}{2\sigma ^2_p})$$
+
+来将关键点分布到特征图上。
+
+## Loss Function
+
+### Center Points Loss Function
+
+$$L_k=\frac{-1}{N}\sum_{xyc}\left\{\begin{matrix} (1-\hat{Y}_{xyc})^\alpha log(\hat{Y}_{xyc}) & if Y_{xyc}=1 \\ (1-\hat{Y}_{xyc})^{\beta}(\hat{Y}_{xyc})^{\alpha}log(1-\hat{Y}_{xyc}) & Otherwise \end{matrix}\right.$$
+
+其中$\alpha$和$\beta$是Focal Loss的超参数，在这篇论文中分别是2和4，$N$是图像的关键点数量，用于将所有的positive focal loss标准化为1。这个损失函数是Focal Loss的修改版，适用于CenterNet。
+
+而在CenterNet中，每个中心点对应一个目标的位置，不需要进行overlap的判断。那么怎么去减少negative center pointer的比例呢？CenterNet是采用Focal Loss的思想，在实际训练中，中心点的周围其他点(negative center pointer)的损失则是经过衰减后的损失(上文提到的)，而目标的长和宽是经过对应当前中心点的w和h回归得到的。
+
+### Offset Loss
+
+因为上文中对图像进行了$R=4$的下采样，这样的特征图重新映射到原始图像上的时候会带来精度误差，因此对于每一个中心点，额外采用了一个local offset 去补偿它。所有类c的中心点共享同一个offset prediction，这个偏置值(offset)用L1 loss来训练： 
+
+$$L_{off}=\frac{1}{N}\sum_p |\hat{O}_{\tilde{p}}-(\frac{p}{R}-\tilde{p})|$$
+
+这个偏置损失是可选的，我们不使用它也可以，只不过精度会下降一些。这部分跟CornerNet一致。
+
+### Size Loss
+
+假设目标$k$坐标为$(x_1^{(k)}, y_1^{(k)}, x_2^{(k)}, y_2^{(k)})$，所属类别为$c$，那它的中心点坐标为$p_k=(\frac{x_1^{(k)}+x_2^{(k)}}{2}, \frac{y_1^{(k)}+y_2^{(k)}}{2})$。我们使用关键点预测$\hat{Y}$去预测所有中心点，然后对每个目标$k$的size做回归，最终得到$s_k=(x_2^{(k)}-x_1^{(k)}, y_2^{(k)}-y_1^{(k)})$，这个值是在训练前提前计算出来的，是进行了下采样之后的长宽值。
+
+为了减少回归的难度，这里使用$\hat{S}\in R^{\frac{W^{'}}{R}\times \frac{H}{R} \times 2}$作为预测值，使用L1损失函数，与之前的$L_{off}$损失一样：
+
+$$L_{size}=\frac{1}{N}\sum_{k=1}^N |\hat{S}_{p_k}-s_k|$$
+
+## Process 
+
+在预测阶段，首先针对一张图像进行下采样，随后对下采样后的图像进行预测，对于每个类在下采样的特征图中预测中心点，然后将输出图中的每个类的热点单独地提取出来。具体怎么提取呢？就是检测当前热点的值是否比周围的八个近邻点(八方位)都大(或者等于)，然后取100个这样的点，采用的方式是一个3x3的MaxPool，类似于anchor-based检测中nms的效果。
+
+这里假设$\hat{p}_c$为检测到的点，
+
+$$\hat{p}=\{(\hat{x}_i, \hat{y}_i)\}_{i=1}^n$$
+
+代表$c$类中检测到的一个点。每个关键点的位置用整型坐标表示$(x_i, y_i)$，然后使用$\hat{Y}_{x_i y_i c}$表示当前点的confidence，随后使用坐标来产生标定框：
+
+$$(\hat{x}_i+\delta \hat{x}_i-\frac{\hat{w}_i}{2}, \hat{y}_i+\delta \hat{y}_i-\frac{\hat{w}_i}{2}, \hat{x}_i+\delta \hat{x}_i-\frac{\hat{w}_i}{2}, \hat{y}_i+\delta \hat{y}_i-\frac{\hat{w}_i}{2})$$
+
+其中$(\delta \hat{x}_i, \delta \hat{y}_i)=\hat{O}\hat{x}_i, \hat{y}_i$，是当前点对应原始图像的偏置点，$(\hat{w}_i, \hat{h}_i)=\hat{S} \hat{x}_i, \hat{y}_i$代表预测出来当前点对应目标的长宽。
+
+下图展示网络模型预测出来的中心点、中心点偏置以及该点对应目标的长宽：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-5.png)
+
+那最终是怎么选择的，最终是根据模型预测出来的$\hat{Y}\in [0, 1]^{\frac{W}{R} \times \frac{H}{R} \times C}$值，也就是当前中心点存在物体的概率值，代码中设置的阈值为0.3，也就是从上面选出的100个结果中调出大于该阈值的中心点作为最终的结果。
+
+## Conclusion
+
+### Advantage
+
+1. 设计模型的结构比较简单，不仅对于two-stage，对于one-stage的目标检测算法来说该网络的模型设计也是优雅简单的；
+2. 该模型的思想不仅可以用于目标检测，还可以用于3D检测和人体姿态识别；
+3. 虽然目前尚未尝试轻量级的模型，但是可以猜到这个模型对于嵌入式端这种算力比较小的平台还是很有优势的。
+### Disadvantage
+
+1. 在实际训练中，如果在图像中，同一个类别中的某些物体的GT中心点，在下采样时会挤到一块，也就是两个物体在GT中的中心点重叠了，CenterNet对于这种情况也是无能为力的，也就是将这两个物体的当成一个物体来训练(因为只有一个中心点)。同理，在预测过程中，如果两个同类的物体在下采样后的中心点也重叠了，那么CenterNet也是只能检测出一个中心点，不过CenterNet对于这种情况的处理要比faster-rcnn强一些的，具体指标可以查看论文相关部分。
+2. 有一个需要注意的点，CenterNet在训练过程中，如果同一个类的不同物体的高斯分布点互相有重叠，那么则在重叠的范围内选取较大的高斯点。
 
 ---
 # Reference
