@@ -24,9 +24,11 @@ tags: [OCR, Deep Learning]
 	-	基于回归：Textboxes++、R2CNN，FEN等
 	-	基于分割：Pixel-Link，PSENet，PMTD，LOMO，DBNet等
 
-DBNet名字中的DB指Differentiable Binarization，即微分二值化的模块，
+DBNet名字中的DB指Differentiable Binarization，即微分二值化的模块。传统的分割方法会预设一个阈值，将分割网络生成的概率图转换为二值图像；然后，采用像素聚类等启发式技术将像素分组为文本实例。而DBNet中将二值化操作插入到分割网络中进行联合优化，这样网络可以自适应的预测图像中每一个像素点的阈值（区别去传统方法的固定阈值），从而可完全区分前景和背景的像素。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220528-3.jpeg)
+
+
 
 # CRNN
 
