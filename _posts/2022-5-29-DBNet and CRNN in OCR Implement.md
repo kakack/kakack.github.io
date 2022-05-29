@@ -28,6 +28,52 @@ DBNet名字中的DB指Differentiable Binarization，即微分二值化的模块�
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220528-3.jpeg)
 
+DBNet整个流程如下：
+
+1.	图像经过FPN网络结构，得到四个特征图，分别为$\frac{1}{4}$、$\frac{1}{8}$、$\frac{1}{16}$、$\frac{1}{32}$大小；
+1.	将四个特征图分别上采样为$\frac{1}{4}$大小，再concat，得到特征图F；
+1.	由F得到 probability map (P) 和 threshold map (T)；
+1.	通过P、T计算approximate binary map（ 近似binary map $\hat B$ ）。
+
+
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220528-4.jpeg)
+
+
+
+由F计算得到P和T可以表示为：
+
+```Python
+1         binary = self.binarize(fuse)   #由F得到P,fuse为特征图F
+2         if self.training:
+3             result = OrderedDict(binary=binary)
+4         else:
+5             return binary
+6         if self.adaptive and self.training:
+7             if self.serial:
+9                 fuse = torch.cat(
+10                        (fuse, nn.functional.interpolate(
+11                            binary, fuse.shape[2:])), 1)
+12            thresh = self.thresh(fuse)
+```
+
+其中第一行通过fuse得到了binary即P，具体实现在self.binarize函数：
+
+```Python
+1         self.binarize = nn.Sequential(
+2             nn.Conv2d(inner_channels, inner_channels //
+3                       4, 3, padding=1, bias=bias),   #shape:(batch,256,1/4W,1/4H)
+4             BatchNorm2d(inner_channels//4),
+5             nn.ReLU(inplace=True),  
+6             nn.ConvTranspose2d(inner_channels//4, inner_channels//4, 2, 2), #shape:(batch,256,1/2W,1/2H)
+7             BatchNorm2d(inner_channels//4),
+8             nn.ReLU(inplace=True),
+9             nn.ConvTranspose2d(inner_channels//4, 1, 2, 2),  #shape:(batch, W, H)
+10            nn.Sigmoid())
+```
+
+
+
 
 
 # CRNN
