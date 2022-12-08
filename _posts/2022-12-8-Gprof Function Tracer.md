@@ -1,5 +1,3 @@
-# Function Tracer基本功能和逻辑小记
-
 ---
 
 layout: post
@@ -168,11 +166,11 @@ analysis.txt  gmon.out  test_gprof  test_gprof.c  test_gprof_new.c
 
 #### 4.3.1	Flat profile
 
-![](../_images/20221205_5.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20221205_5.jpg)
 
 #### 4.3.2	Call graph
 
-![](../_images/20221205_6.jpg)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20221205_6.jpg)
 
 
 
