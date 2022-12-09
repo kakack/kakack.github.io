@@ -26,7 +26,7 @@ Profiler通常改变程序中每一个方法的编译方式，从而在每一个
 
 新的文件格式在`gmon_out.h`中定义，由三部分组成：
 
-	#### 2.2.1	Histogram Records
+#### 2.2.1	Histogram Records
 
 Histogram Records由一个header和一个bins的array组成，其中header包含直方图跨越的文本范围、直方图大小、分析时钟的速率和物理尺寸。直方图的bin是16-bit的数字，每个bin代表等量的文本空间。例如，如果文本段的长度为 1000 个字节，并且直方图中有 10 个 bin，则每个 bin 代表 100 个字节。
 
@@ -40,7 +40,20 @@ Basic-Block Excution Count Records由一个header和后续的一系列地址/计
 
 ### 2.3	Details
 
+`gprof`是首先会处理那些option，在这个阶段如果option中指定了使用哪个symspecs，那么它会构建自己的symspec list（sym_ids.c：sym_id_add）。`gprof`维护了一个symspecs的单向链表，最后会得到12个symbol table，组织成6个include/exclude pair，每一个pair对应：
 
+	-	flat profile(INCL_FLAT/EXCL_FLAT)
+	-	call graph arcs (INCL_ARCS/EXCL_ARCS)
+	-	printing in the call graph (INCL_GRAPH/EXCL_GRAPH)
+	-	timing propagation in the call graph (INCL_TIME/EXCL_TIME)
+	-	the annotated source listing (INCL_ANNO/EXCL_ANNO)
+	-	the execution count listing (INCL_EXEC/EXCL_EXEC).
+
+在option处理之后，gprof 通过将 default_excluded_list 中的所有symspecs添加exclude lists EXCL_TIME 和 EXCL_GRAPH 来完成构建symspec list。
+
+之后调用BFD library来打开目标文件，并验证，读取它的symbol table(core.c:core_init)，在申请到一个合适大小的symbol array后使用`bfd_canonincalize_symtab`。在这时，function mappings被读取，core text space被读取到内存。
+
+此时gprof自己的symbol table（一个Sym structure array）被构建完成。
 
 ## 3.	Output Content
 
