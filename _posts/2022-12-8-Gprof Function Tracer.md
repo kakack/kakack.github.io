@@ -1,8 +1,8 @@
 ---
 
 layout: post
-categories: [dairy]
-tags: [Dairy]
+categories: [C++]
+tags: [C++]
 
 ---
 
@@ -122,6 +122,7 @@ static void func2(void) {
     printf("\n Inside func2 \n");
     int i = 0;
     for(;i<0xffffffaa;i++);
+    new_func1();
     return;
 }
 
