@@ -147,14 +147,16 @@ $ ls
 test_gprof  test_gprof.c  test_gprof_new.c
 
 $ ./test_gprof 
-
- Inside main()
-
- Inside func1 
-
- Inside new_func1()
-
- Inside func2 
+#
+# Inside main()
+#
+# Inside func1 
+#
+# Inside new_func1()
+#
+# Inside func2 
+# 
+# Inside new_func1()
 
 # 执行编译出的可执行文件
 
