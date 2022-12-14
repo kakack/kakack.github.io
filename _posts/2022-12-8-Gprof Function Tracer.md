@@ -264,4 +264,4 @@ python3 gprof2dot.py analysis.txt > call_graph.dot
 
   得到类似的调用图如下：
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20221205_7.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20221205_6.png)
