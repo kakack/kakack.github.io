@@ -252,8 +252,11 @@ python3 gprof2dot.py analysis.txt > call_graph.dot
   # 生成PostScript文件
   $ dot -Tps call_graph.dot -o call_graph.ps
   
-  # 如果要生成其他格式的图像，可以使用-T选项指定，支持eps/gif/jpeg/ps/svg/png/ps2/svgz等格式/
-  # 如果需要对布局引擎进行选择，可以使用-K进行指定，支持circo/dot/fdp/neato/nop/nop1/nop2/osage/patchwork/sfdp/twopi等。
+  # 如果要生成其他格式的图像，可以使用-T选项指定，
+  # 支持eps/gif/jpeg/ps/svg/png/ps2/svgz等格式/
+  
+  # 如果需要对布局引擎进行选择，可以使用-K进行指定，
+  # 支持circo/dot/fdp/neato/nop/nop1/nop2/osage/patchwork/sfdp/twopi等。
   # 例如，生成png图像，使用fdp布局引擎的命令如下:
   
   $ dot -Tsvg -Kfdp call_graph.dot -o call_graph.svg
