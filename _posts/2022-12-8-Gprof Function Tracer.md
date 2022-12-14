@@ -222,7 +222,43 @@ analysis.txt  gmon.out  test_gprof  test_gprof.c  test_gprof_new.c
 - 查找function；
 - 其他点击选中优化显示等
 
+## 7 Visualization
 
 
 
+将gprof输出结果txt可视化的工具有很多，这边推荐的是gprof2dot+graphviz的工具组合。
 
+
+
+- [gprof2dot](https://github.com/jrfonseca/gprof2dot)：将gprof生成的txt转换成dot文件
+
+```
+python3 gprof2dot.py analysis.txt > call_graph.dot
+```
+
+
+
+- [Graphviz](https://graphviz.org/download/source/)：将dot文件生成png文件
+
+  也可以用apt-get等命令直接安装
+
+  ```
+  # 安装graphviz
+  $ sudo apt-get install graphviz
+  
+  # 生成png文件
+  $ dot -Tpng call_graph.dot -o call_graph.png
+  
+  # 生成PostScript文件
+  $ dot -Tps call_graph.dot -o call_graph.ps
+  
+  # 如果要生成其他格式的图像，可以使用-T选项指定，支持eps/gif/jpeg/ps/svg/png/ps2/svgz等格式/
+  # 如果需要对布局引擎进行选择，可以使用-K进行指定，支持circo/dot/fdp/neato/nop/nop1/nop2/osage/patchwork/sfdp/twopi等。
+  # 例如，生成png图像，使用fdp布局引擎的命令如下:
+  
+  $ dot -Tsvg -Kfdp call_graph.dot -o call_graph.svg
+  ```
+
+  得到类似的调用图如下：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20221205_7.png)
