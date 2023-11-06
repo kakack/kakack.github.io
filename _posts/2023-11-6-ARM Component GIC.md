@@ -125,7 +125,7 @@ cpu interface，将GICD发送的中断信息，通过IRQ，FIQ管脚，发送给
 ## GICv2例子
 以下为一个gicv2例子，GICv2结构只支持8core。
 
-![[20231106153456.png]]
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20231106153456.png)
 
 外部中断连接到gic由gic distributor进行中断分组，分组后的中断请求由distributor发送给gic内的CPU Interface，再发送给processor。对于支持安全扩展，其应用如下（安全中断，处于group0，非安全中断处于group1。）：
 
@@ -137,16 +137,16 @@ GICv2的寄存器均是以`memory-map`形式访问：
 
 ### 1. distributor register
 
-![[20231106154542.png]]
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20231106154542.png)
 
 ### 2. cpu interface register
 
-![[20231106154608.png]]
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20231106154608.png)
 
 ---
 # GIC v3
 
-![[20231010234918.png]]
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20231010234918.png)
 
 - `Distributor`：SPI中断的管理，将中断发送给redistributor
 - `Redistributor`：PPI，SGI，LPI中断的管理，将中断发送给cpu interface
