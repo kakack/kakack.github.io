@@ -22,8 +22,7 @@ comments: yes
 	+ Deep Learning	
 	    
 - **E-mail**:  
-  + kakack@126.com  
-  + kakachen1990@gmail.com  
+  + <a href="mailto:kakachen1990@gmail.com">kakachen1990@gmail.com</a>  
 - [**github-repo**](https://github.com/kakack)
 - [**Linkedin**](https://www.linkedin.com/in/kakack/) 
 
