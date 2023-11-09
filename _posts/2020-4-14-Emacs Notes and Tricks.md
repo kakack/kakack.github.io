@@ -8,7 +8,7 @@ date: 2020-04-14
 author: Kaka Chen
 comments: true
 toc: true
-pinned: true
+pinned: false
 
 ---
 # Basic Command

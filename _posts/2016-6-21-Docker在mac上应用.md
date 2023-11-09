@@ -8,7 +8,7 @@ date: 2016-06-21
 author: Kaka Chen
 comments: true
 toc: true
-pinned: true
+pinned: false
 
 ---
 

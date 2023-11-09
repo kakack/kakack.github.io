@@ -1,8 +1,8 @@
-name: LOFFER
-description: 一个可以fork的博客
+name: Rhythmic Lines
+description: 欲買桂花同載酒，終不似，少年遊。
 url: https://kakack.github.io
 #baseurl: /blog
-avatar: https://raw.githubusercontent.com/FromEndWorld/LOFFER/master/images/logo.png
+avatar: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.jpg
 favicon: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/icon.jpg
 navigation:
   - name: Main
@@ -17,9 +17,9 @@ paginate: 12
 excerpt_separator: <!-- more -->
 footer-links: 
   email: kakachen1990@gmail.com
-  github: https://github.com/kakack
-  instagram: https://www.instagram.com/kakack90/
-  linkedin: https://www.linkedin.com/in/kakack/
+  github: kakack
+  instagram: kakack90
+  linkedin: kakack
 footer-text: Copyright (c) 2023 Let's talk with the world.
 disqus: kakack 
 
