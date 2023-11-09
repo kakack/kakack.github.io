@@ -3,6 +3,12 @@
 layout: post
 categories: [Algorithm]
 tags: [Deep Learning, Batch Normalization]
+title: Rethink BachNorm and GroupNorm
+date: 2021-11-05
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
 
 ---
 

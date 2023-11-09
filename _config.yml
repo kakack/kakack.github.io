@@ -1,12 +1,55 @@
-markdown: kramdown
-permalink: /:year/:month/:title/
-author: Kaka Chen	
-pygments: true
-paginate: 16
-url: http://kakack.github.io
-baseurl: /
-encoding: utf-8
-highlighter: rouge
-name: Serendipity Journey
-open_in_new: true
-highlightStyle: xcode
+name: LOFFER
+description: 一个可以fork的博客
+url: https://kakack.github.io
+#baseurl: /blog
+avatar: https://raw.githubusercontent.com/FromEndWorld/LOFFER/master/images/logo.png
+favicon: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/icon.jpg
+navigation:
+  - name: Main
+    url: /
+  - name: About
+    url: /about
+  - name: Archive
+    url: /archive
+  - name: Tags
+    url: /tags
+paginate: 12
+excerpt_separator: <!-- more -->
+footer-links: 
+  email: kakachen1990@gmail.com
+  github: https://github.com/kakack
+  instagram: https://www.instagram.com/kakack90/
+  linkedin: https://www.linkedin.com/in/kakack/
+footer-text: Copyright (c) 2023 Let's talk with the world.
+disqus: kakack 
+
+# gitalk:
+#   clientID: 
+#   clientSecret: 
+#   repo: 
+#   owner: 
+#   proxy:
+google_analytics:
+utteranc:
+  repo: https://github.com/kakack/kakack.github.io
+permalink: /:title/
+paginate_path: /page:num/
+version: v1.2.0
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+sass:
+  style: :expanded # You might prefer to minify using :compressed
+plugins:
+  - jekyll-sitemap # Create a sitemap using the official Jekyll sitemap gem
+  - jekyll-feed # Create an Atom feed using the official Jekyll feed gem
+  - jekyll-paginate
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - LICENSE
+  - README.md
+  - CNAME
+

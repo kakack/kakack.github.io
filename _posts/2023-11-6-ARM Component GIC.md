@@ -3,6 +3,12 @@
 layout: post
 categories: [ARM]
 tags: [ARM]
+title: ARM Component GIC
+date: 2023-11-06
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
 
 ---
 

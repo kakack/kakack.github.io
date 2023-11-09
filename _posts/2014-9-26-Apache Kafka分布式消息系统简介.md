@@ -3,6 +3,12 @@
 layout: post
 categories: [Big Data]
 tags: [Kafka,Distributed System]
+title: Apache Kafka分布式消息系统简介
+date: 2014-09-26
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
 
 ---
 

@@ -3,6 +3,12 @@
 layout: post
 categories: [Emacs]
 tags: [Emacs]
+title: Emacs Notes and Tricks
+date: 2020-04-14
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
 
 ---
 # Basic Command

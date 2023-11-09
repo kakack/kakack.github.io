@@ -3,6 +3,12 @@
 layout: post
 categories: [Computer Vision]
 tags: [Detection, Deep Learning]
+title: Why Anchor Boxes
+date: 2020-12-02
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
 
 ---
 

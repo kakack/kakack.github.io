@@ -3,6 +3,12 @@
 layout: post
 categories: [Algorithm]
 tags: [Detection, Deep Learning]
+title: Attention on Detection
+date: 2021-01-10
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
 
 ---
 

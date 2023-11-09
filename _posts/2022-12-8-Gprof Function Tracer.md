@@ -3,6 +3,13 @@
 layout: post
 categories: [C++]
 tags: [C++]
+title: Gprof Function Tracer
+date: 2022-12-08
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
+
 
 ---
 

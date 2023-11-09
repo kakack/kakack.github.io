@@ -2,6 +2,13 @@
 layout: post
 categories: [Computer Vision]
 tags: [Detection, Deep Learning]
+title: Segmentation in Image
+date: 2022-05-27
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
+
 
 
 ---

@@ -3,6 +3,12 @@
 layout: post
 categories: [Algorithm]
 tags: [Detection, Deep Learning]
+title: Evolution by Yolo
+date: 2020-12-16
+author: Kaka Chen
+comments: true
+toc: true
+pinned: true
 
 ---
 
