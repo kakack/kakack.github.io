@@ -1,6 +1,5 @@
 ---
 layout: post
-categories: [Computer Vision]
 tags: [OCR, Deep Learning]
 title: DBNet and CRNN in OCR Implement
 date: 2022-05-29

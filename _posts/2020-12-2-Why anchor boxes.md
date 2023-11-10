@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [Computer Vision]
 tags: [Detection, Deep Learning]
 title: Why Anchor Boxes
 date: 2020-12-02

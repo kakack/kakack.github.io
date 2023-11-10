@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [Algorithm]
 tags: [Detection, Deep Learning]
 title: Evolution by Yolo
 date: 2020-12-16

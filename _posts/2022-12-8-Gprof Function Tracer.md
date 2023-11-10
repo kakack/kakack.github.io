@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [C++]
 tags: [C++]
 title: Gprof Function Tracer
 date: 2022-12-08
@@ -12,6 +11,8 @@ pinned: false
 
 
 ---
+
+最近接了个任务，是开发仿真软件中关于函数调用的profiling工具，调研了一下热门的gprof。
 
 ## 1.	Abstract
 

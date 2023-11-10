@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [C++]
 tags: [C++]
 title: CMake Brief Intro
 date: 2020-09-09

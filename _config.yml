@@ -13,7 +13,7 @@ navigation:
     url: /archive
   - name: Tags
     url: /tags
-paginate: 12
+paginate: 8
 excerpt_separator: <!-- more -->
 footer-links: 
   email: kakachen1990@gmail.com

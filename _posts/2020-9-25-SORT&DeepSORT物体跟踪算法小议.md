@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [Algorithm]
 tags: [Deep SORT, Tracking]
 title: Sort & Deep Sort物体跟踪算法小议
 date: 2020-09-25

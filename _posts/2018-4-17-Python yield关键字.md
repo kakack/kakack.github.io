@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [Python]
 tags: [Python]
 title: Python yield关键字
 date: 2018-04-17

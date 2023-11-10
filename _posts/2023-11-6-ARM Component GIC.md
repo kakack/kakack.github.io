@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [ARM]
 tags: [ARM]
 title: ARM Component GIC
 date: 2023-11-06

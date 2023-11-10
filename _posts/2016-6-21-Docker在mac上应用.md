@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [docker]
 tags: [Linux, docker]
 title: Docker在mac上应用
 date: 2016-06-21

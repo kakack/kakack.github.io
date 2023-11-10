@@ -1,7 +1,6 @@
 ---
 
 layout: post
-categories: [Python]
 tags: [Jupyter Notebook, Python, Mac, Linux]
 title: Jupyter Notebook在Mac和Linux上的配置及远程访问
 date: 2017-12-05
