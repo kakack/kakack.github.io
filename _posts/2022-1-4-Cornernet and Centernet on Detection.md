@@ -1,7 +1,7 @@
 ---
 
 layout: post
-tags: [Detection, Deep Learning]
+tags: [Detection, Deep Learning, Computer Vision]
 title: Cornernet and Centernet on Detection
 date: 2022-01-04
 author: Kaka Chen

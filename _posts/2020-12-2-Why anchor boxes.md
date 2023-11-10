@@ -1,7 +1,7 @@
 ---
 
 layout: post
-tags: [Detection, Deep Learning]
+tags: [Detection, Deep Learning, Computer Vision]
 title: Why Anchor Boxes
 date: 2020-12-02
 author: Kaka Chen

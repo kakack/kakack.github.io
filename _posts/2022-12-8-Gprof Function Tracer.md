@@ -1,7 +1,7 @@
 ---
 
 layout: post
-tags: [C++]
+tags: [C++, Function Profiling]
 title: Gprof Function Tracer
 date: 2022-12-08
 author: Kaka Chen

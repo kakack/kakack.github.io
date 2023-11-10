@@ -1,7 +1,7 @@
 ---
 
 layout: post
-tags: [ARM]
+tags: [ARM, Computer Architecture]
 title: ARM Component GIC
 date: 2023-11-06
 author: Kaka Chen

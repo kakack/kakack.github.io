@@ -1,7 +1,7 @@
 ---
 
 layout: post
-tags: [Detection, Deep Learning]
+tags: [Detection, Deep Learning, Computer Vision]
 title: Attention on Detection
 date: 2021-01-10
 author: Kaka Chen

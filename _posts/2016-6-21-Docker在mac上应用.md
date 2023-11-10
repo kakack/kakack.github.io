@@ -1,7 +1,7 @@
 ---
 
 layout: post
-tags: [Linux, docker]
+tags: [Linux, Docker, Mac]
 title: Docker在mac上应用
 date: 2016-06-21
 author: Kaka Chen
