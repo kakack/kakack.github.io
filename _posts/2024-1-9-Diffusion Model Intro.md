@@ -2,7 +2,7 @@
 
 layout: post
 tags: [Deep Learning, AIGC, Diffusion Model]
-title: New Era of Large Language Models
+title: Diffusion Model Intro
 date: 2024-1-9
 author: Kaka Chen
 comments: true
