@@ -40,9 +40,8 @@ kramdown:
   syntax_highlighter: rouge
   syntax_highlighter_opts:
     css_class: 'highlight'
-  math_engine: katex
-  math_engine_opts:
-    output: mathml
+  math_engine: mathjax
+
 sass:
   style: :expanded # You might prefer to minify using :compressed
 plugins:
