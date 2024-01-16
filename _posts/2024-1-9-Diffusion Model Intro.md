@@ -70,7 +70,9 @@ $$\begin{align} x_t&=\sqrt{a_t}x_{t-1}+\sqrt{1-\alpha_t}z_{1} \quad \mathrm{wher
 
 $$\begin{align} &\sqrt{a_t(1-\alpha_{t-1})}z_{2}\sim\mathcal{N}(0,a_t(1-\alpha_{t-1})\mathbf{I})\\ &\sqrt{1-\alpha_t}z_{1}\sim\mathcal{N}(0,(1-\alpha_t)\mathbf{I})\\ &\sqrt{a_t(1-\alpha_{t-1})}z_{2}+\sqrt{1-\alpha_t}z_{1}\sim\mathcal{N}(0,[\alpha_t(1-\alpha_{t-1})+(1-\alpha_t)]\mathbf{I})\\ &=\mathcal{N}(0,(1-\alpha_t \alpha_{t-1})\mathbf{I}) \end{align}$$
 
-因此可以混合两个高斯分布得到标准差为 $\sqrt{1-\alpha_t\alpha_{t-1}}$ 的混合高斯分布，任意时刻的 $x_t$ 满足 $q(x_t|x_0)=\mathcal{N}(x_t;\sqrt{\bar{\alpha}_t}x_0,(1-\bar{\alpha}_t)I)$ 
+因此可以混合两个高斯分布得到标准差为 $\sqrt{1-\alpha_t\alpha_{t-1}}$ 的混合高斯分布。
+任意时刻的 $x_t$ 满足 
+$q(x_t|x_0)=\mathcal{N}(x_t;\sqrt{\bar{\alpha}_t}x_0,(1-\bar{\alpha}_t)I)$ 
 
 对于每次diffusion过程中都乘以$\sqrt{1-\beta_t}$的行为，一来是作为权重保证其$< 1$，二来是为了当$T\rightarrow\infty,x_T\thicksim\mathcal{N}(0,I)$时，能保证$x_T$最后收敛到方差是1的标准高斯分布。
 
@@ -148,7 +150,7 @@ $$L_t^{simple}=\mathbb{E}_{x_0,\overline{z}_t}\left[||\overline{z}_t-z_\theta(\s
 
 1. 获取输入 $x_0$ ，从 $1...T$ 随机采样一个 $t$ ；
 2. 从标准高斯分布采样一个噪声$\bar{z}_t\thicksim \mathcal{N}(0,I)$；
-3. 最小化 $\|\overline{z}_t-z_\theta(\sqrt{\overline{\alpha}_t}x_0+\sqrt{1-\overline{\alpha}_t}\overline{z}_t,t)\|$ 
+3. 最小化 $||\overline{z}_t-z_\theta(\sqrt{\overline{\alpha}_t}x_0+\sqrt{1-\overline{\alpha}_t}\overline{z}_t,t)||$ 
 
 最后是简要流程图：
 
