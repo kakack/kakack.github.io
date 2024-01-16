@@ -40,12 +40,18 @@ kramdown:
   syntax_highlighter: rouge
   syntax_highlighter_opts:
     css_class: 'highlight'
+  math_engine: katex
+  math_engine_opts:
+    output: mathml
 sass:
   style: :expanded # You might prefer to minify using :compressed
 plugins:
   - jekyll-sitemap # Create a sitemap using the official Jekyll sitemap gem
   - jekyll-feed # Create an Atom feed using the official Jekyll feed gem
   - jekyll-paginate
+  - jekyll-gist
+  - jekyll-remote-theme
+  - jekyll-scholar
 exclude:
   - Gemfile
   - Gemfile.lock
