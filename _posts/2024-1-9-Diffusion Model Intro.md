@@ -70,17 +70,17 @@ $$\begin{align} x_t&=\sqrt{a_t}x_{t-1}+\sqrt{1-\alpha_t}z_{1} \quad \mathrm{wher
 
 $$\begin{align} &\sqrt{a_t(1-\alpha_{t-1})}z_{2}\sim\mathcal{N}(0,a_t(1-\alpha_{t-1})\mathbf{I})\\ &\sqrt{1-\alpha_t}z_{1}\sim\mathcal{N}(0,(1-\alpha_t)\mathbf{I})\\ &\sqrt{a_t(1-\alpha_{t-1})}z_{2}+\sqrt{1-\alpha_t}z_{1}\sim\mathcal{N}(0,[\alpha_t(1-\alpha_{t-1})+(1-\alpha_t)]\mathbf{I})\\ &=\mathcal{N}(0,(1-\alpha_t \alpha_{t-1})\mathbf{I}) \end{align}$$
 
-因此可以混合两个高斯分布得到标准差为 $\sqrt{1-\alpha_t\alpha_{t-1}}$ 的混合高斯分布。任意时刻的 $x_t$ 满足 $q(x_t|x_0)=\mathcal{N}(x_t;\sqrt{\bar{\alpha}_t}x_0,(1-\bar{\alpha}_t)I)$ 。
+因此可以混合两个高斯分布得到标准差为$\sqrt{1-\alpha_t\alpha_{t-1}}$的混合高斯分布。任意时刻的$x_t$ 满足 $q(x_t\vert x_0)=\mathcal{N}(x_t;\sqrt{\bar{\alpha}_t}x_0,(1-\bar{\alpha}_t)I)$。
 
 对于每次diffusion过程中都乘以$\sqrt{1-\beta_t}$的行为，一来是作为权重保证其$< 1$，二来是为了当$T\rightarrow\infty,x_T\thicksim\mathcal{N}(0,I)$时，能保证$x_T$最后收敛到方差是1的标准高斯分布。
 
 # 逆向过程Denoise
 
-逆向过程denoise就是diffusion去噪推断的过程，如果逐步得到逆转后的分布 $q(x_{t-1}\vert x_t)$ ，就可以从完全的标准高斯分布 $x_T\thicksim\mathcal{N}(0,I)$ 还原出原图分布 $x_0$ 。然而我们无法简单推断 $q(x_{t-1}\vert x_t)$ ，因此使用深度学习模型（参数为 $\theta$ ，目前主流是U-Net+attention的结构）去预测这样的一个逆向的分布 $p_\theta$ ：
+逆向过程denoise就是diffusion去噪推断的过程，如果逐步得到逆转后的分布$q(x_{t-1}\vert x_t)$，就可以从完全的标准高斯分布 $x_T\thicksim\mathcal{N}(0,I)$ 还原出原图分布$x_0$。然而我们无法简单推断$q(x_{t-1}\vert x_t)$，因此使用深度学习模型（参数为$\theta$，目前主流是U-Net+attention的结构）去预测这样的一个逆向的分布$p_\theta$：
 
 $$p_\theta(X_{0:T})=p(x_T)\prod^T_{t=1}p_\theta(x_{t-1}|x_t)\\p_\theta(x_{t-1}|x_t)=\mathcal{N}(x_{t-1};\mu_\theta(x_t,t),\sum_\theta(x_t,t))$$
 
-虽然无法得到逆转后的分布 $q(x_{t-1}|x_t)$ ，但是如果知道 $x_0$ ，可以通过贝叶斯公式得到 $q(x_{t-1}|x_t,x_0)$ 为：
+虽然无法得到逆转后的分布$q(x_{t-1}\vert x_t)$，但是如果知道$x_0$，可以通过贝叶斯公式得到$q(x_{t-1}\vert x_t,x_0)$为：
 
 $$q(x_{t-1}|x_t,x_0)=\mathcal{N}(x_{t-1};\tilde{\mu}(x_t,x_0),\tilde{\beta}_tI)$$
 
@@ -100,7 +100,7 @@ $$\mu_t(x_t,t)=\frac{1}{\sqrt{\alpha_t}}(x_t-\frac{\beta_t}{\sqrt{1-\bar{\alpha}
 
 1. 每个时间步time_step通过$x_t$和$t$来预测高斯噪声$z_\theta(x_t,t)$，随后得到均值$\mu_\theta(x_t,t)$；
 2. 得到方差 $\sum_\theta(x_t, t)$ ，DDPM中使用`untrained` $\sum_\theta(x_t,t)=\tilde{\beta}_t$ ，并且认为 $\tilde{\beta}_t=\beta_t$ 和 $\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$ 结果近似，在GLIDE中则是根据网络预测`trainable`方差 $\sum_\theta(x_t,t)$ ；
-3. 得到 $q(x_{t-1}|x_t)$ ，利用重参数得到 $x_t-1$
+3. 得到 $q(x_{t-1}\vert x_t)$ ，利用重参数得到 $x_t-1$
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240109-7.png)
 
@@ -148,7 +148,7 @@ $$L_t^{simple}=\mathbb{E}_{x_0,\overline{z}_t}\left[||\overline{z}_t-z_\theta(\s
 
 1. 获取输入 $x_0$ ，从 $1...T$ 随机采样一个 $t$ ；
 2. 从标准高斯分布采样一个噪声$\bar{z}_t\thicksim \mathcal{N}(0,I)$；
-3. 最小化 $||\overline{z}_t-z_\theta(\sqrt{\overline{\alpha}_t}x_0+\sqrt{1-\overline{\alpha}_t}\overline{z}_t,t)||$ 
+3. 最小化 $\vert\vert\overline{z}_t-z_\theta(\sqrt{\overline{\alpha}_t}x_0+\sqrt{1-\overline{\alpha}_t}\overline{z}_t,t)\vert\vert$ 
 
 最后是简要流程图：
 
@@ -166,7 +166,7 @@ DDPM的高质量生成依赖于较大的 $T$（一般为1000或以上），这�
 $$\begin{align} x_{t-1}&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{a}_{t-1}}\overline{z}_{t-1}\\ &=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\overline{z}_t+\sigma_t z_t\\ &=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}(\frac{x_t-\sqrt{\overline{a}_t}x_0}{\sqrt{1-\overline{\alpha}_t}})+\sigma_t z_t\\ q_\sigma(x_{t-1}|x_t,x_0)&=\mathcal{N}(x_{t-1};\sqrt{\overline{a}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma^2_t}(\frac{x_t-\sqrt{\overline{a}_t}x_0}{\sqrt{1-\overline{\alpha}_t}}), \sigma_t^2\mathbf{I}) \end{align}$$
 
 
-这里将方差$\sigma^2_t$引入均值汇总，当$\sigma^2_t=\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$时，等价于最初的$q(x_{t-1}|x_t,x_0)$。这种经过贝叶斯的到$q_\theta(x_t|x_{t-1},x_0)$称为非马尔科夫过程，因为$x_t$的概率同时依赖于$x_{t-1}$和$x_0$。DDIM进一步定义了$\sigma_t(\eta)^2=\eta\cdot\tilde{\beta}_t$，当$\eta=0$时，diffusion的sample过程会丧失所有随机性从而得到一个deterministic的结果，当$\eta=1$时，则DDIM等价于DDPM。
+这里将方差$\sigma^2_t$引入均值汇总，当$\sigma^2_t=\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$时，等价于最初的$q(x_{t-1}\vert x_t,x_0)$。这种经过贝叶斯的到$q_\theta(x_t\vert x_{t-1},x_0)$称为非马尔科夫过程，因为$x_t$的概率同时依赖于$x_{t-1}$和$x_0$。DDIM进一步定义了$\sigma_t(\eta)^2=\eta\cdot\tilde{\beta}_t$，当$\eta=0$时，diffusion的sample过程会丧失所有随机性从而得到一个deterministic的结果，当$\eta=1$时，则DDIM等价于DDPM。
 
 对于方差$\sigma^2_t$的选择：
 
