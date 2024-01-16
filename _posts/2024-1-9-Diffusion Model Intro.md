@@ -70,9 +70,7 @@ $$\begin{align} x_t&=\sqrt{a_t}x_{t-1}+\sqrt{1-\alpha_t}z_{1} \quad \mathrm{wher
 
 $$\begin{align} &\sqrt{a_t(1-\alpha_{t-1})}z_{2}\sim\mathcal{N}(0,a_t(1-\alpha_{t-1})\mathbf{I})\\ &\sqrt{1-\alpha_t}z_{1}\sim\mathcal{N}(0,(1-\alpha_t)\mathbf{I})\\ &\sqrt{a_t(1-\alpha_{t-1})}z_{2}+\sqrt{1-\alpha_t}z_{1}\sim\mathcal{N}(0,[\alpha_t(1-\alpha_{t-1})+(1-\alpha_t)]\mathbf{I})\\ &=\mathcal{N}(0,(1-\alpha_t \alpha_{t-1})\mathbf{I}) \end{align}$$
 
-因此可以混合两个高斯分布得到标准差为 $\sqrt{1-\alpha_t\alpha_{t-1}}$ 的混合高斯分布。
-任意时刻的 $x_t$ 满足 
-$q(x_t|x_0)=\mathcal{N}(x_t;\sqrt{\bar{\alpha}_t}x_0,(1-\bar{\alpha}_t)I)$ 
+因此可以混合两个高斯分布得到标准差为 $\sqrt{1-\alpha_t\alpha_{t-1}}$ 的混合高斯分布。任意时刻的 $x_t$ 满足 $q(x_t|x_0)=\mathcal{N}(x_t;\sqrt{\bar{\alpha}_t}x_0,(1-\bar{\alpha}_t)I)$ 。
 
 对于每次diffusion过程中都乘以$\sqrt{1-\beta_t}$的行为，一来是作为权重保证其$< 1$，二来是为了当$T\rightarrow\infty,x_T\thicksim\mathcal{N}(0,I)$时，能保证$x_T$最后收敛到方差是1的标准高斯分布。
 
