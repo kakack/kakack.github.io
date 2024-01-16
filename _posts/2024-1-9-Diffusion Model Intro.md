@@ -76,7 +76,7 @@ $$\begin{align} &\sqrt{a_t(1-\alpha_{t-1})}z_{2}\sim\mathcal{N}(0,a_t(1-\alpha_{
 
 # 逆向过程Denoise
 
-逆向过程denoise就是diffusion去噪推断的过程，如果逐步得到逆转后的分布 $q(x_{t-1}|x_t)$ ，就可以从完全的标准高斯分布 $x_T\thicksim\mathcal{N}(0,I)$ 还原出原图分布 $x_0$ 。然而我们无法简单推断 $q(x_{t-1}|x_t)$ ，因此使用深度学习模型（参数为 $\theta$ ，目前主流是U-Net+attention的结构）去预测这样的一个逆向的分布 $p_\theta$ ：
+逆向过程denoise就是diffusion去噪推断的过程，如果逐步得到逆转后的分布 $q(x_{t-1}\vert x_t)$ ，就可以从完全的标准高斯分布 $x_T\thicksim\mathcal{N}(0,I)$ 还原出原图分布 $x_0$ 。然而我们无法简单推断 $q(x_{t-1}\vert x_t)$ ，因此使用深度学习模型（参数为 $\theta$ ，目前主流是U-Net+attention的结构）去预测这样的一个逆向的分布 $p_\theta$ ：
 
 $$p_\theta(X_{0:T})=p(x_T)\prod^T_{t=1}p_\theta(x_{t-1}|x_t)\\p_\theta(x_{t-1}|x_t)=\mathcal{N}(x_{t-1};\mu_\theta(x_t,t),\sum_\theta(x_t,t))$$
 
