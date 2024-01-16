@@ -99,7 +99,7 @@ $$\mu_t(x_t,t)=\frac{1}{\sqrt{\alpha_t}}(x_t-\frac{\beta_t}{\sqrt{1-\bar{\alpha}
 总结DDPM每一步的推断：
 
 1. 每个时间步time_step通过$x_t$和$t$来预测高斯噪声$z_\theta(x_t,t)$，随后得到均值$\mu_\theta(x_t,t)$；
-2. 得到方差$\sum_\theta(x_t, t)$，DDPM中使用`untrained`$\sum_\theta(x_t,t)=\tilde{\beta}_t$，并且认为$\tilde{\beta}_t=\beta_t$和$\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$结果近似，在GLIDE中则是根据网络预测`trainable`方差$\sum_\theta(x_t,t)$；
+2. 得到方差$\sum_\theta(x_t,t)$，DDPM中使用untrained分布$\sum_\theta(x_t,t)=\tilde{\beta}_t$，并且认为$\tilde{\beta}_t=\beta_t$和$\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$结果近似，在GLIDE中则是根据网络预测trainable方差$\sum_\theta(x_t,t)$；
 3. 得到$q(x_{t-1}\vert x_t)$，利用重参数得到$x_t-1$
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240109-7.png)
