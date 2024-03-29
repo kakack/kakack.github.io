@@ -10,16 +10,15 @@ A traveler, husband, daddy, coder, video game player, fan of Manchester United a
 
 - **Education:**
 	+ **Zhejiang University**, `Master of Software Engineering`, `Bachelor of Computer Science` 
-	
 - **Lives in:**
 	+ **Shaoxing, Zhejiang, CHINA**, as my hometown in childhood
 	+ **Hangzhou, Zhejiang, CHINA**, where I finished my bachelor and master degrees and where I married and my daughter was born. 
 	+ **San Jose, CA, USA**, where I spent a wonderful whole year with the best talents from worlds.
-
 - **Working on:**
 	+ Python, C/C++
-	+ Computer Vision
 	+ Machine Learning
-	+ Deep Learning	
+	+ Deep Learning
+	+ Computer Vision
+	+ Nature Language Processing
 	+ Large Language Model
-	    
+	+ AI Infra
