@@ -51,7 +51,7 @@ Prompt optimization类型：
 
 采用更实用的方法来使用大型语言模型（LLMs）涉及到将任务分解成组件，原型制作，并评估整个系统（外在的）及其组件（内在的）。这种方法经常被证明更有效且更易于维护，并提供了一种平衡的方式来利用LMs的能力，而无需高昂的运营成本和维护复杂性。
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm_practice.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm-practice.png)
 
 ---
 
@@ -78,7 +78,7 @@ Prompt optimization类型：
 - Adapter-tuning：Adapter-tuning 在预训练语言模型的各层之间插入额外的任务特定层，这些被称为适配器Adapter。在调整过程中，只有Adapter的参数会被调整，而预训练模型的参数则保持不变。LoRA（Low-Rank Adaptation）是最近流行起来的一种fine-tuning方法，它最小化了调整参数的数量，优化了调整内存效率，缓解了灾难性遗忘，同时不增加额外的推理延迟。LoRA在保持模型预训练权重不变的同时，增加了一对秩分解权重矩阵（称为更新矩阵）对，且只训练这些新添加的权重。
 - Prefix-tuning：Prefix-tuning也是一种轻量化替代方案。它在模型前面添加一系列连续的任务特定向量，这被称为前缀Prefix。前缀完全由自由参数组成，这些参数不对应真实的tokens。在fine-tuning过程中，只有前缀参数被调整，而预训练模型参数保持冻结。这种方法的灵感来自于prompt。
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm_practice2.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm-practice2.png)
 
 优劣对比：
 
@@ -102,7 +102,7 @@ Prompt optimization类型：
 
 2022年，Instruction fine-tuning因为该技术在不损害模型的泛化能力的情况下显著提升模型性能而获得了巨大的流行。通常，一个pre-trained LM会在一系列语言任务上进行fine-tuning，并在fine-tuning时未见过的另一组语言任务上进行评估，以证明其泛化能力和zero-shot能力。
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm_practice3.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm-practice3.png)
 
 优劣对比：
 
@@ -126,5 +126,5 @@ RLHF步骤：
 
 **RLHF总结**：
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm_practice4.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm-practice4.png)
 
