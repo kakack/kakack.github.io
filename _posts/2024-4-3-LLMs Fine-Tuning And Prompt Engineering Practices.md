@@ -30,12 +30,12 @@ Fine-Tuning是将pre-trained Model适应于特定任务或者特定领域的过�
 - Reinforcement learning through human feedback（RLHF）：本质上是Instruction-tuning的扩展，在tuning之后加入更多新步骤。后续步骤的重点是确保模型符合人类偏好（真实性、毒性降低等）。
 - Direct preference optimization（DPO）：一种稳定、高性能、计算量轻且简单得多的实现，使 LM 与人类偏好保持一致。
 
-**Prompting**：也成为in-context learnig，涉及预先准备指令或为任务输入提供一些示例，并将这些示例提供给pre-trained LLMs。在这里，与其通过数百（或数千）个输入文本来fine-tuning模型，不如说模型通过接收一条指令和少量特定任务的示例（通常少于十个）来操作。这些示例（本质上展示了我们想要执行的任务），为模型提供了处理这类任务的指导蓝图，使其能够迅速适应并在新任务上有效地执行。在这个过程中，预训练模型的权重被冻结。相反，提示被设计和优化以引出来自大型语言模型的期望输出。换句话说，这里，你是通过指令和自然语言进行fine-tuning，而不是改变底层模型参数。
+**Prompting**：也成为in-context learnig，涉及预先准备指令或为任务输入提供一些示例，并将这些示例提供给pre-trained LLMs。在这里，与其通过数百（或数千）个输入文本来fine-tuning模型，不如说模型通过接收一条指令和少量特定任务的示例（通常少于十个）来操作。这些示例（本质上展示了我们想要执行的任务），为模型提供了处理这类任务的指导蓝图，使其能够迅速适应并在新任务上有效地执行。在这个过程中，预训练模型的权重被冻结。相反，prompt被设计和优化以引出来自大型语言模型的期望输出。换句话说，这里，你是通过指令和自然语言进行fine-tuning，而不是改变底层模型参数。
 
 Prompt optimization类型：
 
-- Prompt Engineering：设计提示模板的过程，该模板在下游任务上产生最有效的性能。提示工程可以通过手动或通过算法搜索来完成（不调整参数）。
-- Prompt-Tuning：Prompt-Tuning在提示中引入了额外的参数，并使用监督样本优化这些参数。与在离散空间优化Prompt的Prompt Engineering相比，Prompt-Tuning编码了文本提示，并在连续空间中对其进行优化。
+- Prompt Engineering：设计prompt模板的过程，该模板在下游任务上产生最有效的性能。Prompt engineering可以通过手动或通过算法搜索来完成（不调整参数）。
+- Prompt-Tuning：Prompt-Tuning在prompt中引入了额外的参数，并使用监督样本优化这些参数。与在离散空间优化Prompt的Prompt Engineering相比，Prompt-Tuning编码了文本prompt，并在连续空间中对其进行优化。
 
 如何选择fine-tunig和prompt：这两种方法并不是互斥的，通常可以先用指令Fine-Tuning LLMs，使得其有较好的通用性能，再在交互的时候通过prompting来提升对特定下游任务的性能。
 
@@ -75,8 +75,8 @@ Prompt optimization类型：
 
 **Parameter-efficient fine-tuning**：是fully fine-tuning的轻量级替代方案，它冻结了大部分预先训练的参数，并使用小型可训练模块增强模型。
 
-- Adapter-tuning：Adapter-tuning 在预训练语言模型的各层之间插入额外的任务特定层，这些被称为适配器Adapter。在调整过程中，只有Adapter的参数会被调整，而预训练模型的参数则保持不变。LoRA（Low-Rank Adaptation）是最近流行起来的一种fine-tuning方法，它最小化了调整参数的数量，优化了调整内存效率，缓解了灾难性遗忘，同时不增加额外的推理延迟。LoRA在保持模型预训练权重不变的同时，增加了一对秩分解权重矩阵（称为更新矩阵）对，且只训练这些新添加的权重。
-- Prefix-tuning：Prefix-tuning也是一种轻量化替代方案。它在模型前面添加一系列连续的任务特定向量，这被称为前缀Prefix。前缀完全由自由参数组成，这些参数不对应真实的tokens。在fine-tuning过程中，只有前缀参数被调整，而预训练模型参数保持冻结。这种方法的灵感来自于prompt。
+- Adapter-tuning：Adapter-tuning 在预训练语言模型的各层之间插入额外的任务特定层，这些被称为适配器Adapter。在fine-tuning过程中，只有Adapter的参数会被更新，而预训练模型的参数则保持不变。LoRA（Low-Rank Adaptation）是最近流行起来的一种fine-tuning方法，它最小化了更新参数的数量，优化了调整内存效率，缓解了灾难性遗忘，同时不增加额外的推理延迟。LoRA在保持模型预训练权重不变的同时，增加了一对秩分解权重矩阵（称为更新矩阵）对，且只训练这些新添加的权重。
+- Prefix-tuning：Prefix-tuning也是一种轻量化替代方案。它在模型前面添加一系列连续的任务特定向量，这被称为前缀Prefix。前缀完全由自由参数组成，这些参数不对应真实的tokens。在fine-tuning过程中，只有前缀参数被更新，而预训练模型参数保持冻结。这种方法的灵感来自于prompt。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm-practice2.png)
 
@@ -110,14 +110,14 @@ Prompt optimization类型：
   - 2022年在语言模型（LM）领域的一个突破是，instruction fine-tuning成为了提高大型语言模型（LLMs）整体性能和有用性的state-of-the-art。
   - 特别是在零样本学习场景中（即面对未见过的任务时），instruction fine-tuning显著提高了模型的性能，因此经过Instruction fine-tuning的LLMs比那些更多为特定用例而精细fine-tuning的模型具有更强的泛化能力。
 - 劣势：
-  - 这种方法调整了整个模型的参数，而不是在paramater-efficient fine-tuning中冻结其中一部分。这意味着它不会带来参数高效fine-tuning所具有的成本优势。然而，鉴于instruction fine-tuning产生的模型相比parameter-efficient fine-tuning更具有泛化能力，instruction fine-tuning的模型仍然可以作为服务于多个下游任务的通用模型。本质上，这取决于你是否拥有进行instruction fine-tuning所需的指令数据集以及训练预算。
+  - 这种方法更新了整个模型的参数，而不是在paramater-efficient fine-tuning中冻结其中一部分。这意味着它不会带来参数高效fine-tuning所具有的成本优势。然而，鉴于instruction fine-tuning产生的模型相比parameter-efficient fine-tuning更具有泛化能力，instruction fine-tuning的模型仍然可以作为服务于多个下游任务的通用模型。本质上，这取决于你是否拥有进行instruction fine-tuning所需的指令数据集以及训练预算。
   - Instruction fine-tuning在自然以指令形式表述的任务上普遍有效（e.g., NLI, QA, translation, struct-to-text），但对于直接以语言建模形式构建的任务（例如，推理）就有点更棘手了。为了使instruction fine-tuning在推理任务中也能比传统fine-tuning表现得更好，需要在instruction fine-tuning的监督样本中包含chain-of-thought示例。
 
 **Reinforcement learning through human feedback（RLHF）**：
 RLHF 是instruction fine-tuning的扩展，在instruction fine-tuning步骤之后增加了更多步骤，以进一步纳入人类反馈。
 预训练的大型语言模型（LLMs）经常表现出非预期的行为，如捏造事实（也称为幻觉）、生成有偏见或有害的回答，或简单地不遵循用户指令。这是因为许多最新的语言模型使用的语言建模目标——从互联网上的网页预测下一个词——与“有帮助且安全地遵循用户指令”的目标不同。
 通过人类反馈进行强化学习是一种fine-tuning技术，帮助语言模型按照用户的明确意图（如遵循指令、保持真实）和期望行为（不表现出有偏见、有害或其他有害特征）行动。
-这项技术的最佳示范是由OpenAI提供的。他们采用了他们的预训练GPT-3模型，使用RLHF进行了微调，并派生出他们称为InstructGPT的更加对齐的模型。此外，ChatGPT也是使用RLHF在更高级的GPT模型系列（称为GPT-3.5）上派生出来的。
+这项技术的最佳示范是由OpenAI提供的。他们采用了他们的预训练GPT-3模型，使用RLHF进行了fine-tuning，并派生出他们称为InstructGPT的更加对齐的模型。此外，ChatGPT也是使用RLHF在更高级的GPT模型系列（称为GPT-3.5）上派生出来的。
 
 RLHF步骤：
 1. Instruction-tuning：收集期待模型完成的行为并以此通过监督学习fine-tuning LLMs；
@@ -128,3 +128,50 @@ RLHF步骤：
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm-practice4.png)
 
+在实际应用场景中，会有不少情况prompting效果会更好或者开销会更有效，通常来讲，prompting可以由两种方法实现：
+
+- 使用一个开源的self-trained LLM，设计或者调整prompts，然后自己进行推理；
+- 使用一个商用的LLM API服务（例如GPT-4），然后在它们的调试平台设计prompts。
+
+**Prompt engineering**：在prompt engineering中，prompt通常由任务描述、一个或多个指令和/或几个典型例子组成。通常在这个阶段会使用经过Instruction-tuned的pre-trained model。模型参数被冻结，这种pre-trained model的“冻结”是非常有益的，尤其是随着模型大小的持续增加。与其为每个下游任务单独复制一个模型，不如使用一个单一的通用模型同时服务于许多不同的任务。
+
+Prompt的直觉是，有一个合适的上下文可以在不改变其参数的情况下引导LM。例如，如果我们想让LM生成一个词（e.g., Bonaparte），我们可以在前面添加它的常见搭配作为上下文（e.g., Napoleon），这样语言模型会给所需词汇分配更高的概率。
+
+**Manual prompt design vs. automated prompt design**：
+
+- Manual prompt design：最自然而然的创建prompts的方法，就是通过人工的形式进行prompt设计。
+- Automated prompt design：自动化prompt设计涉及自动搜索在离散空间中描述的prompt模板，通常映射到自然语言短语。
+
+Prompt Engineering优劣分析：
+
+- 优势：
+  - 少量样本prompt可以大大减少对特定任务数据的需求。在收集大量监督样本不可行的情况下，prompt engineering可以用很少的例子来工作。 
+  - 它也适用于零样本设置（没有提供监督样本）。 
+  - 从效率上讲，它不需要更新参数。 
+  - 没有灾难性遗忘，因为LMs的参数保持不变。 
+  - 通常在分布外泛化方面比大多数其他fine-tuning方法表现得更好。 
+  - Prompt engineering生成人类可解释的prompt模板，因此在需要人类努力/主题专家参与迭代的地方更加直观。
+- 劣势：
+  - 因为prompt是提供任务规范的唯一方法，有时需要大量工程才能实现高准确度。然而，找到健壮的、一致的和可解释的prompt选择规则极其困难。
+  - 提供许多受监督的样本在推理时可能会很慢，特别是如果你没有使用商业LM API之一，因此不能轻易地从大型任务特定样本中获益（如果可用的话）。
+  - 通常与fine-tuning相比表现较差，特别是如果有大型任务特定样本可用，这取决于你正在prompt的base LM。
+  - 每次模型进行推理时处理所有prompt的输入-目标对，可能会因高推理场景而产生显著的计算成本。
+  - LLMs只能依赖于有限长度的上下文（例如，GPT-4的8k令牌），prompt不能充分利用比上下文窗口更长的训练集。
+
+**Chain-of-thought Prompt**：Chain-of-thought prompting是一种prompt构成技术，它在prompt中包括一系列中间自然语言推理步骤作为示范，以解锁大型语言模型(LLMs)执行推理任务的能力。具体来说，一个chain-of-thought prompt的prompt包括三元组：{输入, 思考链, 输出}。该prompt赋予语言模型(LM)生成类似的思考链推理能力，这种推理能力可以获得问题的最终答案。请参考下面的示例：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm-practice5.png)
+
+直觉是，chain-of-thought提供了一个可解释的窗口，用于观察模型的行为，表明它可能是如何得出特定答案的，并提供了在推理路径出错处进行fine-tuning的机会。Chain-of-thought推理可用于数学文字题、常识推理和符号操作等任务。研究表明，在足够大的pre-trained LLM（数十亿参数）中，可以容易地引出chain-of-thought推理，但对于较小的LLM则效果不佳。
+
+**Prompt chaining**：Prompt Chaining 是一种prompt分解技术，它将一个总体任务分解为一系列沿着 DAG（有向无环图）的高度目标化子任务，将每个任务映射到一个独立的 LM（语言模型）步骤，并使用一个步骤的输出作为下一个步骤的输入。研究表明，prompt chain可能帮助以更透明和可控的方式完成更复杂的任务。此外，一些研究展示了使用 LM prompt chain的软件编程的一种有前景的新方式。这种方法通过用机器学习模型链替换确定性代码块，增强了软件的能力。
+
+有诸如 *W&B Prompts*这样的工具，提供了一个交互式界面，以视觉方式检查他们的prompt chain，以帮助prompt设计者进行LM链的创作过程。本质上，Prompts 允许用户审查其 LM 采取的步骤以提供输出，从而允许对过程进行细粒度的理解。除了其他优势，prompt chain使得调试 LLMs（大型语言模型）变得更加容易。
+
+**LangChain**：还有一些复杂的LLM管道构建框架，比如LangChain。它协助构建和维护由引导LM调用（可以涉及对不同LM API的多次调用）、外部工具（网络搜索、计算器、字典等）以及LLM Agents组成的管道，这些LLM Agents可以将输入流量路由到最合适的动作以进行自动化规划和问题解决。设计基于LLM的管道和系统是提高系统整体性能的有效方式，前提是管道的部分设计用于缓解LLM的不可靠和非确定性输出，并赋予LLM使用外部可用的专门执行确定性任务的工具（例如计算器）。
+
+随着最新商业LLM（如GPT家族）性能的不断提升，生态系统的努力已从模型构建转移到构建非模型部分——本质上是构建上述基于LLM的系统，以针对某一任务优化性能。
+
+
+
+**小结**：在接下来的几年里，我们仍应该期待看到新的基础大型语言模型（LLM）的出现，但可以肯定的是，大多数组织将更少地专注于训练他们自己的GPT变体，更多地专注于对现有模型进行fine-tuning或prompt engineering。在这个特定领域，研究的步伐非常快，我们预计在未来的几个月和几年里将继续引入新技术。
