@@ -3,7 +3,7 @@
 layout: post
 tags: [Engineering, LLM, Scaling Law]
 title: Scaling Law in Large Language Model
-date: 2024-04-3
+date: 2024-04-8
 author: Kaka Chen
 comments: true
 toc: true
