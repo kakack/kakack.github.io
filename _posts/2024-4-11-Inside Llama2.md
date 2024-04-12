@@ -10,3 +10,19 @@ toc: true
 pinned: false
 
 ---
+# 1 - Intro
+
+# 2 - Process
+
+# 3 - Architcture
+
+## 3.1 - RMSNorm
+
+## 3.2 - RoPE
+
+## 3.3 - KV Cache
+
+## 3.4 - Group Query Attention
+
+## 3.5 - FeedForward
+
