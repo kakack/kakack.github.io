@@ -46,8 +46,8 @@ pinned: false
 
 RCNN以及其一系列衍生模型（Fast-RCNN、Faster-RCNN）将region proposal和CNN结合，是最初也是最经典的将深度学习在目标检测领域的应用。也是Two-Stage目标检测方法的标杆。其核心思想就是将目标检测任务分成两个部分：
 
-	1.	获得输入图像的region proposal。从最初在RCNN上应用selective search到Faster-RCNN上利用集成的RPN（Region Proposal Network），都是用于得到图像中具有相近特征的区域，也就是我们需要做的图像分割的工作；
-	1.	后续的CNN分类器将不同的region proposal分别分类并输出label。
+1. 获得输入图像的region proposal。从最初在RCNN上应用selective search到Faster-RCNN上利用集成的RPN（Region Proposal Network），都是用于得到图像中具有相近特征的区域，也就是我们需要做的图像分割的工作；
+2. 后续的CNN分类器将不同的region proposal分别分类并输出label。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220527-4.jpeg)
 
