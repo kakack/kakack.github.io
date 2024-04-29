@@ -154,23 +154,17 @@ $$
 \begin{align} &\mathcal{L}_{VLB}=L_T+L_{T-1}+...+L_0\\ &L_T=D_{KL}(q(x_T|x_0)||p_\theta(x_T))\\ &L_t=D_{KL}(q(x_t|x_{t+1},x_0)||p_\theta(x_t|x_{t+1}));\qquad 1\leq t \leq T-1\\ &L_0=-\log p_\theta(x_0|x_1)\\ \end{align}$$
 
 其中前向$q$没有可学习参数，而$x_T$是纯高斯噪声，$L_T$可以看做常量忽略，$L_t$则可以看做拉近两个高斯分布，根据多元高斯分布的KL散度求解：
-
 $$
 L_t=E_q[\frac{1}{2||\sum_\theta(x_t,t)||^2_2}||\tilde{\mu}_t(x_t,x_0)-\mu_\theta(x_t,t)||^2]+C
 $$
-
 带入可有：
-
 $$
 \begin{align} L_t&=\mathbb{E}_{x_0,\overline{z}_t}\left[\frac{1}{2||\Sigma_\theta(x_t,t)||_2^2}||\tilde{\mu}_t(x_t,x_0)-\mu_\theta(x_t,t)||^2\right]\\ &=\mathbb{E}_{x_0,\overline{z}_t}\left[\frac{1}{2||\Sigma_\theta(x_t,t)||_2^2}||\frac{1}{\sqrt{\overline{a}_t}}(x_t-\frac{\beta_t}{\sqrt{1-\overline{a}_t}}\overline{z}_t)-\frac{1}{\sqrt{\overline{a}_t}}(x_t-\frac{\beta_t}{\sqrt{1-\overline{a}_t}}z_\theta(x_t,t))||^2\right]\\ &=\mathbb{E}_{x_0,\overline{z}_t}\left[\frac{\beta_t^2}{2\alpha_t(1-\overline{\alpha}_t||\Sigma_\theta||_2^2)}||\overline{z}_t-z_\theta(x_t,t)||^2\right]\\ &=\mathbb{E}_{x_0,\overline{z}_t}\left[\frac{\beta_t^2}{2\alpha_t(141-\overline{\alpha}_t||\Sigma_\theta||_2^2)}||\overline{z}_t-z_\theta(\sqrt{\overline{\alpha}_t}x_0+\sqrt{1-\overline{\alpha}_t}\overline{z}_t,t)||^2\right] \end{align}
 $$
-
 因此diffusion训练的本质就是去学习高斯噪声$\overline{z}_t$和$z_\theta$之间的MSE，DDPM将loss进一步简化为：
-
 $$
 L_t^{simple}=\mathbb{E}_{x_0,\overline{z}_t}\left[||\overline{z}_t-z_\theta(\sqrt{\overline{\alpha}_t}x_0+\sqrt{1-\overline{\alpha}_t}\overline{z}_t,t)||^2\right]
 $$
-
 总结训练过程为：
 
 1. 获取输入$x_0$，从$1...T$随机采样一个$t$；
@@ -186,7 +180,6 @@ $$
 DDPM的高质量生成依赖于较大的$T$（一般为1000或以上），这就导致diffusion的前向过程非常缓慢。在denoising diffusion implicit model (DDIM)中提出了一种牺牲多样性来换取更快推断的手段。
 
 根据独立高斯分布可加性，可以得到$x_{t-1}$为：
-
 $$
 \begin{align} x_{t-1}&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{a}_{t-1}}\overline{z}_{t-1}\\ &=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\overline{z}_t+\sigma_t z_t\\ &=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}(\frac{x_t-\sqrt{\overline{a}_t}x_0}{\sqrt{1-\overline{\alpha}_t}})+\sigma_t z_t\\ q_\sigma(x_{t-1}|x_t,x_0)&=\mathcal{N}(x_{t-1};\sqrt{\overline{a}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma^2_t}(\frac{x_t-\sqrt{\overline{a}_t}x_0}{\sqrt{1-\overline{\alpha}_t}}), \sigma_t^2\mathbf{I}) \end{align}
 $$
