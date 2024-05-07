@@ -213,6 +213,7 @@ $$
 g(x_m, x_n, m - n) & = <f_q(x_m, m), f_k(x_n, n)> \nonumber \\ & = Re[(W_qx_m)(W_kx_n)^*e^{i(m-n)\theta}] \nonumber
 \end{align}
 $$
+
 其中$Re$表示复数的实部，$(W_kx_n)^*$表示$(W_kx_n)$的共轭复数。也就是让$\hat{q}_m$和$\hat{k}_n$内积的值受到$(m-n)$的影响。根据欧拉公式$e^{ix}=\cos(x)+i\sin(x)$代入$f_q(x_m,m)$，有$f_q(x_m,m)=(W_qx_m)e^{im\theta}=(W_qx_m)[\cos(m\theta)+i\sin(m\theta)]$。
 
 假设当前是2维平面即$d=2$，那么展开上述等式可以有：
@@ -234,6 +235,7 @@ f_q(x_m, m) & = (q^{(1)}_m, q^{(2)}_n)[cos(m\theta) + i\sin(m\theta)] \\
 $$
 
 转换为向量的表达形式：
+
 $$
 \begin{align}
 f_q(x_m, m) & = [q^{(1)}_m\cos(m\theta) - q^{(2)}_m \sin(m\theta)] + i[q^{(1)}_m \sin(m\theta) + q^{(2)}_m\cos(m\theta)] \\ 
@@ -241,7 +243,9 @@ f_q(x_m, m) & = [q^{(1)}_m\cos(m\theta) - q^{(2)}_m \sin(m\theta)] + i[q^{(1)}_m
             & = (\begin{array}{cc|r}\cos (m\theta) & -\sin (m\theta) \\ \sin (m\theta) & \cos (m\theta)\end{array})(\begin{array}{cc|r} q_m^{(1)} \\ q_m^{(2)}\end{array})
 \end{align}
 $$
+
 同理key部分也可以表示为：
+
 $$f_k(x_n,n) = (\begin{array}{cc|r}\cos (n\theta) & -\sin (n\theta) \\ \sin (n\theta) & \cos (n\theta)\end{array})(\begin{array}{cc|r} k_n^{(1)} \\ k_n^{(2)}\end{array})$$
 
 其中，$\theta$是由位置$p$确定的旋转角度。在RoPe中，旋转角度$\theta$通常是位置$p$的函数，例如$\theta = \frac{p}{\sqrt d}$，$d$是维度。
