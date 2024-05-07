@@ -131,7 +131,6 @@ Transformer中的Normalization层一般都是采用LayerNorm来对Tensor进行�
 
 $$
 \begin{align}
-& LayerNorm: \nonumber \\
 & y=\frac{x-E[x]}{\sqrt{{Var[x]+\epsilon}}}*\gamma+\beta \nonumber \\
 & E[x]=\frac{1}{N}\sum^N_{i=1}x_i \nonumber \\
 & Var[x]=\frac{1}{N}\sum^N_{i=1}(x_i-E[x])^2 \nonumber
@@ -142,7 +141,6 @@ $$
 
 $$
 \begin{align}
-& RMSNorm: \nonumber \\
 & y=\frac{x}{\sqrt{Mean(x^2)+\epsilon}}*\gamma \nonumber \\
 & Mean(x^2)=\frac{1}{N}\sum^N_{i=1}x^2_i \nonumber
 \end{align}
@@ -254,7 +252,7 @@ $$f_k(x_n,n) = (\begin{array}{cc|r}\cos (n\theta) & -\sin (n\theta) \\ \sin (n\t
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_3.png)
 
-这就是整个整个RoPE在位置编码时所作的工作，可以发现$R_d_{\theta,m}$是一个稀疏矩阵，这样直接对$q,k$进行矩阵乘法的位置编码会很低效，所以可以通过以下方法来实现RoPE。
+这就是整个整个RoPE在位置编码时所作的工作，可以发现 $R_d_{\theta,m}$ 是一个稀疏矩阵，这样直接对$q,k$进行矩阵乘法的位置编码会很低效，所以可以通过以下方法来实现RoPE。
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_4.png)
 
