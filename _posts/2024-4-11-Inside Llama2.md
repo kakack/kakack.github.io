@@ -131,9 +131,9 @@ Transformer中的Normalization层一般都是采用LayerNorm来对Tensor进行�
 
 $$
 \begin{align}
-& y=\frac{x-E[x]}{\sqrt{{Var[x]+\epsilon}}}*\gamma+\beta \nonumber \\
-& E[x]=\frac{1}{N}\sum^N_{i=1}x_i \nonumber \\
-& Var[x]=\frac{1}{N}\sum^N_{i=1}(x_i-E[x])^2 \nonumber
+y & =\frac{x-E[x]}{\sqrt{{Var[x]+\epsilon}}}*\gamma+\beta \nonumber \\
+E[x] & =\frac{1}{N}\sum^N_{i=1}x_i \nonumber \\
+Var[x] & =\frac{1}{N}\sum^N_{i=1}(x_i-E[x])^2 \nonumber
 \end{align}
 $$
 
@@ -141,8 +141,8 @@ $$
 
 $$
 \begin{align}
-& y=\frac{x}{\sqrt{Mean(x^2)+\epsilon}}*\gamma \nonumber \\
-& Mean(x^2)=\frac{1}{N}\sum^N_{i=1}x^2_i \nonumber
+y & =\frac{x}{\sqrt{Mean(x^2)+\epsilon}}*\gamma \nonumber \\
+Mean(x^2) & =\frac{1}{N}\sum^N_{i=1}x^2_i \nonumber
 \end{align}
 $$
 
