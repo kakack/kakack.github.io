@@ -130,20 +130,13 @@ Llama2主要由32个 Transformer Block 组成，不同之处主要包括以下�
 Transformer中的Normalization层一般都是采用LayerNorm来对Tensor进行归一化，LayerNorm可以被表达成：
 
 $$
-\begin{align}
-y & =\frac{x-E[x]}{\sqrt{{Var[x]+\epsilon}}}*\gamma+\beta \nonumber \\
-E[x] & =\frac{1}{N}\sum^N_{i=1}x_i \nonumber \\
-Var[x] & =\frac{1}{N}\sum^N_{i=1}(x_i-E[x])^2 \nonumber
-\end{align}
+y =\frac{x-E[x]}{\sqrt{{Var[x]+\epsilon}}}*\gamma+\beta \\ E[x] =\frac{1}{N}\sum^N_{i=1}x_i \\ Var[x] =\frac{1}{N}\sum^N_{i=1}(x_i-E[x])^2 
 $$
 
 而RMSNorm则是LayerNorm的变体，省去了求均值过程，也没有了求偏置$\beta$，即：
 
 $$
-\begin{align}
-y & =\frac{x}{\sqrt{Mean(x^2)+\epsilon}}*\gamma \nonumber \\
-Mean(x^2) & =\frac{1}{N}\sum^N_{i=1}x^2_i \nonumber
-\end{align}
+y =\frac{x}{\sqrt{Mean(x^2)+\epsilon}}*\gamma \\ Mean(x^2) =\frac{1}{N}\sum^N_{i=1}x^2_i
 $$
 
 其中$\beta$和$\gamma$为可学习参数
