@@ -126,7 +126,9 @@ Llama2主要由32个 Transformer Block 组成，不同之处主要包括以下�
 4. FeedForward层。
 
 ## 3.1 - RMSNorm
+
 Transformer中的Normalization层一般都是采用LayerNorm来对Tensor进行归一化，LayerNorm可以被表达成：
+
 $$
 \begin{align}
 & LayerNorm: \nonumber \\
@@ -135,7 +137,9 @@ $$
 & Var[x]=\frac{1}{N}\sum^N_{i=1}(x_i-E[x])^2 \nonumber
 \end{align}
 $$
+
 而RMSNorm则是LayerNorm的变体，省去了求均值过程，也没有了求偏置$\beta$，即：
+
 $$
 \begin{align}
 & RMSNorm: \nonumber \\
@@ -143,7 +147,9 @@ $$
 & Mean(x^2)=\frac{1}{N}\sum^N_{i=1}x^2_i \nonumber
 \end{align}
 $$
+
 其中$\beta$和$\gamma$为可学习参数
+
 ```python
 # RMSNorm
 class RMSNorm(torch.nn.Module):
