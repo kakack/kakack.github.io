@@ -108,7 +108,19 @@ $$
 \begin{align} &\frac{1}{\sigma^2}=\frac{1}{\tilde{\beta}_t}=(\frac{\alpha_t}{\beta_t}+\frac{1}{1-\overline{\alpha}_{t-1}});\quad \tilde{\beta}_t=\frac{1-\overline{\alpha}_{t-1}}{1-\overline{\alpha}_t}\cdot\beta_t~\tag{8-1}\\ &\frac{2\mu}{\sigma^2}=\frac{2\tilde{\mu}_t(x_t,x_0)}{\tilde{\beta}_t}=(\frac{2\sqrt{\alpha_t}}{\beta_t}x_t+\frac{2\sqrt{\overline{a}_{t-1}}}{1-\overline{\alpha}_{t-1}}x_0);\\&\tilde{\mu}_t(x_t,x_0)=\frac{\sqrt{a}_t(1-\overline{\alpha}_{t-1})}{1-\overline{\alpha}_t}x_t+\frac{\sqrt{\overline{\alpha}_{t-1}}\beta_t}{1-\overline{\alpha}_t}x_0 \end{align}
 $$
 
-然后已知：$x_0=\frac{1}{\sqrt{\bar{\alpha}_t}}(x_t-\sqrt{1-\bar{\alpha}_t}\bar{z}_t)$，带入后得到$\bar{\mu}_t=\frac{1}{\sqrt{\alpha_t}}(x_t-\frac{\beta_t}{\sqrt{1-\bar{\alpha}_t}}\bar{z}_t)$，其中高斯分布$\bar{z}_t$为深度模型所预测的噪声（用于去噪），可看做为$z_\theta(x_t,t)$，得到：
+然后已知：
+
+$$
+x_0=\frac{1}{\sqrt{\bar{\alpha}_t}}(x_t-\sqrt{1-\bar{\alpha}_t}\bar{z}_t)
+$$
+
+代入后得到
+
+$$
+\bar{\mu}_t=\frac{1}{\sqrt{\alpha_t}}(x_t-\frac{\beta_t}{\sqrt{1-\bar{\alpha}_t}}\bar{z}_t)
+$$
+
+其中高斯分布 $\bar{z}_t$ 为深度模型所预测的噪声（用于去噪），可看做为 $z_\theta(x_t,t)$ ，得到：
 
 $$
 \mu_t(x_t,t)=\frac{1}{\sqrt{\alpha_t}}(x_t-\frac{\beta_t}{\sqrt{1-\bar{\alpha}_t}}z_\theta(x_t, t))
@@ -116,8 +128,8 @@ $$
 
 总结DDPM每一步的推断：
 
-1. 每个时间步time_step通过$x_t$和$t$来预测高斯噪声$z_\theta(x_t,t)$，随后得到均值$\mu_\theta(x_t,t)$；
-2. 得到方差$\sum_\theta(x_t,t)$，DDPM中使用untrained分布$\sum_\theta(x_t,t)=\tilde{\beta}_t$，并且认为$\tilde{\beta}_t=\beta_t$和$\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$结果近似，在GLIDE中则是根据网络预测trainable方差$\sum_\theta(x_t,t)$；
+1. 每个时间步time_step通过$x_t$和$t$来预测高斯噪声 $z_\theta(x_t,t)$ ，随后得到均值 $\mu_\theta(x_t,t)$ ；
+2. 得到方差 $\sum_\theta(x_t,t)$ ，DDPM中使用untrained分布 $\sum_{\theta}(x_t,t)=\tilde{\beta}_t$ ，并且认为 $\tilde{\beta}_t=\beta_t$ 和 $\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$ 结果近似，在GLIDE中则是根据网络预测trainable方差 $\sum_\theta(x_t,t)$ ；
 3. 得到$q(x_{t-1}\vert x_t)$，利用重参数得到$x_t-1$
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240109-7.png)
@@ -169,7 +181,7 @@ $$
 
 1. 获取输入$x_0$，从$1...T$随机采样一个$t$；
 2. 从标准高斯分布采样一个噪声$\bar{z}_t\thicksim \mathcal{N}(0,I)$；
-3. 最小化$\vert\vert\overline{z}_t-z_\theta(\sqrt{\overline{\alpha}_t}x_0+\sqrt{1-\overline{\alpha}_t}\overline{z}_t,t)\vert\vert$
+3. 最小化$||\overline{z}_t-z_\theta(\sqrt{\overline{\alpha}_t}x_0+\sqrt{1-\overline{\alpha}_t}\overline{z}_t,t)||$
 
 最后是简要流程图：
 
@@ -181,7 +193,12 @@ DDPM的高质量生成依赖于较大的$T$（一般为1000或以上），这就
 
 根据独立高斯分布可加性，可以得到$x_{t-1}$为：
 $$
-\begin{align} x_{t-1}&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{a}_{t-1}}\overline{z}_{t-1}\\ &=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\overline{z}_t+\sigma_t z_t\\ &=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}(\frac{x_t-\sqrt{\overline{a}_t}x_0}{\sqrt{1-\overline{\alpha}_t}})+\sigma_t z_t\\ q_\sigma(x_{t-1}|x_t,x_0)&=\mathcal{N}(x_{t-1};\sqrt{\overline{a}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma^2_t}(\frac{x_t-\sqrt{\overline{a}_t}x_0}{\sqrt{1-\overline{\alpha}_t}}), \sigma_t^2\mathbf{I}) \end{align}
+\begin{align} 
+x_{t-1}&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{a}_{t-1}}\overline{z}_{t-1} \nonumber \\ 
+&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\overline{z}_t+\sigma_t z_t \nonumber \\ 
+&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}(\frac{x_t-\sqrt{\overline{a}_t}x_0}{\sqrt{1-\overline{\alpha}_t}})+\sigma_t z_t \nonumber \\ 
+q_\sigma(x_{t-1}|x_t,x_0)&=\mathcal{N}(x_{t-1};\sqrt{\overline{a}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma^2_t}(\frac{x_t-\sqrt{\overline{a}_t}x_0}{\sqrt{1-\overline{\alpha}_t}}), \sigma_t^2\mathbf{I}) \nonumber 
+\end{align}
 $$
 
 这里将方差$\sigma^2_t$引入均值汇总，当$\sigma^2_t=\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$时，等价于最初的$q(x_{t-1}\vert x_t,x_0)$。这种经过贝叶斯的到$q_\theta(x_t\vert x_{t-1},x_0)$称为非马尔科夫过程，因为$x_t$的概率同时依赖于$x_{t-1}$和$x_0$。DDIM进一步定义了$\sigma_t(\eta)^2=\eta\cdot\tilde{\beta}_t$，当$\eta=0$时，diffusion的sample过程会丧失所有随机性从而得到一个deterministic的结果，当$\eta=1$时，则DDIM等价于DDPM。
