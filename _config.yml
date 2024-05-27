@@ -15,19 +15,19 @@ navigation:
     url: /tags
 paginate: 8
 excerpt_separator: <!-- more -->
-footer-links: 
-  email: kakachen1990@gmail.com
+footer-links:
+  email: kyriiiechen@gmail.com
   github: kakack
-  instagram: kakack90
+  instagram: kyriiiec
   linkedin: kakack
 footer-text: Copyright (c) 2024 Let's talk with the world.
-disqus: kakack 
+disqus: kakack
 
 # gitalk:
-#   clientID: 
-#   clientSecret: 
-#   repo: 
-#   owner: 
+#   clientID:
+#   clientSecret:
+#   repo:
+#   owner:
 #   proxy:
 google_analytics:
 utteranc:
@@ -39,7 +39,7 @@ kramdown:
   input: GFM
   syntax_highlighter: rouge
   syntax_highlighter_opts:
-    css_class: 'highlight'
+    css_class: "highlight"
   math_engine: mathjax
 
 sass:
@@ -58,4 +58,3 @@ exclude:
   - LICENSE
   - README.md
   - CNAME
-
