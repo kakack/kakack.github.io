@@ -9,11 +9,7 @@ permalink: /about/
 A traveler, husband, daddy, coder, video game player, fan of Manchester United and Golden State Warriors
 
 - **Education:**
-	+ **Zhejiang University**, `Master of Software Engineering`, `Bachelor of Computer Science` 
-- **Lives in:**
-	+ **Shaoxing, Zhejiang, CHINA**, as my hometown in childhood
-	+ **Hangzhou, Zhejiang, CHINA**, where I finished my bachelor and master degrees and where I married and my daughter was born. 
-	+ **San Jose, CA, USA**, where I spent a wonderful whole year with the best talents from worlds.
+	+ **Zhejiang University** 
 - **Working on:**
 	+ Python, C/C++
 	+ Machine Learning
