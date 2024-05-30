@@ -10,3 +10,15 @@ toc: true
 pinned: false
 
 ---
+
+# 1 - Intro
+
+# 2 - Extrapolation and Interpolation
+
+# 3 - Recurrent Structure
+
+# 4 - Segmentation and Sliding Window
+
+# 5 - Memory-Retrieval Augmentation
+
+# 6 - Conclusion

@@ -2,7 +2,7 @@
 
 layout: post
 tags: [LLM, NLP, RAG]
-title: LLM RAG
+title: Retrieval-Augmented Generation(RAG) for LLMs
 date: 2024-04-20
 author: Kaka Chen
 comments: true
@@ -11,7 +11,7 @@ pinned: false
 
 ---
 
-# 原理
+# 1 - 原理
 
 RAG ，检索增强生成技术（Retrieval-Augmented Generation，RAG），通过在语言模型生成答案之前，先从广泛的文档数据库中检索相关信息，然后利用这些信息来引导生成过程，极大地提升了内容的准确性和相关性。RAG 有效地**缓解了幻觉问题**，提高了**知识更新的速度**，并增强了内容生成的**可追溯性**，使得大型语言模型在实际应用中变得更加**实用和可信**。
 
@@ -34,9 +34,9 @@ RAG适用场景：
   
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-1.png)
 
-# RAG方法概述
+# 2 - RAG方法概述
 
-## 朴素RAG（Naive RAG）
+## 2.1 - 朴素RAG（Naive RAG）
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-2.png)
 
@@ -49,17 +49,17 @@ RAG适用场景：
 - Sentence-window retrieval：Embedding and retrieving single sentence，在检索之后，句子将被替换为围绕原始检索句子的更大窗口的句子。
 - Auto-Merging retrieval：构建树状chunk节点结构，将检索节点合并到较大的父节点中，意味着在检索过程中一个父节点有大多数子节点已检索，那么用父节点替换子节点。
 
-## 进阶的 RAG（Advanced RAG）
+## 2.2 - 进阶的 RAG（Advanced RAG）
 
 Advanced RAG 范式增加了 `预检索` 、 `检索后处理` 等步骤  。在检索前阶段则可以使用**问题的重写**、**路由**和**扩充**等方式对齐问题和文档块之间的语义差异。在检索后阶段则可以通过将检索出来的文档库进行**重排序rerank**避免 “Lost in the Middle ” 现象的发生。或是通过上下文筛选与压缩的方式缩短窗口长度。
 
-## 模块化 RAG（Modular RAG）
+## 2.3 - 模块化 RAG（Modular RAG）
 
 模块化 RAG 在结构上它更加自由的和灵活，引入了更多的具体功能模块，例如**查询搜索引擎**、**融合多个回答**。技术上将检索与微调、强化学习等技术融合。流程上也对 RAG 模块之间进行设计和编排，出现了多种的 RAG 模式。然而，模块化 RAG 并不是突然出现的，三个范式之间是继承与发展的关系。Advanced RAG 是 Modular RAG 的一种特例形式，而 Naive RAG 则是 Advanced RAG 的一种特例。
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-3.png)
 
-# 检索增强
+# 3 - 检索增强
 
 RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强” 和 “生成”。正好也对应的 RAG 中的三个首字母。想要构建一个好的 RAG 系统，增强部分是核心，则需要考虑三个关键问题：**检索什么？什么时候检索？怎么用检索的内容？**
 
@@ -69,7 +69,7 @@ RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强
 
 **检索增强的过程**：最初的检索是一次性过程，在 RAG 发展过程中逐渐出现了迭代检索、递归检索以及交由 LLMs 自行判断检索时刻的自适应检索方法。
 
-# RAG关键问题
+# 4 - RAG关键问题
 
 1. 检索什么：
     1. Token：KNN-LMM擅长处理长尾和跨域问题，计算效率高，但需要大量存储；
@@ -92,7 +92,7 @@ RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强
     - 检索选择：BERT、Roberta、BGE…
     - 生成选择：GPT、Llama、T5…
 
-# RAG关键技术：
+# 5 - RAG关键技术：
 
 1. 数据索引优化：
     1. 核心是chunk策略：
@@ -114,7 +114,7 @@ RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强
 6. 检索流程优化：可以有Iterative迭代式检索和Adaptive自适应检索。
 7. Hybrid (RAG+Fine-tuning) 融合RAG和FT：既可以检索FT，也可以生成FT，还可以进行检索，生成联合FT
 
-# 和微调对比
+# 6 - 和微调对比
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-4.png)
 
@@ -122,7 +122,7 @@ RAG 就像给模型一本教科书，用于定制的信息检索，非常适合�
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-5.png)
 
-# 如何评价RAG
+# 7 - 如何评价RAG
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-6.png)
 
@@ -145,6 +145,6 @@ RAG优点：
 - **可解释性 (Interpretability)**：检索到的项目作为模型预测中来源的参考
 - **多功能性 (Versatility)**：RAG 可以针对多种任务进行微调和定制，包括QA、文本摘要、对话系统等。
 
-# RAG技术生态
+# 8 - RAG技术生态
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-8.png)

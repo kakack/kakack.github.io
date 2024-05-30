@@ -10,3 +10,19 @@ toc: true
 pinned: false
 
 ---
+
+# 1 - Intro
+
+# 2 - Parameter-Efficient Fine-Tuning
+
+## 2.1 - Adapter-based Tuning
+
+## 2.2 - Low-Rank Adaptation
+
+## 2.3 - Prefix Tuning
+
+## 2.4 - Prompt Tuning
+
+# 3 - Memory-Efficient Fine-Tuning
+
+# 4 - Concclusion

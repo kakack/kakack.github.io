@@ -11,16 +11,16 @@ pinned: false
 
 ---
 
-# Intro
+# 1 - Intro
 
-# Mixed Precision Acceleration
+# 2 - Mixed Precision Acceleration
 
-# Scaling Models
+# 3 - Scaling Models
 
-# Initialization Techniques
+# 4 - Initialization Techniques
 
-# Optimization Strategies
+# 5 - Optimization Strategies
 
-# System-Level Pre-Training Efficiency Optimization
+# 6 - System-Level Pre-Training Efficiency Optimization
 
-# Conclusion
+# 7 - Conclusion
