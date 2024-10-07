@@ -4,7 +4,7 @@ layout: post
 tags: [LLM, NLP, RAG]
 title: Retrieval-Augmented Generation(RAG) for LLMs
 date: 2024-04-20
-author: Kaka Chen
+author: Kyrie Chen
 comments: true
 toc: true
 pinned: false

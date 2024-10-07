@@ -4,7 +4,7 @@ layout: post
 tags: [Detection, Deep Learning, Computer Vision]
 title: Evolution by Yolo
 date: 2020-12-16
-author: Kaka Chen
+author: Kyrie Chen
 comments: true
 toc: true
 pinned: false

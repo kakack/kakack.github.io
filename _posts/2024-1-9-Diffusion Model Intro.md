@@ -4,7 +4,7 @@ layout: post
 tags: [Deep Learning, AIGC, Diffusion Model]
 title: Diffusion Model Intro
 date: 2024-1-9
-author: Kaka Chen
+author: Kyrie Chen
 comments: true
 toc: true
 pinned: false

@@ -3,7 +3,7 @@ layout: post
 tags: [Detection, Deep Learning, Computer Vision]
 title: Segmentation in Image
 date: 2022-05-27
-author: Kaka Chen
+author: Kyrie Chen
 comments: true
 toc: true
 pinned: false

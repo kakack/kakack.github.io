@@ -4,7 +4,7 @@ layout: post
 tags: [Deep SORT, Tracking]
 title: Sort & Deep Sort物体跟踪算法小议
 date: 2020-09-25
-author: Kaka Chen
+author: Kyrie Chen
 comments: true
 toc: true
 pinned: false

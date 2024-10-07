@@ -4,7 +4,7 @@ layout: post
 tags: [Deep Learning, Batch Normalization]
 title: Batch Normalization Survey
 date: 2021-10-06
-author: Kaka Chen
+author: Kyrie Chen
 comments: true
 toc: true
 pinned: false

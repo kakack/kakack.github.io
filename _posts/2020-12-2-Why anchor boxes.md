@@ -4,7 +4,7 @@ layout: post
 tags: [Detection, Deep Learning, Computer Vision]
 title: Why Anchor Boxes
 date: 2020-12-02
-author: Kaka Chen
+author: Kyrie Chen
 comments: true
 toc: true
 pinned: false
