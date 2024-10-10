@@ -57,6 +57,14 @@ pinned: false
 
 针对ChatGPT和Claude的结果和之前Kamradt的发现差别不大，并且生成的图表看起来相对相似：右上方（长上下文，指针位于上下文开头附近）是 LLM 信息检索出现问题的地方。
 
+![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240516-6.png)
+
+至于带有prompt guidance的Claude 2.1，虽然无法复制Anthropic 98%的检索准确率，但确实看到提示更新后总未命中率显著下降（从165降至74）。这一飞跃是通过在现有prompt末尾添加10个字的说明来实现的，这突显出提示的细微差异可能会对LLMs产生截然不同的结果。
+
+![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240516-7.png)
+
+最后但同样重要的一点是，尽管Mixtral是迄今为止测试的最小模型，但有趣的是，它在这个任务中表现得非常出色。MOE模型比7B-Instruct好得多，而且发现MOE在检索评估方面表现更好。
+
 ---
 
 # Reference
