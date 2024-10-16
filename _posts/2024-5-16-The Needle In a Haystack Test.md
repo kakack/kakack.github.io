@@ -71,6 +71,57 @@ pinned: false
 
 ## 支持128k上下文的数据工程
 
+- 论文：Data Engineering for Scaling Language Models to 128K Context（2024年2月）
+
+这篇论文认为，在<=4k窗口长度完成预训练的模型，其实就已经基本具备在128k或者更大的上下文窗口进行推理的能力，只需要进行轻量级的继续预训练（e.g. <5B token），就能够解锁这种能力。
+
+而针对继续训练，本文着重切入点在于数据工程。实验基于Llama，数据集基于SlimPajama。提出了几种数据处理策略用于实验对比：
+- Cut at 4k：所有数据按4k长度分chunk，不影响领域分布，是llma这类4k预训练模型所采样的方法；
+- Cut at 128k：截断长度提升到128k，保留长文本内部信息依赖关系，如LongLoRA就是这么做的；
+- Pre-Source Upsampling：在保持各个领域的比例不变的前提下，对长文本进行上采样，提高长文本的比例，在实验中效果最好；
+- Global Upsampling：不管领域，直接对长文本进行上采样；
+- Upsample Arxiv/ Book/ Github：提高特定领域的数据比例，对长文本进行上采样。
+
+结论：
+- 在0-4k长度上，除了Per-source Upsampling以外，各种数据策略都会对模型效果有损害；
+- 在一些领域上的提升，并不能很好地迁移到其他领域，比如Book和Github之间就有点跷跷板效应，其中一个效果好了，另一个可能就有损失
+- 在4k-128k，Per-source Upsampling在各个领域的效果相对较为平衡（绿色的数量最多）
+
+此外，length upsampling很重要。Per-source Upsampling的策略在领域上可以和源数据保持一致，而提升长文本的比例。
+
+## Paraphrasing
+
+- 论文：Training With "Paraphrasing the Original Text" Improves Long-Context Performance（2023年12月）
+
+这篇论文提出了一个叫检索相关度（retrieval relevance）的指标，一个token（或者n-gram）$x$ 的相关度 $R(x)$定义如下：
+
+$$
+R(x)=\frac{n'}{n}log\frac{N}{N'+1}
+$$
+
+这个指标跟TF-IDF很像，其中$n'$表示$x$在gold-chunk中的频率，而$n$是gold-chunk中的总tokens数目；$N$表示整个上下文中的chunk数目，$N'$是包含$x$的chunk数量。
+
+基于token $x$的检索相关度$R(x)$，定义训练样本$S$的检索相关度如下：
+
+$$
+\mathcal{R}(S)=\frac{1}{|S_a|}\sum_{x\in S_a}R(x)
+$$
+
+其中$S_a$表示$S$的答案部分。通过$\mathcal{R}(S)$这个指标可以反映出一个训练样本对模型提高检索能力的贡献。$\mathcal{R}(S)$越高，这个样本对提高模型检索能力的贡献越大。
+
+## PoSE
+
+- 论文：PoSE: Efficient Context Window Extension of LLMs via Positional Skip-wise Training（2023年9月）
+
+解决RoPE位置旋转编码在长输入文本上效果不好的现象，本文提出Positional Skip-wisE，PoSE，通过在短的训练窗口模拟长距离的位置编码，提升模型处理长上下文的能力。模型可以在2k的训练窗口进行训练，而在128k的长度进行推理。相比直接训练128k模型效率更高。
+
+PoSE提出两个设计原则：
+- 模拟所用的位置编码index要覆盖目标长度的范围。如果我们想在128k的窗口进行推理，那就要保证训练的时候，模型从1-128k的位置编码都见过。
+- 为了不损害原模型的能力，位置编码应该尽量保持原来预训练的结构，即尽量连续，和保持顺序关系。
+
+PoSE的一个优势是可以在没有任何成本增加的情况下，支持更长的推理长度。比如可以通过简单修改采样策略的参数，PoSE就可以支持到1M，甚至更大的窗口长度，这是其他方法难以做到的。
+
+有了FlashAttention等方案之后，在128k这个长度，我们也有能力在合理的成本下，进行继续预训练，使用5B左右的token解锁模型的长上下文能力。预训练中，长文本对模型的远距离建模能力很重要，要提高长文本的比例才有更好的效果。此外，领域的分布也是一个需要关注的点。在长窗口的微调上，精心设计输入输出形式能带来一些收益。对于更长的窗口，比如M级别这种几乎无法直接训练/微调的长度，PoSE这种模拟的方案能够在不增加成本的情况下，在效果上达到接近直接训练/微调的表现。
 
 ---
 
