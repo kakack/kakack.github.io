@@ -11,12 +11,6 @@ pinned: false
 
 ---
 
-- [Paper](http://arxiv.org/pdf/1602.00763.pdf)
-- [Open Source Code](https://github.com/abewley/sort)
-
-
-# Abstract
-
 `Deep SORT`是多目标跟踪`Multiple Object Tracking(MOT)`中常用到的一种算法，是一个Detection Based Tracking的方法。主要任务是给定一个图像序列，找到图像序列中运动的物体，并将不同帧的运动物体进行识别，也就是给定一个确定准确的id
 
 整个计算架构可以简单地被分为四个主要步骤，当获得一系列待检测的原始视频帧之后：
@@ -32,6 +26,10 @@ pinned: false
 而SORT算法中只通过前后两帧IOU来构建相似度矩阵，所以运行速度很快。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20200928-1.JPG)
+
+
+- [Paper](http://arxiv.org/pdf/1602.00763.pdf)
+- [Open Source Code](https://github.com/abewley/sort)
 
 - - -
 

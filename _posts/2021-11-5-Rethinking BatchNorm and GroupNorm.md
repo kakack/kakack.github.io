@@ -11,11 +11,11 @@ pinned: false
 
 ---
 
-# Rethinking BatchNorm
-
 在BatchNorm广泛应用之后，关于BN的一些思考也被提出，希望能从bacth本身的采样等方法里探讨，不同的batch会有什么样的不同效果。详见ref[1]。
 
 本文简述其中涉及的四大实验，每个实验涉及一些子结论。
+
+# Rethinking BatchNorm
 
 BatchNorm相对于其他算子来说，主要的不同在于BN是对batch数据进行操作的。BN在batch数据中进行统计量计算，而其他算子一般都是独立处理单个样本的。因此影响BN的输出不仅仅取决于单个样本的性质，还取决于batch的采样方式。
 

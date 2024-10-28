@@ -11,10 +11,6 @@ pinned: false
 
 ---
 
-# Apache Kafka分布式消息系统简介
-
-## Introduction
-
 Kafka是一个分布式的、分区的、多复本的日志提交服务。它通过一种独一无二的设计提供了一个消息系统的功能。
 
 主要有以下一些消息术语（terminology）需要掌握：

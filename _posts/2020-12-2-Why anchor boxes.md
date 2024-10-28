@@ -11,8 +11,6 @@ pinned: false
 
 ---
 
-# Abstract
-
 Anchor Box最早是在Faster-R-CNN中被提到使用，此后在SSD、YOLOv2、YOLOv3等一系列目标检测网络中被普遍使用。Anchor Boxes实质上是一组人为预先设定的检测尺寸框，各个anchor box之间都有各自不同的尺寸和长宽比，以适应不同的被检物体类别。
 
 Anchor boxes是一组具有一定高度和宽度的预定义边界框。定义这些anchor boxes是为了捕获待检测的具有特定尺寸和长宽比的对象类别，它们自身的尺寸和长宽比通常是根据训练数据集中的对象大小来选择的。在检测期间，预定义的anchor boxes会平铺在图像上。网络会在每一个anchor box上预测出被检测对象的存在概率和其他一些属性，如IOU和偏移量等。这些预测会被用于重新完善每一个特定的anchor box。网络不会直接在anchor box上预测出物体的bounding box位置，但是会预测在这个anchor box上出现物体的可能性和细化结果。网络会为定义的每一个anchor box返回一组唯一的预测。最终的feature map会代表每一类的检测结果。对anchor boxes的使用可以让网络能够检测到多个不同比例以及重叠的对象。

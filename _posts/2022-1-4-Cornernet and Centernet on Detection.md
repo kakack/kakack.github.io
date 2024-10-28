@@ -8,11 +8,7 @@ author: Kyrie Chen
 comments: true
 toc: true
 pinned: false
-
-
 ---
-
-# Why Anchor Free?
 
 随着anchor在检测算法中的应用，不管是one or two stage的检测模型，都会在图片上放置密密麻麻尺寸不一的anchors，用来检测全图各个角落大小不一的目标物体。但是anchor based model有两个不足之处：
 

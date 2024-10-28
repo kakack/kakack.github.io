@@ -10,9 +10,10 @@ toc: true
 pinned: false
 
 ---
-# 1 - Intro
 
 Meta的Llama2是当前开源状态最好又可以作为效果标杆的一个LLM模型，但它的官方口径好像也是个半开源，即只有inference而没有train，但是从它的模型结构和部分处理逻辑上，还是具有很高的参考价值。
+
+# 1 - Intro
 
 - [Paper](https://link.zhihu.com/?target=https%3A//arxiv.org/abs/2307.09288)
 - [Code](https://link.zhihu.com/?target=https%3A//github.com/facebookresearch/llama)
