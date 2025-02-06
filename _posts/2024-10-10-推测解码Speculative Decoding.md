@@ -43,9 +43,45 @@ Eagle 是 Google 的一个开源项目，它利用了 Speculative Decoding 的�
 
 EAGLE 引入了一个轻量级的自回归头（Auto-regression Head），基于当前特征序列预测下一个特征，最后通过冻结的分类头将 features 映射为 tokens。这种方法的优势在于，features 比 tokens 更具结构性和规律性，因此能达到更好的草稿接受率。此外，EAGLE在起草阶段采用树状生成结构，使得在验证阶段可以通过一次前向传播处理多个 tokens，从而提高了解码效率。
 - EAGLE 与 SpecInfer 和 Medusa 类似，采用树注意力机制，草稿的生成和验证都是树结构的。
-- 需要一个基础大模型和一个附加模块（FeatExtrapolator），这个 FeatExtrapolator 模块的参数量远小于大模型，例如 70B 的大模型对应 1B 的 FeatExtrapolator。
+- 需要一个基础大模型和一个附加模块（FeatExtrapolator），这个 FeatExtrapolator模块的参数量远小于大模型，例如70B的大模型对应1B的 FeatExtrapolator。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-03.png)
+
+与其他方法只基于 token 进行起草不同，EAGLE 还基于 feature 序列（f4, f5）进行起草。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-04.png)
+
+具体流程如下：
+1. 初始前向计算（原模型生成初始特征和下一个token）：
+首先使用原始LLM对给定的输入prompt进行一次标准的自回归前向传播，得到下一 token 的特征表示（第二高层特征）和对应的token输出。这一步是正常解码的开始点，得到初始的已知特征和token。
+2. 特征外推（起草）：
+利用上述已获得的特征和当前 token 的词嵌入，输入到轻量的 Auto-regression Head（FeatExtrapolator）中进行预测。该头通过自回归方式生成后续的特征序列（即对下一步、下下步的特征进行外推预测）。
+在得到这些预测特征后，使用冻结的LM头将这些特征映射回 token 分布，并根据该分布进行采样，得到多条可能的token序列分支。最后在特征层面快速生成了一个树形的候选token集。
+3. 多轮推测与树状生成：
+重复上述特征外推和token生成的过程多次，即在每一轮中，从当前已验证的token和特征出发，通过 FeatExtrapolator 再猜测多个后续特征点，并通过 LM头生成多个候选 token 分支，形成一颗较为稀疏的预测树。这一过程仅使用小模型（FeatExtrapolator）快速起草出大量候选序列。
+4. 验证（单次前向评估原LLM）：
+对通过树状起草的候选序列进行验证，即使用原始LLM进行一次前向传播，验证这些猜测路径中哪些分支的token是与原LLM分布一致的，并选出要接受的token。
 
 ## Eagle-2
+
+相比EAGLE-1的改进：
+- 在 EAGLE-1 中使用静态 draft 树，这假设 draft tokens 的接受率仅取决于它们的位置。但是现在，我们发现 draft tokens 的接受率还取决于上下文。因此 EAGLE-2 使用了一种具有上下文感知的动态draft树。
+- 回归了传统推测采样（speculative sampling）方法的假设：根据上下文的变化，某些 tokens 更简单，更容易通过较小的草稿模型预测。
+EAGLE-2 在 EAGLE 的基础上，通过 扩展（Expand）和 重排序（Rerank）两个阶段实现对 draft 树的动态调整，实现了对生成过程的进一步优化和加速，提高了对高价值分支的优先性，从而在验证前就大幅减少了需要处理的冗余候选序列。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-05.png)
+
+1. 扩展阶段（Expansion Phase）：
+- 在当前层中，根据全局接受率（通过节点接受率与置信度近似计算得到的值）对节点进行排名。
+- 选取 top-k 个具有最高全局接受概率的节点作为输入，再次输入给起草模型进行下一层候选 token 的生成，从而扩展起草树。这样就避免了过度扩张，减少了单次前向计算的负担。
+2. 重排序阶段（Reranking Phase）：
+- 在扩张完成后，对所有已生成的候选 token 节点（包括浅层和深层）进行全局排序，选取 top-m 个最有可能被接受的 token。
+- 对于同值节点优先选浅层节点，以确保选出的前 m 个 token 仍然保持一个树状结构。
+- 将这些选中的节点线性化成一条序列，以作为下一步验证阶段的输入。
+
+Attention Mask 的调整。因为最终输入给 LLM 验证的序列来自一棵树的不同分支，这些分支不应共享上下文。通过调整注意力掩码，只让每个 token 看见它的祖先节点，保证生成和原始自回归过程在信息可见性上的一致性。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-06.png)
 
 # 大模型draft+verify
 
