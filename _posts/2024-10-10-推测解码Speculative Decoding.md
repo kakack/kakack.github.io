@@ -31,6 +31,43 @@ pinned: false
 
 1. Drafting/草稿阶段：使用某种方法（小草稿模型或大模型本身），对下一个可能出现的一批 token 进行预生成。也就是说，在大模型自回归生成一个 token 之前，先行快速给出一批候选 token 序列。
 2. Validation/验证阶段：将这批候选 token 序列连同原有上下文输入大模型，通过禁用缓存或重新传入完整序列等方式，使大模型在一次前向计算中输出相应位置上的 logits 分布。在这里，大模型能通过单次前向传播就给出整个草稿序列的各位置下一步 token 的概率向量。通过将大模型针对这些位置所得的概率分布与草稿序列进行对比，可以快速判断每个草稿 token 是否与大模型的真实预测概率匹配。
+   ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-01.gif)
+3. 筛选和确认：若猜测的 token 序列在大模型的 logits 确认下可信（即与大模型可能选择的高概率 token 一致），则直接接受整个草稿序列，从而节省了逐 token 生成的反复计算时间；若猜测不符，则丢弃并重新尝试。
+    ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-02.gif)
+
+在贪婪解码情境下，推测解码之所以能够在理论上保留与大模型原本逐步生成相同的概率分布特征，其关键在于“确认”步骤的严格性。贪婪解码策略下，大模型在每个位置都会选择当前概率分布中最高概率的下一个 token。推测解码既没有改变大模型给出概率分布的方式，也没有在最终决策上偏离大模型的“贪婪”选择逻辑。它只是在过程中预先尝试一批潜在的后续 token，并使用大模型原本的概率分布为标准进行严格筛选。一旦筛选通过，就说明这些 token 本来就是大模型在逐 token 解码中所可能给出的最高概率路径，从而保证最终输出与传统自回归解码的结果在理论上是一致的。这一过程并未更改大模型本来的输出分布，只是通过提前拟合和后验验证的方式，加快了确认下一个最优 token 的决策速度。
+
+## Eagle
+
+Eagle 是 Google 的一个开源项目，它利用了 Speculative Decoding 的思想，实现了一种基于大模型 Drafting 的方法，以加速大模型的解码速度。它的创新点在于，不直接对下一步 token 进行预测，而是对原始大模型内部的最后一个隐藏层特征（来自 lm_head 前面一层的 feature）进行外推（extrapolate）。
+
+EAGLE 引入了一个轻量级的自回归头（Auto-regression Head），基于当前特征序列预测下一个特征，最后通过冻结的分类头将 features 映射为 tokens。这种方法的优势在于，features 比 tokens 更具结构性和规律性，因此能达到更好的草稿接受率。此外，EAGLE在起草阶段采用树状生成结构，使得在验证阶段可以通过一次前向传播处理多个 tokens，从而提高了解码效率。
+- EAGLE 与 SpecInfer 和 Medusa 类似，采用树注意力机制，草稿的生成和验证都是树结构的。
+- 需要一个基础大模型和一个附加模块（FeatExtrapolator），这个 FeatExtrapolator 模块的参数量远小于大模型，例如 70B 的大模型对应 1B 的 FeatExtrapolator。
+
+## Eagle-2
+
+# 大模型draft+verify
+
+## Medusa
+
+## Hydra
+
+## Draft & Verify
+
+## Lookahead Decoding
+
+# 通过检索生成draft
+
+## REST
+
+## Prompt Lookup Decoding
+
+# 与稀疏kv cache结合
+
+## MagicDec
+
+# 实验效果
 
 ---
 
@@ -39,4 +76,5 @@ pinned: false
 - [Speculative Decoding: Exploiting Speculative Execution for Accelerating Seq2seq Generation](https://arxiv.org/abs/2203.16487)
 - [Fast Inference from Transformers via Speculative Decoding, Yaniv Leviathan et al., 2023](https://arxiv.org/abs/2211.17192)
 - [Accelerating Large Language Model Decoding with Speculative Sampling, Charlie Chen et al., 2023](https://arxiv.org/abs/2302.01318)
+- [Eagle](https://github.com/SafeAILab/EAGLE)
 
