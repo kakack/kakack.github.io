@@ -382,8 +382,6 @@ The fixed draft KV budget naturally raises concern about the acceptance rate, wh
 
 !()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-13.png]
 
-# 实验效果
-
 ---
 
 # Reference
