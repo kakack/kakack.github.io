@@ -234,7 +234,7 @@ Hydra++ 是对 Hydra 的改进，它在 Hydra 基础上，引入了一个新的 
 - 在hydra heads推理中，为输入序列添加噪声；将每个头部的MLP扩展为4层。
 - 为了增强草稿模型利用整个上下文信息（而不仅仅是最近验证过的token）的能力，在基础模型中添加了一个额外的自注意力解码层。这一新增的层在每个decoding step中仅被query一次。
 
-!()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-10.png]
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-10.png)
 
 ## Draft & Verify
 
@@ -294,7 +294,7 @@ y_n^{(j+1)} = \arg \max_y \, p(y \mid y_{1:n}^{(j)}, \mathbf{x})
 
 Lookahead decoding 使用雅可比迭代对未来 tokens 执行并行解码，还同时验证 cache 中有可能选中的 n-gram 模型。接受 N-gram 允许我们一步推进 N 个标记，从而加速解码过程，如下图：
 
-!()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-11.gif]
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-11.gif)
 
 每个解码步骤都分为两个并行分支：lookahead branch 和 verification branch。
 
@@ -378,9 +378,9 @@ The fixed draft KV budget naturally raises concern about the acceptance rate, wh
 
 这篇文章并没有提出一个自己的模型或算法，更多的是展示实验结果，并选了一些外部的 kv cache 压缩方法直接拿来用（与小草稿模型集成）。作者选的是SnapKV 和 StreamingLLM。
 
-!()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-12.png]
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-12.png)
 
-!()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-13.png]
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-13.png)
 
 ---
 
