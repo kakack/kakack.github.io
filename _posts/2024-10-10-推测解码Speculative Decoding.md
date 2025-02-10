@@ -207,19 +207,180 @@ Medusa 真正吸引人的地方在于它上一步生成草稿，后续就可以�
 
 Hydra 是对Medusa 的改进，它对 Medusa Heads 的结构进行了简单的更改。在 Medusa 中，所有Medusa Heads都是独立的，但 Hydra Heads 会将 candidate 序列中的早期 tokens 作为附加输入：
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-09.png)
+
+Hydra 头是顺序依赖的，因为它们是位于时间步 t 的基础模型的hidden states（hydra_hidden_states）与先前 Hydra 头生成的 tokens 的 input embeddings 的函数（the input embeddings of the tokens sampled by previous Hydra heads）。
+
+```python
+hydra_hidden_states = []
+with torch.inference_mode():
+    input_embeds = self.input_embed_fn(input_ids)
+hydra_inputs = [prefix_embedding]
+
+for i in range(self.hydra_num_heads):
+    # 将input_embeds的向量沿第1维（时间步或序列维度）滚动-(i+1)个位置。每个Hydra头都会收到一个被移位的版本
+    hydra_inputs.append(torch.roll(input_embeds, shifts=-(i+1), dims=1))
+    
+for i in range(self.hydra_num_heads):
+    # 从hydra_inputs中取前i+2个输入，沿最后一个维度拼接
+    head_input = torch.cat(hydra_inputs[:i + 2], dim=-1) 
+    hydra_hidden_states.append(self.hydra_mlp[i](head_input))
+```
+
+## Hydra++
+
+Hydra++ 是对 Hydra 的改进，它在 Hydra 基础上，引入了一个新的 Hydra Head 结构，这个 Hydra Head 可以同时处理多个候选序列，从而进一步提升了整体的推理速度。
+
+- 在hydra heads推理中，为输入序列添加噪声；将每个头部的MLP扩展为4层。
+- 为了增强草稿模型利用整个上下文信息（而不仅仅是最近验证过的token）的能力，在基础模型中添加了一个额外的自注意力解码层。这一新增的层在每个decoding step中仅被query一次。
+
+!()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-10.png]
+
 ## Draft & Verify
 
+这个方法在起草阶段同样使用大模型进行推理，但是选择性地跳过一些层，起到将大模型作为小草稿模型来使用的效果。因此本文需要解决两个问题：
+
+- 如何确定在起草过程中要跳过的层和层数
+
+作者将其表述为一个贝叶斯优化问题，它接收要绕过的层组合作为输入，目标是最大限度地减少每个 token 的平均推理时间。目标函数为：
+
+$$z^* = \arg\min_{z} f(z), \quad \text{s.t. } z \in \{0, 1\}^L.$$
+
+- 如何决定停止生成 draft tokens 的时间
+  
+可以在置信度分数低于某个预定义的静态阈值时停止生成 draft tokens 。关于如何设置这个阈值，本文提出了一种自适应阈值更新方法，该阈值会根据更新规则动态调整，从而可以准确反映大模型接受率并更好地处理不同难度的输入样本：
+
+$$\begin{align}
+AR &\leftarrow \beta_1 AR + (1 - \beta_1) AR_e, \\
+\tilde{\gamma} &=
+\begin{cases} 
+\gamma + \epsilon, & \text{if } AR \leq \alpha, \\
+\gamma - \epsilon, & \text{otherwise},
+\end{cases} \\
+\gamma &\leftarrow \beta_2 \gamma + (1 - \beta_2) \tilde{\gamma}.
+\end{align}$$
+
+其中 $\alpha$ 是大模型接受率， $\epsilon$ 是更新步长，$\beta_1$ 和 $\beta_2$ 是用于减小 $$\gamma$$ （生成草稿长度） 和表示自回归波动的因子。在每个验证阶段后更新$$\gamma$$ 。这种更新规则确保接受率保持在接近大模型接受率 $\alpha$ 的范围内。
+
 ## Lookahead Decoding
+
+### Jacobi Decoding
+
+本文受到 Accelerating Transformer Inference for Translation via Parallel Decoding 的启发，这篇工作提出了一种将 llm 的自回归解码转换为可并行求解的非线性方程组的方法，称为 Jacobi Decoding，它使用固定点 Jacobi 迭代方法来实现并行化解码。
+
+具体来说，Jacobi Decoding 将顺序解码过程重新表述为一个由 n 个变量组成的非线性方程组，并基于雅可比迭代并行求解：
+
+$$f(y_i, y_{-i}; \mathbf{x}) = 0 \quad \text{for} \quad i = 1, \ldots, n \implies
+\begin{cases}
+y_1^{(j+1)} = \arg \max_y \, p(y \mid \mathbf{x}) \\
+y_2^{(j+1)} = \arg \max_y \, p(y \mid y_1^{(j)}, \mathbf{x}) \\
+\vdots \\
+y_n^{(j+1)} = \arg \max_y \, p(y \mid y_{1:n}^{(j)}, \mathbf{x})
+\end{cases}$$
+
+其中，$y_1,y_2,…,y_n$ 表示模型生成的序列的各个位置上的 token。每个迭代步骤可能会预测多个正确的tokens（“正确”是指与贪婪采样策略下的自回归解码结果对齐），从而实现并行化解码。
+然而，在实践中，原始的 Jacobi Decoding 方法的加速比很小。这是因为当前一个 token 错误时，LLM 很少能生成下一个正确的 token；同时，大模型很难在一次迭代中同时实现对多个 token 的准确解码和定位。
+
+### Jacobi Trajectory
+
+在上述Jacobi Decoding 的目标方程组中，$\mathcal{J} := \{\mathbf{y}^{(1)}, \ldots, \mathbf{y}^{(k)}\}$ 称为雅可比轨迹（Jacobi Trajectory）。雅可比轨迹代表了模型在生成文本时，通过并行优化每个解码位置的预测结果逐渐逼近最终输出的过程。
+当 $y(j+1)=y(j)$ 时，解码过程收敛，最终固定点 $y*$ 即为模型解码输出。雅可比轨迹为理解解码的收敛性提供了直观解释，通过分析轨迹，可以评估解码的效率（需要多少次迭代达到收敛）以及模型的稳定性（是否总能收敛到合理的结果）。
+例如，假设我们使用雅可比解码生成一句话，初始预测为随机的 token $\mathbf{y}^{(1)}$ ，第一轮预测输出一些不连贯的文本。随着迭代次数增加 $（\mathbf{y}^{(2)}，\mathbf{y}^{(3)}）$，每个位置的 token 都会基于更准确的上下文被逐步修正，直到得到连贯的句子作为固定点 $y*$ 。这一修正和优化过程便是雅可比轨迹的现实体现。
+总之，雅可比轨迹展示了通过并行更新逐步逼近最终解码结果的过程，反映了 LLM 的解码机制从局部优化走向整体稳定的动态变化。
+
+### Lookahead Decoding
+
+本文注意到在 Jacobi Decoding 中，单个位置的每个新 token 都是根据之前迭代的历史值进行解码的，这会在每个 token 的位置创建历史标记的轨迹，形成许多n-gram。例如，通过 3 次 Jacobi iterations，可以在每个 token 位置形成 3-gram。Lookahead decoding 通过从雅可比轨迹（Jacobi trajectory）中收集和缓存这些 n-grams，并将它们作为草稿。同时，维护一个 n-gram pool 来缓存历史生成的 n-gram。
+
+Lookahead decoding 使用雅可比迭代对未来 tokens 执行并行解码，还同时验证 cache 中有可能选中的 n-gram 模型。接受 N-gram 允许我们一步推进 N 个标记，从而加速解码过程，如下图：
+
+!()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-11.gif]
+
+每个解码步骤都分为两个并行分支：lookahead branch 和 verification branch。
+
+- lookahead branch 维护一个固定大小的 2D 窗口，以根据雅可比迭代轨迹生成 n-gram。
+- verification branch 选择并验证有前途的 n-gram 候选序列。
 
 # 通过检索生成draft
 
 ## REST
 
+REST: Retrieval-Based Speculative Decoding 是一种基于字符串检索的推测解码方法，可以与任何llm无缝集成。作者在 HumanEval 和 MT-Bench 上做了实验，可以达到不错的效果
+
+在推理过程中，输入上下文用作query，并从数据存储中检索与输入的最长后缀匹配的文档，然后使用检索到的文档中的 continuation 构建 Trie前缀树。我们修剪低频（权重）分支，剩余的子树进一步用作推测解码中的draft tokens。 draft tokens 被输入到 LLM 中，并使用 tree attention mask 进行验证。
+
+检索数据库的过程是在 cpu 上进行的，这意味着在推测解码的过程中要不断地往返于 host 和  device 之间；每增加一个数据集就需要在磁盘上维护一个相应的巨大数据库，同时也可能会使小草稿模型只具备在特定的数据集上快速生成草稿的能力。
+
+```python
+for span_id, token_span in enumerate(token_spans):
+    this_token = input_ids_extend.squeeze(0)[-token_span:].to("cpu").tolist()
+    # Retrieve draft tokens from the datastore, and get draft buffer
+    retrieved_token_list, _draft_attn_mask, _tree_indices, _draft_position_ids, _retrieve_indices = datastore.search(this_token, choices=max_num_draft)
+```
+
 ## Prompt Lookup Decoding
+
+这个工作简单而有效，目前已经集成自transformers库，可以直接调用。它的优势在于不需要额外训练和外部数据库，同样是一种基于字符串检索的方法，但是应用场景有限。
+
+这篇文章基于一个假设：当 llm 进行一些依赖输入prompt的下游任务（如摘要、文档问答、多轮对话、代码编辑）时，这些任务的输入 prompt 和输出之间存在高度的 n-gram重叠，因此大模型可以在生成输出时直接从输入中查找这些内容。
+
+```python
+class PromptLookupCandidateGenerator(CandidateGenerator)
+```
+
+代码的核心部分是通过 n-gram 匹配 从输入中提取可能的候选序列：
+
+```python
+for ngram_size in range(min(self.max_matching_ngram_size, input_length - 1), 0, -1):
+    # 使用滑动窗口 (unfold) 在输入序列中生成 n-gram
+    windows = input_ids.unfold(dimension=1, size=ngram_size, step=1)
+    # 提取输入序列末尾的 n-gram
+    ngram_tensor = input_ids[0, -ngram_size:]
+    # 对比滑动窗口中的 n-gram，与末尾的 n-gram 匹配
+    matches = (windows == ngram_tensor).all(dim=2)
+    # 找到匹配的索引 match_indices
+    match_indices = matches.nonzero(as_tuple=True)[1]
+```
+
+基于匹配的索引 `match_indices` 生成候选序列，并将候选序列存储在 `chosen_ids` 中：
+
+```python
+for idx in match_indices:
+    start_idx = idx + ngram_size
+    end_idx = start_idx + self.num_output_tokens
+    end_idx = min(end_idx, input_length, self.max_length)
+    if start_idx < end_idx:
+        chosen_ids = input_ids[0, start_idx:end_idx]
+        match_found = True
+
+```
+
+如果未找到匹配的 n-gram，就返回当前输入序列，使用传统的自回归解码。最后将候选序列与输入序列使用 torch.cat 拼接，return 给验证阶段。
+
 
 # 与稀疏kv cache结合
 
 ## MagicDec
+
+MagicDec: Breaking the Latency-Throughput Tradeoff for Long Context Generation with Speculative Decoding
+
+这篇文章探讨了将推测解码与稀疏 kv cache 结合的可能性。作者做了一些实验，并认为在大 batchsize 的情况下，实际上影响 throughput 的并非小模型的推理时间或者大模型的验证时间，而是小模型 kv cache 的加载时间。
+
+因此本文的核心思想是：既然随着 batchsize 的增大，影响 throughput 的主要瓶颈变为 kv cache 的读取，那么我们就使用一个具有稀疏kv cache的小草稿模型，这个小草稿模型在每一时刻的 kv cache 都是恒定不变的。
+
+这篇文章也注意到推测解码在批量验证时的限制，但并没有从本质上修改每个sequence的验证逻辑或注意力内核，而是做了一些实验来表明如何通过kv cache稀疏化的方法提升批处理时小模型的推理速度。
+
+尽管推测解码对于单样本请求很有希望，但在实现批处理支持时会带来新的挑战。由于推测解码中接受的tokens数量遵循截断的几何分布 [引用了Leviathan那篇论文]，因此平均接受长度可能会在整个批次中发生变化，从而导致整个batch的序列长度不一致。[Bass: Batched attention-optimized speculative sampling] 优化了注意力kernel，以处理一个batch中接受的tokens数量不等的情况。然而，推测解码的过量计算可能会在大batchsize的情况下受到限制。
+
+疑问：这会不会导致草稿模型的推理性能减弱，草稿接受率更低？
+
+The fixed draft KV budget naturally raises concern about the acceptance rate, which is another important deciding factor. Fortunately, StreamingLLM with a small KV budget like 512 is able to retain a high acceptance rate even for sequences as long as 100K! To further improve the acceptance rate, we can increase the drafting budget in different ways as long as the draft to target cost ratio remains reasonably small.
+
+这篇文章并没有提出一个自己的模型或算法，更多的是展示实验结果，并选了一些外部的 kv cache 压缩方法直接拿来用（与小草稿模型集成）。作者选的是SnapKV 和 StreamingLLM。
+
+!()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-12.png]
+
+!()[https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-13.png]
 
 # 实验效果
 
@@ -231,4 +392,5 @@ Hydra 是对Medusa 的改进，它对 Medusa Heads 的结构进行了简单的�
 - [Fast Inference from Transformers via Speculative Decoding, Yaniv Leviathan et al., 2023](https://arxiv.org/abs/2211.17192)
 - [Accelerating Large Language Model Decoding with Speculative Sampling, Charlie Chen et al., 2023](https://arxiv.org/abs/2302.01318)
 - [Eagle](https://github.com/SafeAILab/EAGLE)
-
+- [Accelerating Transformer Inference for Translation via Parallel Decoding](https://arxiv.org/abs/2305.10427)
+- [MagicDec: Breaking the Latency-Throughput Tradeoff for Long Context Generation with Speculative Decoding](https://arxiv.org/abs/2408.11049)
