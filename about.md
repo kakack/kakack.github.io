@@ -16,6 +16,5 @@ A traveler, husband, daddy, coder, video game player, supporter of Manchester Un
 - **Career:**
     + Cisco, Huawei, IAAR, MemTensor
 - **Working on:**
-	+ Python, C/C++
 	+ Machine Learning, Deep Learning
 	+ Computer Vision, Nature Language Processing, Large Language Model, AI Infra
