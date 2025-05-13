@@ -11,8 +11,6 @@ A traveler, husband, daddy, coder, video game player, supporter of Manchester Un
 - **Profile:**
 	+ **[Google Scholar](https://scholar.google.com/citations?view_op=list_works&hl=zh-CN&authuser=1&user=4Lt1ETcAAAAJ)**
 	+ **[OpenReview](https://openreview.net/profile?id=~Kai_Chen45)**
-	+ **[LinkedIn](https://www.linkedin.com/in/kakack/)**
-	+ **[Github](https://github.com/kakack)**
 - **Education:**
 	+ **Zhejiang University** 
 - **Working on:**
