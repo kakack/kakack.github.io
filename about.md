@@ -14,7 +14,7 @@ A traveler, husband, daddy, coder, video game player, supporter of Manchester Un
 - **Education:**
 	+ Zhejiang University 
 - **Career:**
-  	+ Cisco, Huawei, IAAR, MemTensor
+    + Cisco, Huawei, IAAR, MemTensor
 - **Working on:**
 	+ Python, C/C++
 	+ Machine Learning, Deep Learning
