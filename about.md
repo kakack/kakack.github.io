@@ -6,7 +6,7 @@ permalink: /about/
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/myprofile.jpg)
 
-A traveler, husband, daddy, coder, video game player, fan of Manchester United and Golden State Warriors
+A traveler, husband, daddy, coder, video game player, supporter of Manchester United and Golden State Warriors
 
 - **Profile:**
 	+ **[Google Scholar](https://scholar.google.com/citations?view_op=list_works&hl=zh-CN&authuser=1&user=4Lt1ETcAAAAJ)**
