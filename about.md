@@ -9,15 +9,13 @@ permalink: /about/
 A traveler, husband, daddy, coder, video game player, supporter of Manchester United and Golden State Warriors
 
 - **Profile:**
-	+ **[Google Scholar](https://scholar.google.com/citations?view_op=list_works&hl=zh-CN&authuser=1&user=4Lt1ETcAAAAJ)**
-	+ **[OpenReview](https://openreview.net/profile?id=~Kai_Chen45)**
+	+ [Google Scholar](https://scholar.google.com/citations?view_op=list_works&hl=zh-CN&authuser=1&user=4Lt1ETcAAAAJ)
+	+ [OpenReview](https://openreview.net/profile?id=~Kai_Chen45)
 - **Education:**
-	+ **Zhejiang University** 
+	+ Zhejiang University 
+- **Career:**
+  	+ Cisco, Huawei, IAAR, MemTensor
 - **Working on:**
 	+ Python, C/C++
-	+ Machine Learning
-	+ Deep Learning
-	+ Computer Vision
-	+ Nature Language Processing
-	+ Large Language Model
-	+ AI Infra
+	+ Machine Learning, Deep Learning
+	+ Computer Vision, Nature Language Processing, Large Language Model, AI Infra
