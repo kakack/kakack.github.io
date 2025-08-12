@@ -62,9 +62,11 @@ GPU之所以能实现大规模并行，核心在于其计算模型。你可能�
 
 - **SIMT（Single Instruction, Multiple Thread）**：这是NVIDIA在CUDA架构中提出的模型，可以看作是SIMD在GPU上的升级版和更灵活的实现。它将成千上万的计算任务包装成**线程（Thread）**，然后将32个线程组成一个**线程束（Warp）**。同一个Warp中的所有线程在同一个时钟周期内执行相同的指令，但每个线程可以处理不同的数据。SIMT模型的美妙之处在于它对开发者更友好，屏蔽了底层硬件的复杂性。你只需要编写单个线程要执行的程序，GPU的硬件调度器会自动将它映射到成千上万个核心上去并行执行。
 
+在传统的标量计算模型中，CPU的一条指令一次只能操作单个数据。例如，一次浮点加法就是double + double。当处理如图形、音频或科学计算中常见的大规模数据集时，这种“一次一个”的模式效率极低，因为我们需要对海量数据重复执行完全相同的操作，这暴露了标量处理的瓶颈。为了打破这个瓶颈，现代CPU集成了SIMD（单指令，多数据）架构。CPU增加了能容纳多个数据元素的宽向量寄存器（如256位的YMM寄存器），以及能够并行处理这些数据的执行单元。
+
 无论是SIMD还是SIMT，其本质都是用一条指令驱动海量的计算单元，这是GPU实现超高计算吞吐量的根本。
 
-## **CUDA核心、Tensor Core与TPU：专业分工的计算单元**
+## **CUDA Core、Tensor Core与TPU：专业分工的计算单元**
 
 GPU的“计算军团”并非由单一兵种构成，而是由不同类型的专业计算单元组成，以应对不同的任务需求。
 
@@ -72,13 +74,30 @@ GPU的“计算军团”并非由单一兵种构成，而是由不同类型的�
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250709-2.jpg)
 
-- **CUDA核心（CUDA Core）**：这是GPU最基本的计算单元，主要负责执行**单精度浮点（FP32）**和整数运算。你可以把它看作是GPU里的“普通士兵”，负责执行大部分通用的并行计算任务。
+- **CUDA Core**：这是GPU最基本的计算单元，主要负责执行**单精度浮点（FP32）**和整数运算。你可以把它看作是GPU里的“普通士兵”，负责执行大部分通用的并行计算任务。
 
-- **Tensor Core（张量核心）**：这是NVIDIA从Volta架构开始引入的、**专为深度学习打造的“特种部队”**。Tensor Core专门用于执行大规模的矩阵乘加运算（Matrix Multiply-Accumulate, MMA），并且在硬件层面直接支持**混合精度（FP16/FP32）**和低精度（INT8/INT4）计算。在一次操作中，一个Tensor Core可以完成一个4x4的矩阵乘法，其效率远超CUDA核心。对于大模型训练和推理中无处不在的矩阵运算，Tensor Core能够带来数倍的性能提升。
+- **Tensor Core**：这是NVIDIA从Volta架构开始引入的、**专为深度学习打造的“特种部队”**。Tensor Core专门用于执行大规模的矩阵乘加运算（Matrix Multiply-Accumulate, MMA），并且在硬件层面直接支持**混合精度（FP16/FP32）**和低精度（INT8/INT4）计算。在一次操作中，一个Tensor Core可以完成一个4x4的矩阵乘法，其效率远超CUDA核心。对于大模型训练和推理中无处不在的矩阵运算，Tensor Core能够带来数倍的性能提升。
 
 - **与TPU的对比**：Google的TPU（Tensor Processing Unit）是另一个为AI而生的专用处理器。如果说Tensor Core是GPU里的“特种部队”，那TPU就是一支纯粹的“矩阵运算专业军团”，它将整个芯片的设计都聚焦于此，因此在特定任务上能效比极高。而GPU则更像是一个通用平台，既有CUDA核心处理通用并行任务，又有Tensor Core加速AI任务。
 
-## **内存层次：HBM（高带宽内存）的重要性**
+## **计算单元**
+
+GPU中的计算单元是**GCP（Graphics Processing Cluster）**，而一个GPC包含多个**TPC（Texture Processing Cluster）**，而一个TPC中则包含多个**SM（Streaming Multiprocessor）**，SM是GPU执行计算任务的核心单元，每个SM都是一个高度独立的计算单元。
+
+如果说CUDA核心是士兵，那么**SM（Streaming Multiprocessor，流式多处理器）**就是军营里的“指挥官”。它包含了：
+- 一定数量的CUDA核心和Tensor Core。
+- 自己的指令缓存和调度器。
+- 一小块高速的共享内存（Shared Memory），寄存器（Register File）和L1缓存（L1 Data Cache / Instruction Cache）。
+- Warp调度器 (Warp Scheduler) 等关键组件。
+
+SM是GPU执行任务的核心单位。当一个计算任务（在CUDA中称为Kernel）被启动时，它会被分解成一个个线程块（Thread Block），然后这些线程块被分配到不同的SM上去执行。SM内部的调度器再将线程块分解成线程束（Warp），并安排它们在CUDA核心或Tensor Core上执行。
+
+**SM就像一个自给自足的计算工厂**，它接收任务，管理资源，调度执行，并最终产出结果。正是由成百上千个这样的“工厂”协同工作，才构成了GPU强大的并行处理能力。
+
+![单个SM的架构图](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250709-5.png)
+*(图注：单个SM的架构图)*
+
+## **内存层次**
 
 想象一下，你拥有一个成千上万人的计算军团，但如果后勤补给（数据供应）跟不上，这支军团的战斗力将大打折扣。这就是所谓的“**内存墙**”问题——计算单元的速度远超内存访问速度，导致计算单元不得不花费大量时间等待数据。
 
@@ -91,14 +110,23 @@ GPU的“计算军团”并非由单一兵种构成，而是由不同类型的�
 ![HBM示意图](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250709-3.png)
 *(图注：HBM通过3D堆叠和宽位宽接口技术实现超高内存带宽)*
 
-## **SM（Streaming Multiprocessor）：GPU的中枢神经**
+在一块GPU中，HBM和L2 Cache是整个GPU共享的，而L1 Cache/Shared Memory则是SM维度独享的。Shared Memory是每个SM内部的一块高速、可编程的片上缓存。同一线程块（Block）内的所有线程都可以访问它，速度远快于访问全局显存（HBM）。它是实现Block内线程高效协作和数据交换的核心，对于矩阵乘法等需要数据复用的算法至关重要。
 
-如果说CUDA核心是士兵，那么**SM（Streaming Multiprocessor，流式多处理器）**就是军营里的“指挥官”。一块GPU由多个SM组成，每个SM都是一个高度独立的计算单元，它包含了：
-- 一定数量的CUDA核心和Tensor Core。
-- 自己的指令缓存和调度器。
-- 一小块高速的共享内存（Shared Memory）和L1缓存。
+## 异构计算
 
-SM是GPU执行任务的核心单位。当一个计算任务（在CUDA中称为Kernel）被启动时，它会被分解成一个个线程块（Thread Block），然后这些线程块被分配到不同的SM上去执行。SM内部的调度器再将线程块分解成线程束（Warp），并安排它们在CUDA核心或Tensor Core上执行。
+![异构计算示意图](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250709-4.png)
+*(图注：CPU/GPU异构计算架构)*
 
-**SM就像一个自给自足的计算工厂**，它接收任务，管理资源，调度执行，并最终产出结果。正是由成百上千个这样的“工厂”协同工作，才构成了GPU强大的并行处理能力。
+CPU是整个系统的核心，是总指挥，GPU的任务指令是由CPU分配的。CPU通过PCIe总线给GPU发送指令和数据交互。
+
+- 互联：`PCIe` 为通用路径；`NVLink/NVSwitch` 提升 GPU↔GPU/CPU 带宽；封装内 `NVLink‑C2C/UMA` 进一步降低延迟。而PCIe支持DMA和MMIO两种通讯模式:
+    - MMIO（内存映射I/O，Memory Mapping I/O）由CPU直接控制数据读写，操作系统会把设备地址映射到CPU的虚拟空间中，适合小数据量的指令交互
+    - DMA（直接内存访问，Direct Memory Access）则允许设备绕过CPU直接访问系统内存，专为大数据块的高效传输设计。
+CPU通过IMC和Memory Channel访问内存，为了提升数据传输带宽，高端CPU通常会支持多内存通道，即多IMC和Memory Channel的组合，以满足日益增长的数据处理需求。
+- 内存：`UVM` 提供单一地址空间（配合预取/访问提示）；`Pinned/Zero‑copy` 降低拷贝开销；`GPUDirect`（P2P/RDMA/GDS）减少绕行。
+- 编程：多 `stream` 与 `events` 重叠拷贝与计算；`CUDA Graphs` 降低小内核启动开销；`NCCL` 负责多 GPU 集体通信。
+- 并行：`DP/TP/PP/EP` 可组合扩展超大模型。
+- 部署：`MIG` 分片、`MPS` 并发，容器与 K8s 做拓扑感知调度。
+
+---
 
