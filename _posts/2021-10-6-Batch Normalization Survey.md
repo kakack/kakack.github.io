@@ -11,11 +11,11 @@ pinned: false
 
 ---
 
-**Batch Normalization**（以下用BN简称代替）是为了解决Deep Learning中*Internal Covariate Shift（内部协变量移位）*问题，而针对一个batch中的数据进行归一标准化的方法。作用是可以使用更加flexible的学习率learning rate，得到更快的学习速率，同时不会过于依赖模型的初始化initialization。其中所谓的Internal Covariate Shift是指在deep neural network当中，随着层数的加深，每一层layer都关联着其上下层，其input实上一层layer的output，而其output又是下一层layer的input，而在随机梯度下降学习过程中，随着每层layer参数的更新，其对应的input/output分布也在随时起着微小的变化，这种变化会随着层数深度的加深而逐步积累，从而使得整个学习过程难度加大。
+**Batch Normalization**（以下用 BN 简称）旨在缓解深度网络中的“Internal Covariate Shift（内部协变量移位）”，对同一 mini‑batch 的特征做标准化，使得训练可使用更大的学习率并加快收敛，同时降低对初始化的敏感性。所谓内部协变量移位，是指随着层数加深、参数更新导致每层输入分布不断变化，进而增加优化难度。
 
 # Introduce BN
 
-BN的整体思路其实是一种*whiten白化*操作，即将输入的数据分布转换到均值$\mu=0$，方差$\sigma=1$的正态分布，能有效加快整个network的收敛，即用较少的学习步骤获得相同的推理精度。直观上的现象就是缓解梯度消失，支持更大的学习率。因为大学习率往往导致反向时梯度困在局部最小值处，BN可以避免神经网络层中很小的参数变动在层数加深的过程中会积聚造成很大的影响。
+BN 的直觉接近“白化”：将每一层的输入标准化为零均值、单位方差，从而缓解梯度消失并支持更大的学习率。
 
 一般会有以下两种对不同阶段BN的操作方法：
 
@@ -30,43 +30,110 @@ BN的整体思路其实是一种*whiten白化*操作，即将输入的数据分�
 
 # Method
 
-如果batch size为m，则在前向传播时每个节点都有m个输出，对每个节点的m个输出进行归一化。实现如下图所示，可以分为两步：
+如果 batch size 为 m，则在前向时每个节点都有 m 个输出，对该 m 个值做标准化。两步：
 
- - Standardization：对m个$x$进行标准化得到zero mean unit variance的$\hat{x}$
- - Scale and shift：对$\hat{x}$进行缩放和平移，得到最终的分布$y$，具有新的均值$\beta$和方差$\gamma$，其中$\beta$和$\gamma$是作为网络训练过程中需要被训练的参数形式出现，其最终取值会在训练过程中不断变化得到。
+  - Standardization：对 m 个 $x$ 标准化得到 $\hat{x}$；
+  - Scale and shift：对 $\hat{x}$ 进行缩放和平移，得到最终输出 $y$。其中 $\gamma$ 与 $\beta$ 为可学习参数。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-1.jpg)
 
-针对Batch Normalization Transform，总体可以写为如下公式，所以，无论$x_i$原本的均值和方差是多少，通过Batch Norm后其均值和方差分别变为待学习的$\beta$和$\gamma$。
+针对 Batch Normalization Transform，总体可写为：
 
-$y^{(b)}_i=BN(x_i)^{b}=\gamma\cdot(\frac{x_i^{b}-\mu(x_i)}{\sqrt{}\sigma(x_i)^2})+\beta$
+$\mathrm{BN}(x_i^{(b)})= \gamma\cdot\frac{x_i^{(b)}-\mu_\beta}{\sqrt{\sigma_\beta^2+\epsilon}}+\beta$
 
 整体变化流程如下图所示：
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-3.jpg)
 
+## Forward/Backward 公式
+
+设某一层单通道在一个 mini‑batch 上有 m 个样本（卷积层中按 `N×H×W` 展平计数）：
+
+- 均值：\(\mu_\beta=\tfrac{1}{m}\sum_i x_i\)
+- 方差：\(\sigma_\beta^2=\tfrac{1}{m}\sum_i (x_i-\mu_\beta)^2\)
+- 标准化：\(\hat{x}_i=\tfrac{x_i-\mu_\beta}{\sqrt{\sigma_\beta^2+\epsilon}}\)
+- 仿射：\(y_i=\gamma\hat{x}_i+\beta\)
+
+反向传播（给定上游梯度 \(g_i=\partial\mathcal{L}/\partial y_i\)）：
+
+- \(\partial\mathcal{L}/\partial\beta=\sum_i g_i\)
+- \(\partial\mathcal{L}/\partial\gamma=\sum_i g_i\,\hat{x}_i\)
+- \(\partial\mathcal{L}/\partial x_i=\frac{\gamma}{m\sqrt{\sigma_\beta^2+\epsilon}}\left[m\,g_i-\sum_j g_j-\hat{x}_i\sum_j (g_j\,\hat{x}_j)\right]\)
+
+该式展示了“批间耦合”的来源：每个样本的梯度依赖于同批次其他样本的 \(g_j\)。
+
 ---
 
 # Training & Testing
 
-在训练时，$\mu$，$\sigma$是当前mini batch的统计量，随着batch的不同一直在变化。在testing阶段，我们希望模型的输出只和输入相关，所以$\mu$，$\sigma$应该固定，可以采用移动平均来计算$\mu$，$\sigma$。简单说就是在训练过程中不断记录下当前mini-batch中的$\mu$和$\sigma$，最后用它们各自的全局平均值来作为testing过程中所需要的$\mu$和$\sigma$值。
+训练阶段，$\mu,\sigma$ 取自当前 mini‑batch 的统计量；推理阶段应固定为“人口统计量”（running mean/var），通常用指数滑动平均（EMA）在训练中累积得到。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20211006-2.jpg)
+
+实现细节（Conv 层）：对每个通道独立归一化，均值/方差在 `N×H×W` 维度上统计；\(\gamma,\beta\) 的形状为 `C`。常见的 BN1d/BN2d/BN3d 仅对应不同的统计维度约定。
 
 ---
 
 # Effect
 
-1. **可以使用更大的学习率**，训练过程更加稳定，极大提高了训练速度。
+1. **可以使用更大的学习率**，训练更稳定、收敛更快。
 2. **可以将bias置为0**，因为Batch Normalization的Standardization过程会移除直流分量，所以不再需要bias。
 3. **对权重初始化不再敏感**，通常权重采样自0均值某方差的高斯分布，以往对高斯分布的方差设置十分重要，有了Batch Normalization后，对与同一个输出节点相连的权重进行放缩，其标准差σσ也会放缩同样的倍数，相除抵消。
 4. **对权重的尺度不再敏感**，理由同上，尺度统一由$\gamma$参数控制，在训练中决定。
 5. **深层网络可以使用sigmoid和tanh了**，理由同上，BN抑制了梯度消失。
-6. **Batch Normalization具有某种正则作用，从而去掉droupout过程**，不需要太依赖dropout，减少过拟合。
+6. **具备一定正则作用**，可适度降低对 dropout 的依赖。
 7. **加速学习率衰减**，因为可以比inception更快训练，所以可以将学习率衰减速率增加到其6倍。
-8. **去掉局部响应归一化Local Response Normalization**，这货本身就不太稳定，在inception和其他一些网络中被用到，但是用了BN就不需要它了。
+8. **可替代 LRN（Local Response Norm）**，后者稳定性较差。
 9. **更彻底地shuffle训练样本**，BN更受益于样本内部更大的随机性。
-10. **减少光度畸变photometric distirtions**，由于BN的网络训练更快且更少observe每一个训练样本，因此可以让训练器更注重真实图片本身而不是它们的畸变结果。
+10. **减少光度畸变（photometric distortions）敏感性**，更关注有效样本而非强增广噪声。
+
+---
+
+# 实践要点
+
+- 层内顺序：常用 `Conv → BN → ReLU`；在 Pre‑Activation ResNet 中用 `BN → ReLU → Conv`。
+- 超参：`momentum` 控制 EMA 更新速率（常 0.9/0.99），`eps` 防止除零（1e‑5/1e‑3）。
+- 小 batch：当每卡样本数过小，mini‑batch 统计量噪声大，建议使用 SyncBN、FreezeBN/PreciseBN 或改用 GN。
+- 梯度累积不等于大 batch 统计：累积只影响优化步长，不会改变 BN 的统计量维度。
+
+常见易错点与排坑：
+
+- 冻结 BN（FrozenBN）：微调小数据集或检测/分割下游任务时，常固定 running mean/var 与 \(\gamma,\beta\)（或仅固定统计量），防止统计漂移；
+- 混合精度：保持 BN 统计在 FP32 进行更稳的均值/方差计算；
+- 分布式：若使用 SyncBN，确认通信分组与 world size；对超大分辨率可分层同步（仅主干同步，head 层使用本地 BN）。
+
+---
+
+# 统计与泛化
+
+在实际训练中，BN 的统计量如何获得、如何在不同 batch 尺度与不同数据分布下保持稳定，直接决定了模型的可泛化性。
+
+首先，运行时均值与方差若仅由 EMA 累积，可能出现收敛偏差。为此，可在同一权重下用若干 mini‑batches 专门收集统计量，并聚合成更接近总体的估计（俗称 PreciseBN）：
+
+$\mu_{pop}=\mathbb{E}[\mu_\beta],\quad \sigma^2_{pop}=\mathbb{E}[\mu_\beta^2+\sigma_\beta^2]-\mathbb{E}[\mu_\beta]^2$。
+
+其次，需区分两种 batch 尺度：用于优化的全局 SGD batch size，以及参与统计的 Normalization batch size（单卡或同步后）。后者过小会带来更大的训练噪声与 train‑test 不一致；经验上 32–128 的归一化批量更稳。工程上常见做法是在训练后期切换到 Frozen/PreciseBN，以稳定 population 统计进行推理；个别线上场景也会在推理阶段沿用 mini‑batch 统计，但需评估延迟与可重复性。
+
+当训练域与推理域存在差异（domain shift）时，建议使用评估域上收集到的 population 统计量；若多域联合训练，尽量保持“优化、统计收集、评估”三者的域一致，或采用 domain‑specific 统计以降低偏移。
+
+最后，BN 的“批内共享统计”带来一种信息泄漏：同一 mini‑batch 内样本在标准化时彼此可见。对于检测/分割等多目标任务，可通过 SyncBN、跨 GPU 打散 RoI features、或在 head 前随机重分配样本来减弱相关性；在超大分辨率下，也可仅对主干启用同步，而在 head 使用本地 BN，以在稳定与开销之间取得平衡。
+
+---
+
+# Group Normalization（GN）
+
+BN 依赖 batch 统计，在小 batch 或多域场景表现欠佳。**Group Normalization** 按通道分组做标准化：将特征从 `[N,C,H,W]` reshape 为 `[N,G,C//G,H,W]`，在每组上计算均值/方差并归一化，最后再使用可学习的 $\gamma,\beta$ 做仿射变换。极端情形下：`G=C` 退化为 LayerNorm，`G=1` 退化为 InstanceNorm。经验上 `G=32` 常见。
+
+优点：对 batch size 鲁棒；在检测/分割/视频等任务中稳定。缺点：在大 batch 分类上有时略逊于 BN。
+
+---
+
+# 何时使用 BN / GN / LN / IN
+
+- 大 batch、单域训练：优先 BN（含 SyncBN）。
+- 小 batch、多卡微批：GN 或 Frozen/PreciseBN；检测/分割常选 GN。
+- 语言/自回归等序列模型：LN 常用。
+- 风格迁移/生成：IN 常见。
 
 ---
 
