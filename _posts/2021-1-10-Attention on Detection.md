@@ -16,7 +16,7 @@ pinned: false
 1. 注意力机制需要决定整体输入中哪部分需要被额外关注；
 2. 从关键部分进行特征提取，以获得重要信息。
 
-在NLP领域，对于语言信息的理解很大程度上会以来语句上下文语境和先后顺序。同样在视觉领域，对于图像信息理解也存在从整体到局部或从局部到整体的观察理解顺序，同样如车牌识别、手写信息识别等方面，也会依赖画面从左往右或者从上往下的顺序。而循环神经网络（Recurrent Neural Network，RNN）本身就特别适合处理这一类order ruled的信息，因此注意力机制往往会在RNN上应用。
+在NLP领域，对于语言信息的理解很大程度上会依赖语句上下文语境和先后顺序。同样在视觉领域，对于图像信息理解也存在从整体到局部或从局部到整体的观察理解顺序，同样如车牌识别、手写信息识别等方面，也会依赖画面从左往右或者从上往下的顺序。而循环神经网络（Recurrent Neural Network，RNN）本身就特别适合处理这一类order ruled的信息，因此注意力机制往往会在RNN上应用。
 
 但是在图像层面，输入神经网络的往往都是一整张图片，只有像素之间相互位置信息，并没有如NLP中语序先后顺序，而且从人类理解能力角度来看，并没有什么可以模式化或者规则化的观察手段，且观察顺序也会因人而异，因此很难用固定规则的形式来确定图片中信息理解顺序。因此在原有RNN基础上需要进行一定的改造。
 
@@ -36,7 +36,7 @@ pinned: false
 现在常见的注意力方法有两类：
 
 1. 基于强化学习Reinforcement Learning的方法，通过收益函数Rewarding来反馈激励，让模型更加关注某个局部的细节；
-2. 基于梯度下降Gradient Decent的方法，通过目标函数objective function和相应的优化函数optimization function来做。
+2. 基于梯度下降（Gradient Descent）的方法，通过目标函数 objective 与相应的优化函数 optimization 来做。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-3.png)
 
@@ -96,13 +96,13 @@ SENet是一个非常通用的模块化结构，可以嵌入当今各种主流网
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-13.png)
 
-SENet block处理的过程可以理解为两部分：Squeeze和Excitation。其中$c*1*1$的global pooling称之为squeeze，而之后的两个fully connect layer称为excitation，最终用sigmod将输出限制在$[0, 1]$范围内，把这个值作为scale权重乘到各个channel上，作为下一级的输入。这么做的原理就是通过控制权重scale的大小把重要channel的特征增强，无关channel的特征削弱。
+SENet block处理的过程可以理解为两部分：Squeeze和Excitation。其中$c*1*1$的global pooling称之为squeeze，而之后的两个fully connect layer称为excitation，最终用sigmoid将输出限制在$[0, 1]$范围内，把这个值作为scale权重乘到各个channel上，作为下一级的输入。这么做的原理就是通过控制权重scale的大小把重要channel的特征增强，无关channel的特征削弱。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-14.png)
 
 # Convolutional Block Attention Module（CBAM）
 
-CBAM相对于SENet的区别就在于其即关注不同channel的重要性，也关注某个channel中不同位置pixel的重要性。Convolutional Block Attention Module (CBAM) 表示卷积模块的注意力机制模块。是一种结合了空间（spatial）和通道（channel）的注意力机制模块。相比于senet只关注通道（channel）的注意力机制可以取得更好的效果。它相对于SE多了一个空间attension，这个空间其实就是宽高对应的方形或者说是一个通道对应的feature map，SE只关注通道，它既关注通道，也关注宽高。
+CBAM相对于SENet的区别就在于其即关注不同channel的重要性，也关注某个channel中不同位置pixel的重要性。Convolutional Block Attention Module (CBAM) 表示卷积模块的注意力机制模块。是一种结合了空间（spatial）和通道（channel）的注意力机制模块。相比于SENet只关注通道（channel）的注意力机制可以取得更好的效果。它相对于SE多了一个空间attention，这个空间其实就是宽高对应的方形或者说是一个通道对应的feature map，SE只关注通道，它既关注通道，也关注宽高。
 
 基于传统vgg结构的CBAM模块：
 
@@ -112,11 +112,60 @@ CBAM相对于SENet的区别就在于其即关注不同channel的重要性，也�
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-17.png)
 
-与SENet不同的是，一开始的pooling分为MaxPool和AvgPool两条支线，再将两个输出结果相加后做sigmod控制在$[0, 1]$范围内，最后跟feature map相乘。两种不同的polling意味着提取的高层次特征更加丰富，这是通道上的attention。
+与SENet不同的是，一开始的pooling分为MaxPool和AvgPool两条支线，再将两个输出结果相加后做sigmoid控制在$[0, 1]$范围内，最后跟feature map相乘。两种不同的pooling意味着提取的高层次特征更加丰富，这是通道上的attention。
 
 之后还会进一步做空间上的attention。首先将基于channel attention的feature结果再做一次MaxPool和AvgPool，但这次是在channel这个维度进行，即把所有输入channel全部pooling到2个实数，由$(h * w * c)$的形状transfer到两个$(h * w * 1)$的feature map，紧接着使用一个7*7的conv kernel形成新的$(h * w * 1)$的feature map。最后也是相同的scale操作，注意力模块特征与得到的新特征图相乘得到经过双重注意力调整的特征图。
 
+---
+
+## 补充：Non-local 与 Transformer 系列在检测中的注意力（简要）
+
+- Non-local 自注意力在特征图上显式建模任意两位置的关系，常配合 FPN 使用以增强全局依赖；
+- DETR 用全局 self/cross‑attention 实现端到端集合预测，Deformable DETR 通过稀疏关键点采样显著加速并改善小目标性能；
+- 轻量化通道/坐标注意力（ECA/SK/Coordinate Attention）适合在检测骨干上做性价比优化。
+
+工程建议：注意力模块应与检测头和分辨率预算匹配，通道注意力成本低且稳定，全局/空间自注意力需控制特征大小与头数；评估时关注不同尺度目标的 AP 指标，以验证注意力对小目标与远程依赖的改善是否有效。
+
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-16.png)
+
+## Swin Transformer 与窗口注意力（Window Attention）
+
+Swin 采用“局部窗口 + 移位窗口”的自注意力，避免全局二次复杂度：
+
+- 在固定大小的窗口内做 self‑attention，降低计算与显存；
+- 通过 Shifted Window 在相邻层交错窗口边界，实现跨窗口的信息流；
+- 搭配分层金字塔设计（Patch Merging）天然适配检测中的多尺度特征。
+
+在目标检测中，Swin 常作为主干替换 ResNet，并与 FPN/Mask R‑CNN/RetinaNet 等头部直接配合；与 Deformable Attention 或 DCNv2 组合，能进一步兼顾全局与几何建模能力。
+
+## 可变形卷积（DCNv2）与动态采样
+
+可变形卷积通过学习偏移（offset）与调制（modulation）改变采样位置和权重，可理解为“空间注意力的一种显式几何化实现”：
+
+- 在检测中对尺度变化与形变更鲁棒，常用于主干高层或 neck；
+- 与注意力模块互补：注意力强调“选什么”，DCN 强化“从哪里取与如何取”。
+
+## 特征金字塔中的注意力（PANet/BiFPN/SEPC）
+
+- PANet：在自上而下 FPN 之外，增加自下而上的路径聚合，减小语义鸿沟；
+- BiFPN：引入可学习融合权重与简化拓扑，连续堆叠获得更强的多尺度融合；
+- SEPC：在金字塔融合中显式加入可分离卷积与注意引导的对齐，提高密集检测头的稳定性。
+
+实务上，可在 FPN 融合节点加入轻量通道注意力（如 SE/ECA）提升性价比；全局自注意力建议仅用于高语义、低分辨率层。
+
+## 动态头与解码器式注意（DyHead/Sparse R‑CNN）
+
+- DyHead：将空间、通道与任务（分类/回归）三个维度统一为动态模块，跨层共享注意力权重，有利于提升跨尺度一致性；
+- Sparse R‑CNN：用可学习 proposal + 多层解码器的方式迭代更新候选，核心是 decoder attention 对候选与特征的交互。
+
+两者都强调在“头部阶段”做更强的注意力交互，与 backbone/neck 的注意力形成互补。
+
+## 训练与部署注意事项（Attention for Detection）
+
+- 长宽比与分辨率：空间/自注意力对分辨率敏感，建议在较小分辨率上做全局注意力，在高分辨率层用通道注意力或 DCN；
+- 正负样本与损失：中心型/anchor‑free 头部可配合边界/中心引导的注意力，提升正样本质量；
+- 推理延迟：窗口/轴向注意力优于全局注意力；部署到 TensorRT/ONNX 时注意算子支持（如 Deformable Attention/Masked Attention 需插件实现）；
+- 可视化与诊断：Grad‑CAM/注意力热图有助于定位注意力“是否聚焦目标”；评估 AP_small/AP_medium/AP_large 与帧时延双指标。
 
 ---
 
