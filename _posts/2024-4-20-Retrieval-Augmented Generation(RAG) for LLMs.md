@@ -40,14 +40,14 @@ RAG适用场景：
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-2.png)
 
-- **Ingestion（摄入）**：对每个文件做split到到多个文本chunks中，对于每一个chunk，根据embedding model进行text embedding，然后将每个embedding offload到一个index，这个index是存储系统的视图，例如vector database。
-- **Retrieval（检索）**：根据生成的index启动查询，然后提取与查询最相似的top k个chunk
-- **Synthesis（合成）**：将得到的top k chunks与用户查询合并，将其放入合成截断的LLM prompt window中，从而生成最终的结果内容。
+- **Ingestion（摄入）**：对每个文件做 split 到多个文本 chunks 中；对每个 chunk 使用 embedding model 计算 embedding，并将 embedding 写入 index（例如 vector database）。
+- **Retrieval（检索）**：根据生成的 index 启动查询，提取与查询最相似的 top‑k 个 chunk。
+- **Synthesis（合成）**：将得到的 top‑k chunks 与用户查询合并，放入 LLM 的 prompt window 中生成最终答案。
 
 改进方法：
 
-- Sentence-window retrieval：Embedding and retrieving single sentence，在检索之后，句子将被替换为围绕原始检索句子的更大窗口的句子。
-- Auto-Merging retrieval：构建树状chunk节点结构，将检索节点合并到较大的父节点中，意味着在检索过程中一个父节点有大多数子节点已检索，那么用父节点替换子节点。
+- Sentence‑window retrieval：对单句做 embedding 并检索，命中后用该句周围更大窗口替换，以引入上下文。
+- Auto‑Merging retrieval：构建树状 chunk 节点结构；当父节点的多数子节点被命中时，用父节点替换子节点，减少冗余。
 
 ## 2.2 - 进阶的 RAG（Advanced RAG）
 
@@ -72,14 +72,14 @@ RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强
 # 4 - RAG关键问题
 
 1. 检索什么：
-    1. Token：KNN-LMM擅长处理长尾和跨域问题，计算效率高，但需要大量存储；
+    1. Token：KNN‑LM 擅长处理长尾和跨域问题，计算效率高，但需要大量存储；
     2. Phrase；
     3. Chunk：非结构化数据，召回大量信息但准确率低，存在较多冗余信息；
     4. Paragraph；
     5. Entity；
     6. Knowledge graph：丰富的语义和结构化数据，检索效率低，效果严重依赖KG本身质量
 2. 何时检索：
-    1. Single research：只检索一次，效率高，但可能导致检索结果相关度低；
+    1. Single search：只检索一次，效率高，但可能导致检索结果相关度低；
     2. Each token；
     3. Every N tokens：会导致检索次数过多，并召回大量冗余信息；
     4. Adaptive search：平衡效率和检索效果。
@@ -96,13 +96,13 @@ RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强
 
 1. 数据索引优化：
     1. 核心是chunk策略：
-        - Small-2-Big 在sentense级别做embedding
-        - Slidingwindow 滑动窗口，让chunk覆盖整个文本，避免语义歧义
+        - Small‑to‑Big：在 sentence 级别做 embedding
+        - Sliding Window：滑动窗口，让 chunk 覆盖整个文本，避免语义歧义
         - Summary 通过摘要检索文档，然后从文档中检索文本块。
     2. 可以添加一些额外的meta信息，例如page，时间，类型，文档标题等，并依此进行过滤或者增强信息量（Pseudo Metadata、Metadata filter）
 2. 结构化检索文档库：可以分层组织检索文档库。
-    1. Summary → Document方法， 用摘要检索取代文档检索，不仅可以检索最直接相关的节点，还可以探索与这些节点相关的其他节点
-    2. Document → Embedded Objects 比如一个PDF文档具有嵌入对象（如表、图表），首先检索实体引用对象，然后查询底层对象，如文档块、[数据库](https://cloud.tencent.com/solution/database?from_column=20065&from=20065)、子节点
+    1. Summary → Document 方法：用摘要检索取代文档检索，不仅可以检索最直接相关的节点，还可以探索与这些节点相关的其他节点
+    2. Document → Embedded Objects：比如一个 PDF 文档具有嵌入对象（如表、图表），首先检索实体引用对象，然后查询底层对象，如文档块、数据库、子节点
 3. Knowledge Graph作为召回数据源：GraphRAG  从用户的输入查询中提取**实体**，然后**构建子图**以形成上下文，并最终将其输入到大模型中进行生成。
     1. 使用LLM 从问题中提取关键entity
     2. 基于提取的到entity实体，检索子图，并深入到一定的深度，比如2跳或者更多
