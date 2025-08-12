@@ -60,9 +60,9 @@ GPU之所以能实现大规模并行，核心在于其计算模型。你可能�
 
 - **SIMD（Single Instruction, Multiple Data）**：这是并行计算的一种经典模型。它意味着**用一条指令同时对多个数据执行相同的操作**。想象一下，老师对一个班的学生说：“请大家把手里的数字都加上5”。在这里，“加5”就是单条指令，而每个学生手里的不同数字就是多份数据。
 
-- **SIMT（Single Instruction, Multiple Thread）**：这是NVIDIA在CUDA架构中提出的模型，可以看作是SIMD在GPU上的升级版和更灵活的实现。它将成千上万的计算任务包装成**线程（Thread）**，然后将32个线程组成一个**线程束（Warp）**。同一个Warp中的所有线程在同一个时钟周期内执行相同的指令，但每个线程可以处理不同的数据。SIMT模型的美妙之处在于它对开发者更友好，屏蔽了底层硬件的复杂性。你只需要编写单个线程要执行的程序，GPU的硬件调度器会自动将它映射到成千上万个核心上去并行执行。
+- **SIMT（Single Instruction, Multiple Threads）**：这是NVIDIA在CUDA架构中提出的模型，可以看作是SIMD在GPU上的升级版和更灵活的实现。它将成千上万的计算任务包装成**线程（Thread）**，然后将32个线程组成一个**线程束（Warp）**。同一个Warp中的所有线程在同一个时钟周期内执行相同的指令，但每个线程可以处理不同的数据。SIMT模型的美妙之处在于它对开发者更友好，屏蔽了底层硬件的复杂性。你只需要编写单个线程要执行的程序，GPU的硬件调度器会自动将它映射到成千上万个核心上去并行执行。
 
-在传统的标量计算模型中，CPU的一条指令一次只能操作单个数据。例如，一次浮点加法就是double + double。当处理如图形、音频或科学计算中常见的大规模数据集时，这种“一次一个”的模式效率极低，因为我们需要对海量数据重复执行完全相同的操作，这暴露了标量处理的瓶颈。为了打破这个瓶颈，现代CPU集成了SIMD（单指令，多数据）架构。CPU增加了能容纳多个数据元素的宽向量寄存器（如256位的YMM寄存器），以及能够并行处理这些数据的执行单元。
+在传统的标量计算模型中，CPU的一条指令一次只能操作单个数据。例如，一次浮点加法就是 `double + double`。当处理如图形、音频或科学计算中常见的大规模数据集时，这种“一次一个”的模式效率极低，因为我们需要对海量数据重复执行完全相同的操作，这暴露了标量处理的瓶颈。为了打破这个瓶颈，现代CPU集成了SIMD（单指令，多数据）架构。CPU增加了能容纳多个数据元素的宽向量寄存器（如256位的YMM寄存器），以及能够并行处理这些数据的执行单元。
 
 无论是SIMD还是SIMT，其本质都是用一条指令驱动海量的计算单元，这是GPU实现超高计算吞吐量的根本。
 
@@ -82,13 +82,13 @@ GPU的“计算军团”并非由单一兵种构成，而是由不同类型的�
 
 ## **计算单元**
 
-GPU中的计算单元是**GCP（Graphics Processing Cluster）**，而一个GPC包含多个**TPC（Texture Processing Cluster）**，而一个TPC中则包含多个**SM（Streaming Multiprocessor）**，SM是GPU执行计算任务的核心单元，每个SM都是一个高度独立的计算单元。
+GPU中的计算单元是**GPC（Graphics Processing Cluster）**，而一个GPC包含多个**TPC（Texture Processing Cluster）**，而一个TPC中则包含多个**SM（Streaming Multiprocessor）**，SM是GPU执行计算任务的核心单元，每个SM都是一个高度独立的计算单元。
 
 如果说CUDA核心是士兵，那么**SM（Streaming Multiprocessor，流式多处理器）**就是军营里的“指挥官”。它包含了：
 - 一定数量的CUDA核心和Tensor Core。
 - 自己的指令缓存和调度器。
 - 一小块高速的共享内存（Shared Memory），寄存器（Register File）和L1缓存（L1 Data Cache / Instruction Cache）。
-- Warp调度器 (Warp Scheduler) 等关键组件。
+- Warp调度器（Warp Scheduler）等关键组件。
 
 SM是GPU执行任务的核心单位。当一个计算任务（在CUDA中称为Kernel）被启动时，它会被分解成一个个线程块（Thread Block），然后这些线程块被分配到不同的SM上去执行。SM内部的调度器再将线程块分解成线程束（Warp），并安排它们在CUDA核心或Tensor Core上执行。
 
@@ -130,3 +130,246 @@ CPU通过IMC和Memory Channel访问内存，为了提升数据传输带宽，高
 
 ---
 
+# **四、 简易的一个例子**
+
+以下这个demo是实现两个长度为 $2^{30}$ (约10亿) 的浮点数数组的相加。其中，一个数组 $(x)$ 的所有元素初始化为 $1.0$，另一个数组 $(y)$ 的所有元素初始化为 $2.0$，我们计算 $y[i] = x[i] + y[i]$。
+
+## **CPU实现**
+
+```C++
+#include <iostream>
+#include <math.h>
+#include <chrono>
+
+// function to add the elements of two arrays
+void add(int n, float *x, float *y)
+{
+  for (int i = 0; i < n; i++)
+      y[i] = x[i] + y[i];
+}
+
+int main(void)
+{
+  int N = 1<<30;
+
+  float *x = new float[N];
+  float *y = new float[N];
+
+  // initialize x and y arrays on the host
+  for (int i = 0; i < N; i++) {
+    x[i] = 1.0f;
+    y[i] = 2.0f;
+  }
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  // Run kernel on 1M elements on the CPU
+  add(N, x, y);
+
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+  std::cout << "CPU 'add' function execution time: " << duration.count() << " ms" << std::endl;
+
+  // Check for errors (all values should be 3.0f)
+  float maxError = 0.0f;
+  for (int i = 0; i < N; i++)
+    maxError = fmax(maxError, fabs(y[i]-3.0f));
+
+  std::cout << "Max error: " << maxError << std::endl;
+
+  delete [] x;
+  delete [] y;
+
+  return 0;
+}
+```
+
+性能表现：
+
+```Bash
+g++ add.cpp -o add
+time ./add
+
+CPU 'add' function execution time: 3740 ms
+Max error: 0
+
+real 0m21.418s
+user 0m15.798s
+sys 0m4.400s
+```
+
+- 计算耗时: 核心的add函数耗时 3740毫秒。
+- 总耗时: 整个程序从启动到结束（real time）耗时 21.4秒。这额外的时间主要消耗在分配8GB内存（new float[N]）以及初始化数组上。
+
+## **GPU实现**
+
+包含步骤：
+
+1. 分配内存: 分别在CPU（Host）和GPU（Device, cudaMalloc）上分配内存。
+2. 数据传输 (H2D): 将CPU上的输入数据 (h_x, h_y) 拷贝到GPU显存 (d_x, d_y)。
+3. 执行Kernel函数: 在GPU上启动addKernel函数，利用其大规模并行能力进行计算。
+4. 数据传回 (D2H): 将GPU计算完成的结果 (d_y) 拷贝回CPU内存 (h_y) 以便后续使用或验证。
+
+```C++
+#include <iostream>
+#include <math.h>
+
+#define CUDA_CHECK(call) \
+do { \
+    cudaError_t err = call; \
+    if (err != cudaSuccess) { \
+        fprintf(stderr, "CUDA Error in %s at line %d: %s\n", __FILE__, __LINE__, cudaGetErrorString(err)); \
+        exit(EXIT_FAILURE); \
+    } \
+} while (0)
+
+
+// __global__ 关键字声明的函数被称为Kernel函数
+__global__
+void add(int n, float *x, float *y)
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  if (index < n) {
+    y[index] = x[index] + y[index];
+  }
+}
+
+int main(void)
+{
+  int N = 1 << 30;
+  size_t bytes = N * sizeof(float);
+
+
+  float *h_x, *h_y;
+  h_x = new float[N];
+  h_y = new float[N];
+
+  float *d_x, *d_y;
+  CUDA_CHECK(cudaMalloc(&d_x, bytes));
+  CUDA_CHECK(cudaMalloc(&d_y, bytes));
+
+  for (int i = 0; i < N; i++) {
+    h_x[i] = 1.0f;
+    h_y[i] = 2.0f;
+  }
+
+
+  CUDA_CHECK(cudaMemcpy(d_x, h_x, bytes, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_y, h_y, bytes, cudaMemcpyHostToDevice));
+
+  cudaEvent_t start, stop;
+  CUDA_CHECK(cudaEventCreate(&start));
+  CUDA_CHECK(cudaEventCreate(&stop));
+  CUDA_CHECK(cudaEventRecord(start));
+
+  int blockSize = 256;
+  int numBlocks = (N + blockSize - 1) / blockSize;
+  add<<<numBlocks, blockSize>>>(N, d_x, d_y);
+
+  CUDA_CHECK(cudaEventRecord(stop));
+  CUDA_CHECK(cudaEventSynchronize(stop));
+
+  float milliseconds = 0;
+  CUDA_CHECK(cudaEventElapsedTime(&milliseconds, start, stop));
+  std::cout << "GPU Kernel 'add' execution time: " << milliseconds << " ms" << std::endl;
+
+
+  CUDA_CHECK(cudaEventDestroy(start));
+  CUDA_CHECK(cudaEventDestroy(stop));
+  CUDA_CHECK(cudaMemcpy(h_y, d_y, bytes, cudaMemcpyDeviceToHost));
+
+  float maxError = 0.0f;
+  for (int i = 0; i < N; i++) {
+    maxError = fmax(maxError, fabs(h_y[i] - 3.0f));
+  }
+  std::cout << "Max error: " << maxError << std::endl;
+
+  delete[] h_x;
+  delete[] h_y;
+  
+  CUDA_CHECK(cudaFree(d_x));
+  CUDA_CHECK(cudaFree(d_y));
+
+  return 0;
+}
+```
+
+性能表现：
+
+```Bash
+nvcc  add.cu -o add_cu -gencode arch=compute_75,code=sm_75
+time ./add_cu
+
+GPU Kernel 'add' execution time: 48.6738 ms
+Max error: 0
+
+real 0m19.413s
+user 0m15.308s
+sys 0m4.014s
+```
+
+- 计算耗时: GPU Kernel 函数的执行耗时仅为 48.7 毫秒。
+- 总耗时: 程序总耗时为 19.4秒。
+
+## **性能分析**
+
+单看核心计算任务，GPU (48.7ms) 的速度是CPU (3740ms) 的 约75倍。这完美体现了GPU在处理数据并行任务时的绝对优势。CPU需要串行执行10亿次加法(此处只考虑单核场景)，而GPU则将任务分配给成千上万个线程同时处理。
+
+但是虽然GPU计算本身极快，但程序的总耗时 (19.4s) 却和CPU版本 (21.4s) 相差无几。这是为什么呢？主要是CPU和GPU通讯的开销。
+
+## **GPU上一次任务执行的步骤**
+
+1) 编译阶段（主机侧）
+- 使用 `nvcc add.cu -o add_cu -gencode arch=compute_75,code=sm_75`：生成可执行文件，内部可能包含 `cubin/ptx` 等设备代码。若只含 PTX，运行时会进行 JIT 编译到目标 GPU 的 SASS。
+
+2) 程序加载与进程启动
+- OS 加载可执行文件，进入 `main`。首次触发任意 CUDA Runtime API（如 `cudaMalloc`）时，运行时进行懒初始化。
+
+3) 启动 CUDA 调用（初始化与上下文）
+- 硬件准备与唤醒：驱动检查设备、上电与功耗状态切换（空闲→P0/性能态），建立与设备的管理通道（通常经 PCIe/NVLink）。
+- 运行时/驱动初始化：加载 NVIDIA 驱动模块，创建与设备通讯所需的数据结构。
+- 选择设备：默认设备为 `device 0`（也可通过 `cudaGetDevice/cudaSetDevice` 指定）。
+- 上下文创建：获取或创建该设备的 Primary Context，并将其设为当前线程的 active context（Runtime API 使用 Primary Context）。
+- 上下文就绪：完成流、事件、内存分配器、JIT 缓存等必要子系统的初始化。
+
+4) 模块与函数准备
+- 若可执行中包含 PTX：驱动在首次使用时对 PTX 做 JIT → SASS，并缓存。
+- 解析出要执行的 Kernel 符号 `add<<<...>>>()`，生成启动描述符（grid/block/共享内存大小/实参/流）。
+
+5) 内存与数据阶段
+- Host 侧内存：示例使用 `new float[N]` 分配并初始化 `h_x/h_y`。
+- Device 侧内存：`cudaMalloc(&d_x, bytes)`、`cudaMalloc(&d_y, bytes)`。
+- H2D 拷贝：`cudaMemcpy(d_x, h_x, ...)`、`cudaMemcpy(d_y, h_y, ...)`。
+  - 若主机内存为 pageable，驱动会使用隐式 pinned staging 做分段 DMA；显式 `cudaMallocHost` 可减少一次拷贝并提升吞吐。
+
+6) Kernel 启动
+- 配置：`int blockSize=256; int numBlocks=(N+blockSize-1)/blockSize;`
+- 记录时间戳：`cudaEventRecord(start)`。
+- 启动：`add<<<numBlocks, blockSize, 0, /* default stream */ 0>>>(N, d_x, d_y);`
+- 运行时打包 launch 参数并提交到驱动命令队列；默认流保证在该流上的顺序语义。
+
+7) 硬件执行（设备侧）
+- 调度：命令由前端送入 GPU，调度到 GPC/SM。每个 SM 依据可用寄存器/共享内存决定 CTA（Block）驻留数（占用度）。
+- 执行：Warp 调度器以 SIMT 模式发射指令；访存经 L1/L2/显存（HBM），示例 Kernel 为简单逐元素加法，受内存带宽影响更大。
+- 完成：所有 CTA 结束后，内核在该流上标记完成。
+
+8) 同步与计时
+- `cudaEventRecord(stop)` → `cudaEventSynchronize(stop)`，通过 `cudaEventElapsedTime` 计算 Kernel 纯执行时间。
+
+9) 结果回传与校验
+- D2H 拷贝：`cudaMemcpy(h_y, d_y, bytes, cudaMemcpyDeviceToHost)`。
+- 校验：遍历 `h_y`，应得到 `3.0f`。
+
+10) 资源释放与退出
+- 释放：`cudaFree(d_x/d_y)`、`delete[] h_x/h_y`、销毁事件。
+- 进程结束：Primary Context 引用计数归零后可被驱动回收；JIT 缓存可复用；设备回到低功耗/空闲态。
+
+小结：一次 GPU 任务的关键链路是“编译→上下文→内存与数据→Kernel→同步/拷回→清理”。性能往往由 H2D/D2H 与内核访存带宽决定；用 pinned 内存、流与事件重叠拷贝/计算、以及合适的网格配置可显著优化。
+
+# **五、 结语：从架构到实践**
+
+本文从 CPU 与 GPU 的设计分野出发，说明了 GPU 如何以 SIMT 和海量并行单元换取吞吐，其中 `SM` 是任务执行与资源调度的基本单位。要把并行算力变成可见的应用性能，内存层次与带宽是第一性约束：`HBM + 宽接口` 缓解“内存墙”，共享 `L2` 与 `SM` 侧的 `L1/Shared Memory` 共同决定算子的效率上限。异构协同方面，CPU 负责组织与 I/O，GPU 承担矩阵/向量主力，互联从 `PCIe` 演进到 `NVLink/NVSwitch`，并在封装内通过 `NVLink‑C2C/UMA` 进一步降低延迟。
+
+在编程实践中，应通过 `Streams/Events` 重叠搬运与计算，用 `CUDA Graphs` 降低小内核的启动开销，依赖 `NCCL` 完成多 GPU 集体通信，并按需组合 `DP/TP/PP/EP` 等并行策略来支撑超大模型。结合文中的示例可以看到，端到端耗时常由数据“搬运”主导，因此优化顺序应优先打通数据路径与拓扑放置，再到核内算子与网格配置。展望未来，更强的专用单元（如 Tensor/Transformer Core）、更紧耦合的 CPU‑GPU 形态以及更开放的内存互联（如 CXL）将继续抬升系统级带宽与利用率。
+
+一句话总结：要让 GPU 真正“跑快”，既要并行算得动，更要数据喂得上。
