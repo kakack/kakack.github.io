@@ -1,5 +1,4 @@
 ---
-
 layout: post
 tags: [Detection, Deep Learning, Computer Vision]
 title: CornerNet and CenterNet on Detection
@@ -10,172 +9,170 @@ toc: true
 pinned: false
 ---
 
-随着 anchor 在检测算法中的应用，不管是 one- 或 two-stage 的检测模型，都会在图片上放置密密麻麻、尺寸不一的 anchors，用来覆盖全图各个角落的目标。但 anchor-based 方法存在两点不足：
+随着锚框（anchor）在检测算法中的广泛应用，无论是从 R-CNN 系列演进来的两阶段（two-stage）检测器，还是以 YOLO 和 SSD 为代表的单阶段（one-stage）模型，其核心策略都是在图像上密集地铺设大量预设尺寸和长宽比的锚框，以期覆盖所有可能的目标。然而，这种 anchor-based 的范式虽然取得了巨大成功，却也存在着一些固有的、难以回避的弊端：
 
-- Anchor 数量过大，计算与显存开销高。大多数 anchors 与 GT 不匹配，成为被丢弃的负样本；
-- 大量超参数（尺度、长宽比、阈值等）与后处理 NMS，使训练与部署复杂且影响性能。
+- **锚框数量冗余，计算与显存开销巨大**：为了实现高召回率，通常需要在图像上设置数以万计的锚框。其中，绝大多数锚框与任何真实目标（Ground Truth, GT）都无法有效匹配，它们作为简单的负样本被舍弃，却消耗了大量的计算资源，并导致了训练过程中正负样本的极端不平衡。
+- **引入过多超参数，训练部署流程复杂**：锚框的尺度、长宽比、以及与 GT 匹配的 IoU 阈值等，都是需要精细调节的超参数。这使得训练过程变得敏感且繁琐，同时，复杂的后处理（如非极大值抑制 NMS）也增加了模型部署的难度并可能影响最终性能。
+
+为了解决这些问题，学术界开始探索更为简洁高效的 anchor-free 方法，这股浪潮催生了如 FCOS、FoveaBox 等众多优秀工作。而 CornerNet 和 CenterNet 正是这一方向的开创性工作，它们通过新颖的视角重新定义了目标检测问题，对后续研究产生了深远影响。
+
 # CornerNet
 
 ---
 
-# CornerNet
+CornerNet 的论文标题为 `Detecting Objects as Paired Keypoints`，其核心思想是“**将物体检测视为成对关键点的检测与匹配问题**”。本文将从以下几点展开，深入剖析其精髓：
 
-CornerNet 的论文题为 `Detecting Objects as Paired Keypoints`，核心思想是“以配对关键点表示目标框”。本文从以下几点展开：
+1.  如何用 anchor-free 的方式表示目标；
+2.  什么是 corner pooling；
+3.  网络结构与损失函数；
+4.  角点配对与后处理。
 
-1. 如何用 anchor-free 的方式表示目标；
-2. 什么是 corner pooling；
-3. 网络结构与损失函数；
-4. 配对与后处理。
+## Locate the Object (目标定位)
 
-## Locate the Object
+在 CornerNet 中，一个目标边界框（bbox）由其左上角（top-left）和右下角（bottom-right）两个关键点来唯一确定。网络的目标就是去预测这两组角点的位置。但仅有位置信息是不够的，如何将图像中属于同一个物体的左上角和右下角正确配对，是 anchor-free 方法必须解决的核心问题。
 
-在 CornerNet 中，我们预测目标 bbox 的左上（top-left）与右下（bottom-right）两个角点作为关键点。为了解决“跨目标配对”问题，网络为每个角点学习一个 embedding（又称 tag），同一目标的两角 embedding 距离更近、不同目标更远。
+为此，CornerNet 引入了 **Embedding（嵌入）** 的概念。网络会为每一个预测出的角点学习一个低维度的嵌入向量（embedding vector，又称 tag）。在训练过程中，通过特定的损失函数，使得属于同一个物体的角点对的 embedding 向量在特征空间中的距离（通常是 L1 或 L2 距离）更近，而属于不同物体的角点则相互疏远。这样，在推理阶段就可以通过计算 embedding 向量间的距离来完成角点的配对。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-1.png)
 
-作者选择 corner 而非 center 的原因：中心点需回归宽高（四边）才能确定框，而角点只需两条边；以 corner 表示 bbox 也更符合“关键点检测”的范式。
+作者选择角点而非中心点（center）或 proposal，主要基于以下考量：物体的中心点位置难以直接从局部特征中判断，往往需要依赖物体的四条边；而角点则天然地位于物体的边界，仅需两条边的信息即可确定，这使得角点检测更符合“关键点检测”的范式，并且理论上角点对于物体部分遮挡的情况比中心点更具鲁棒性。
 
-## Corner Pooling
+## Corner Pooling (角点池化)
 
-Corner pooling 用于在边界处强化角点响应：以 top-left 为例，在每个像素上沿“向右”的水平方向与“向下”的垂直方向分别做 max pooling，再将二者相加，从而聚合“到边界为止”的极值特征；bottom-right 则相反方向。
+角点的一个显著特征是，它们通常位于物体的外部轮廓上，其自身局部区域可能并不包含足够的物体信息。为了让网络在预测角点位置时能“感知”到物体的全局结构，CornerNet 设计了一种新颖的池化层——**Corner Pooling**。
+
+以左上角为例，其位置由物体的顶边和左边共同决定。因此，对于一个候选的左上角位置 `(i,j)`，Corner Pooling 的具体操作如下：
+1. **水平扫描**: 从位置 `(i,j)` 到 `(i, W-1)` （W为特征图宽度）的路径上所有特征向量进行逐元素最大化（element-wise maximum），得到一个聚合了右侧信息的特征向量 `t_ij`。
+2. **垂直扫描**: 从位置 `(i,j)` 到 `(H-1, j)` （H为特征图高度）的路径上所有特征向量进行逐元素最大化，得到一个聚合了下方信息的特征向量 `l_ij`。
+3. **聚合**: 将 `t_ij` 和 `l_ij` 两个向量相加，作为该位置的最终输出。
+
+这个操作能有效地将物体的边界信息聚合到角点的位置，从而帮助网络更准确地定位角点。右下角点的 Corner Pooling 则采用相反的方向（水平向左、垂直向上）。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-2.png)
-## CornerNet Detail
 
-### Network Architecture
+## CornerNet Detail (网络细节)
 
-CornerNet 的网络结构主要分为以下几部分：
+### Network Architecture (网络架构)
 
-1. Backbone: Hourglass Network；
-2. Head: 二分支输出 Top-left corners 和 Bottom-right corners，每个分支包含了各自的corner pooling以及三分支输出。
+CornerNet 的骨干网络采用了在姿态估计领域大放异彩的 **Hourglass Network（沙漏网络）**。沙漏网络通过其对称的、重复的下采样和上采样结构以及密集的跳跃连接（skip connections），能够在一个统一的结构内高效地融合局部细节（来自上采样路径）和全局上下文信息（来自下采样路径）。这对于需要综合多尺度特征来精确定位的关键点检测任务来说至关重要。CornerNet 中堆叠了两个沙漏模块，以进一步增强网络的特征提取能力。
+
+在骨干网络之后，模型分为两个独立的分支，分别用于预测左上角和右下角。每个分支都包含各自的 Corner Pooling 模块，并最终输出三组预测图：
+
+1.  **Heatmaps (热力图)**：预测角点出现的位置。
+2.  **Embeddings (嵌入向量)**：用于角点配对。
+3.  **Offsets (偏移量)**：用于修正下采样带来的位置误差。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-3.png)
 
-CornerNet 使用 Hourglass 作为 backbone。Hourglass 常见于姿态估计，由对称的下采样与上采样模块组成，两端堆叠以增强表达能力。
+### Loss Function (损失函数)
 
-在原有hourglass的基础上，作者做了以下的改进：
+CornerNet 的总损失由三部分构成，并通过加权和进行组合： \(L = \alpha L_{det} + \beta L_{pull} + \gamma L_{push} + \delta L_{off}\)。其中 \(\alpha, \beta, \gamma, \delta\) 是各项损失的权重超参数。
 
-1. 在输入hourglass module之前，需要将图片分辨率降低为原来的1/4倍。本文采用了一个stride=2的7x7卷积和一个stride=2的残差单元进行图片分辨率降低。
-2. 使用stride=2的卷积层代替max pooling进行downsample
-3. 共进行5次downsample ,这5次downsample后的特征图通道为[256,384,384,384,512]
-4. 采用最近邻插值的上采样（upsample),后面接两个残差单元
+#### Focal Loss（热力图损失，改进版）
 
-### Loss Function
+网络输出的角点热力图维度为 \(\tilde{M}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times C}\)。对于每个真实角点，其在 GT 热力图上的标签并非简单的 0/1 二值分布，而是以该点为中心的一个高斯分布。这种“软标签”设计可以鼓励网络预测出靠近真实角点的位置。损失函数采用了 Focal Loss 的一个改进版本，该思想源自 RetinaNet，旨在解决正样本（角点）与负样本（背景）间的极端不平衡问题。
 
-#### Focal Loss（改造版）
+$$L_{det}=\frac{-1}{N}\sum_{c=1}^{C}\sum_{i=1}^{H}\sum_{j=1}^{W}\left\{\begin{matrix} (1-p_{cij})^{\alpha} \log(p_{cij}) & \text{if } y_{cij}=1 \\ (1-y_{cij})^{\beta}(p_{cij})^{\alpha}\log(1-p_{cij}) & \text{Otherwise} \end{matrix}\right.$$
 
-首先是角点热图的分类损失。网络输出角点 heatmap，维度为 \(\tilde{M}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times C}\)。GT 不是二值而是基于角点位置绘制的高斯分布（软标签），以鼓励靠近 GT 的预测点。损失采用改造版 Focal Loss，对正样本与负样本进行不同衰减。
+其中，$y_{cij}=1$ 的位置是 GT 角点，而高斯半径内其他位置的 $y_{cij}$ 值则小于 1。$(1-y_{cij})^{\beta}$ 这一项是其核心改进，能够减小这些“次优位置”（即高斯核覆盖的、靠近真值的负样本）的惩罚权重，使网络更专注于学习那些远离真值的、困难的负样本。
 
-$$L_{det}=\frac{-1}{N}\sum_{c=1}^{C}\sum_{i=1}^{H}\sum_{j=1}^{W}\left\{\begin{matrix} (1-p_{cij})^{\alpha} log(p_{cij}) & if y_{cij}=1 \\ (1-y_{cij})^{\beta}(p_{cij})^{\alpha}log(1-p_{cij}) & Otherwise \end{matrix}\right.$$
+#### Embedding Loss (嵌入损失)
 
-计算对每个channel在heatmap上的每个位置的损失的和。如果这是一个正样本点（$y_{cij}=1$），那么使用focal loss计算损失，更多的关注难样本。如果不是，那么在focal loss的基础上加上$(1-y_{cij})^\beta$这一项，控制我们分配的标签对整体损失的影响。可以看到如果$y_{cij}$很接近1，这一项损失是接近0的，也就是说我们鼓励将这里的$p_{cij}$预测为1，这种soft的操作看起来就很舒服，注意使用object的数目$N$进行归一化。
-#### Embedding Loss
+嵌入损失分为 "pull" 和 "push" 两部分，用于训练角点配对的 embedding 向量 \(\tilde{E}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times1}\)。
 
-论文同时引入 embedding 的 pull/push 损失：同一目标的两角向“中心 embedding”拉近，不同目标之间相互推远，\(\tilde{E}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times1}\)。
-
+- **Pull Loss (类内拉近损失)**: 使属于同一个物体的角点对 $(e_{t_k}, e_{b_k})$ 的 embedding 向量向它们的均值 $e_k$ 靠近，目的是让同类更紧凑。
 $$L_{pull}=\frac{1}{N}\sum_{k=1}^{N}[(e_{t_k}-e_k)^2+(e_{b_k}-e_k)^2]$$
 
-$$L_{push}=\frac{1}{N(N-1)}\sum_{k=1}^{N}\sum_{i=1,j\neq 1}^{N}max(0, \triangle -|e_{b_k}-e_j|)$$
+- **Push Loss (类间推远损失)**: 使不同物体的角点对的 embedding 均值 $(e_k, e_j)$ 相互疏远，目的是让异类更分离。此处的距离通常用 L1 距离。
+$$L_{push}=\frac{1}{N(N-1)}\sum_{k=1}^{N}\sum_{j=1,j\neq k}^{N}\max(0, \triangle -|e_k-e_j|)$$
+其中 \(\triangle\) 是一个超参数，定义了不同物体 embedding 之间的最小间隔（margin）。
 
-pull 使类内更紧，push 使类间更分离。\(e_{t_k}, e_{b_k}, e_k\) 分别为目标 \(k\) 的两角与均值 embedding，仅在目标处计算该项损失。
-#### Offsets Loss
+#### Offsets Loss (偏移量损失)
 
-对于下采样后的 heatmap 回映射到原图会有取整误差（对小目标尤甚），因此引入 offset 分支 \(\tilde{O}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times2}\) 进行补偿：
+由于骨干网络进行了下采样（stride > 1），将预测结果从低分辨率热力图映射回原始图像时，会因取整操作产生量化误差，这对小物体尤其致命。因此，网络引入一个 offset 分支 \(\tilde{O}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times2}\) 来学习这个误差并进行补偿。该损失仅对存在真实角点的位置计算，并采用对离群点更鲁棒的 Smooth L1 Loss。
 
-$$o_k=(\frac{x_k}{n}-\left \lfloor \frac{x_k}{n} \right \rfloor, \frac{y_k}{n}-\left \lfloor \frac{y_k}{n} \right \rfloor)$$
-
-每个pixel都会预测一对偏移值，但是只有存在object的pixel才会计算偏移误差。
-
-$$L_{off}=\frac{1}{N}\sum_{k=1}^{N}{SmoothL1Loss}(o_k, \hat{o_k})$$
+$$L_{off}=\frac{1}{N}\sum_{k=1}^{N}{\text{SmoothL1Loss}}(o_k, \hat{o_k})$$
 
 ---
 
 # CenterNet
 
-CornerNet 在推理时需要对角点进行 grouping 与配对，带来一定计算与失败风险。CenterNet 在此基础上提出“以中心点表示目标”，显著简化流程。
+CornerNet 在推理时需要对角点进行分组配对，这个过程不仅计算复杂，也存在配对失败的风险。CenterNet 在此基础上提出了一个更为简洁优雅的方案——**“将物体视为点”（Objects as Points）**，显著简化了检测流程，使其成为一个几乎完全端到端（end-to-end）的检测器。
 
-CenterNet 直接预测 bbox 中心点，并回归宽高、offset 等属性；也可扩展到 3D、姿态等。其本质是“关键点检测”：用 FCN 产生 heatmap，局部极值即中心点。默认下采样因子 R=4；由于不使用 FPN，所有中心在同一特征图上预测，因而分辨率不能太低。
+CenterNet 直接预测目标的中心点，并从此中心点回归该目标的宽高、偏移量等其他属性。该思想也可以方便地扩展到 3D 检测、人体姿态估计等任务。其本质是一个纯粹的关键点检测问题：用一个全卷积网络（FCN）生成热力图，图上的局部峰值点即为预测的物体中心。
 
-总之，CenterNet结构十分简单，直接检测目标的中心点和大小，是真正意义上的anchor-free。
+总之，CenterNet 结构极为简洁，是真正意义上彻底的 anchor-free 和 NMS-free 检测器。
 
-## Network Architecture
+## Network Architecture (网络架构)
 
-论文中CenterNet提到了三种用于目标检测的网络，这三种网络都是编码解码(encoder-decoder)的结构：
+论文中 CenterNet 提及了三种可用的骨干网络，它们都是编码器-解码器（encoder-decoder）结构，以在速度和精度间进行权衡：
 
-1. ResNet‑18 with up-conv：28.1% COCO AP，142 FPS
-2. DLA‑34：37.4% COCO AP，52 FPS
-3. Hourglass‑104：45.1% COCO AP，1.4 FPS
+1.  **ResNet‑18 with up-conv**：28.1% COCO AP，142 FPS
+2.  **DLA‑34 (Deep Layer Aggregation)**：37.4% COCO AP，52 FPS
+3.  **Hourglass‑104**：45.1% COCO AP，1.4 FPS
 
-各骨干不同，但头部统一输出三个分支：类别 heatmap、中心点偏置（offset）与宽高（wh）。默认 80 类、2 个坐标 offset、2 个尺寸值。
-
+无论骨干网络如何，其预测头部的结构是统一的，通常由一个 3x3 卷积进行特征整合，后接三个并行的 1x1 卷积分支，分别输出：类别热力图（heatmap）、中心点偏移量（offset）和物体尺寸（wh）。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-4.png)
 
-训练时将每个 GT 框的中心点投影到下采样特征图：\(p=(\tfrac{x_1+x_2}{2},\tfrac{y_1+y_2}{2})\), \(\tilde{p}=\left\lfloor p/R\right\rfloor\)。围绕 \(\tilde{p}\) 绘制高斯核，半径由目标尺寸与 IoU 阈值联合确定，以减少中心点冲突。
+训练时，每个 GT 框的中心点被投影到下采样后的特征图上 \(\tilde{p}=\left\lfloor p/R\right\rfloor\)，并围绕 \(\tilde{p}\) 渲染一个高斯核。高斯核的半径 \(\sigma_p\) 是一个与物体尺寸自适应的参数，其确定原则是：如果一个与 GT 框有特定 IoU（如0.7）的预测框，其中心点落在高斯半径内，那么这个点就被视为正样本。这个巧妙的设计保证了不同尺寸的物体都能有合适范围的正样本区域。
 
-然后我们对图像进行标记，在下采样的[128,128]图像中将ground truth point以下采样的形式，用一个高斯滤波：
+$$Y_{xyc}=\exp(-\frac{(x-\tilde{p}_x)^2+(y-\tilde{p}_y)^2}{2\sigma ^2_p})$$
 
-$$Y_{xyc}=exp(-\frac{(x-\tilde{p}_x)^2+(y-\tilde{p}_y)^2}{2\sigma ^2_p})$$
+## Loss Function (损失函数)
 
-来将关键点分布到特征图上。
+CenterNet 的总损失由三个部分构成，同样通过加权和进行组合：\(L_{det} = L_k + \lambda_{size}L_{size} + \lambda_{off}L_{off}\)，其中 \(\lambda_{size}\) 和 \(\lambda_{off}\) 是平衡各项任务的权重。
 
-## Loss Function
+### Center Points Loss Function（中心点热力图损失）
 
-### Center Points Loss Function（改造版 Focal）
+同样是 Focal Loss 的改进版，用于监督中心点热力图的生成。其形式与 CornerNet 的热力图损失非常相似。
 
-$$L_k=\frac{-1}{N}\sum_{xyc}\left\{\begin{matrix} (1-\hat{Y}_{xyc})^\alpha log(\hat{Y}_{xyc}) & if Y_{xyc}=1 \\ (1-\hat{Y}_{xyc})^{\beta}(\hat{Y}_{xyc})^{\alpha}log(1-\hat{Y}_{xyc}) & Otherwise \end{matrix}\right.$$
+$$L_k=\frac{-1}{N}\sum_{xyc}\left\{\begin{matrix} (1-\hat{Y}_{xyc})^\alpha \log(\hat{Y}_{xyc}) & \text{if } Y_{xyc}=1 \\ (1-Y_{xyc})^{\beta}(\hat{Y}_{xyc})^{\alpha}\log(1-\hat{Y}_{xyc}) & \text{Otherwise} \end{matrix}\right.$$
 
-其中$\alpha$和$\beta$是Focal Loss的超参数，在这篇论文中分别是2和4，$N$是图像的关键点数量，用于将所有的positive focal loss标准化为1。这个损失函数是Focal Loss的修改版，适用于CenterNet。
+其中 $\alpha=2$ 和 $\beta=4$ 是论文中使用的超参数，$N$ 是图像中关键点的总数，用于归一化。
 
-每个中心点唯一对应一个目标，不再需要 IoU 匹配。为缓解负样本数量过大，采用改造版 Focal Loss 对非中心区域进行衰减。宽高由对应位置的 \(w,h\) 分支回归得到。
+### Offset Loss (偏移量损失)
 
-### Offset Loss
-
-由于下采样带来量化误差，对每个中心点回归局部 offset（所有类别共享），使用 L1 损失： 
+与 CornerNet 完全一致，用于补偿下采样带来的量化误差，采用 L1 损失。
 
 $$L_{off}=\frac{1}{N}\sum_p |\hat{O}_{\tilde{p}}-(\frac{p}{R}-\tilde{p})|$$
 
-这个偏置损失是可选的，我们不使用它也可以，只不过精度会下降一些。这部分跟CornerNet一致。
+### Size Loss (尺寸损失)
 
-### Size Loss
-
-假设目标$k$坐标为$(x_1^{(k)}, y_1^{(k)}, x_2^{(k)}, y_2^{(k)})$，所属类别为$c$，那它的中心点坐标为$p_k=(\frac{x_1^{(k)}+x_2^{(k)}}{2}, \frac{y_1^{(k)}+y_2^{(k)}}{2})$。我们使用关键点预测$\hat{Y}$去预测所有中心点，然后对每个目标$k$的size做回归，最终得到$s_k=(x_2^{(k)}-x_1^{(k)}, y_2^{(k)}-y_1^{(k)})$，这个值是在训练前提前计算出来的，是进行了下采样之后的长宽值。
-
-为了减少回归的难度，这里使用$\hat{S}\in R^{\frac{W^{'}}{R}\times \frac{H}{R} \times 2}$作为预测值，使用L1损失函数，与之前的$L_{off}$损失一样：
+网络在预测的中心点位置上，直接回归该物体的长和宽 $s_k=(x_2^{(k)}-x_1^{(k)}, y_2^{(k)}-y_1^{(k)})$。这假设了中心点的特征已经包含了推断物体尺寸所需的全部信息。同样采用 L1 损失。为增加训练稳定性，一些实现会回归尺寸的对数 `log(size)`。
 
 $$L_{size}=\frac{1}{N}\sum_{k=1}^N |\hat{S}_{p_k}-s_k|$$
 
-## Process 
+## Process (推理过程)
 
-推理阶段，先对热图做 3×3 max-pooling 获得局部极值（近似 NMS），每类取 top‑K（如 100）中心点作为候选。
-
-这里假设$\hat{p}_c$为检测到的点，
-
-$$\hat{p}=\{(\hat{x}_i, \hat{y}_i)\}_{i=1}^n$$
-
-代表 $c$ 类中检测到的一个点。每个关键点的位置用整型坐标表示 $(x_i, y_i)$，其置信度为 $\hat{Y}_{x_i y_i c}$。bbox 由坐标、offset 与宽高回构：
+CenterNet 的推理过程非常简洁：
+1.  对网络输出的热力图进行 3×3 的最大池化操作。这个操作的意义在于，如果一个像素的值不是其 3x3 邻域内的最大值，它就会被抑制。这等价于一个高效的、非参数化的 NMS，用于提取热力图上的局部峰值点。
+2.  对每个类别，提取前 K 个（如 100 个）置信度最高的峰值点作为候选中心点。
+3.  根据每个中心点位置上回归出的 offset 和 wh 值，计算出最终的边界框坐标。
 
 $$(\hat{x}_i+\delta \hat{x}_i-\tfrac{\hat{w}_i}{2},\ \hat{y}_i+\delta \hat{y}_i-\tfrac{\hat{h}_i}{2},\ \hat{x}_i+\delta \hat{x}_i+\tfrac{\hat{w}_i}{2},\ \hat{y}_i+\delta \hat{y}_i+\tfrac{\hat{h}_i}{2})$$
 
-其中 $(\delta \hat{x}_i, \delta \hat{y}_i)=\hat{O}_{x_i y_i}$ 为 offset，$(\hat{w}_i, \hat{h}_i)=\hat{S}_{x_i y_i}$ 为回归的宽高。
-
-下图展示网络模型预测出来的中心点、中心点偏置以及该点对应目标的长宽：
+其中 $(\delta \hat{x}_i, \delta \hat{y}_i)$ 是预测的偏移量, $(\hat{w}_i, \hat{h}_i)$ 是回归的宽高。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-5.png)
 
-最终根据 $\hat{Y}\in[0,1]^{\tfrac{W}{R}\times\tfrac{H}{R}\times C}$ 的置信度与阈值（如 0.3）筛选中心点，回构对应 bbox 后输出结果。
+## Conclusion & Comparison (总结与对比)
 
-## Conclusion
+| 特性                | **CornerNet**                                      | **CenterNet (Objects as Points)**                        |
+| ------------------- | -------------------------------------------------- | -------------------------------------------------------- |
+| **物体表征**        | 一对角点 (左上角, 右下角)                            | 单个中心点                                               |
+| **核心机制**        | 检测 + Embedding 配对                              | 检测 + 直接回归属性                                      |
+| **后处理**          | 复杂的角点配对 + 传统 NMS                          | 无需配对，用 3x3 MaxPool 代替 NMS                        |
+| **主要挑战**        | 角点配对的效率和准确性，后处理复杂                 | 同类物体的中心点在下采样后重叠，导致漏检               |
 
-### Advantage
+**CornerNet** 开创性地将目标检测转化为关键点检测问题，但其复杂的角点配对步骤成为了性能瓶颈。
 
-1. 设计模型的结构比较简单，不仅对于two-stage，对于one-stage的目标检测算法来说该网络的模型设计也是优雅简单的；
-2. 该模型的思想不仅可以用于目标检测，还可以用于3D检测和人体姿态识别；
-3. 虽然目前尚未尝试轻量级的模型，但是可以猜到这个模型对于嵌入式端这种算力比较小的平台还是很有优势的。
-### Disadvantage
+**CenterNet** 则将这一思想推向了极致的简洁。通过将物体表征为单个中心点，它彻底摒弃了复杂的后处理，构建了一个更为优雅、高效的检测框架。虽然它存在中心点碰撞的问题，但在许多场景下，其在速度和简洁性上的优势是革命性的。这两项工作共同开启了 anchor-free 检测的新纪元，并深刻影响了后续如 TTFNet、FCOS 等一系列检测器的设计哲学。
 
-1. 在实际训练中，如果在图像中，同一个类别中的某些物体的GT中心点，在下采样时会挤到一块，也就是两个物体在GT中的中心点重叠了，CenterNet对于这种情况也是无能为力的，也就是将这两个物体的当成一个物体来训练(因为只有一个中心点)。同理，在预测过程中，如果两个同类的物体在下采样后的中心点也重叠了，那么CenterNet也是只能检测出一个中心点，不过CenterNet对于这种情况的处理要比faster-rcnn强一些的，具体指标可以查看论文相关部分。
-2. 有一个需要注意的点，CenterNet在训练过程中，如果同一个类的不同物体的高斯分布点互相有重叠，那么则在重叠的范围内选取较大的高斯点。
+### Disadvantage (CenterNet 局限性)
+
+1.  在训练中，如果两个同类物体的 GT 中心点在下采样后重叠或挤在一起，CenterNet 会将它们视为一个物体来训练（因为只有一个中心点），这天然地造成了漏检。
+2.  同理，在推理时，如果两个同类物体的中心点在预测的热力图上重叠，网络也只能检测出一个。尽管论文指出其处理这种情况的能力优于 Faster R-CNN，但这仍是一个固有的设计局限。
 
 ---
 # Reference
@@ -183,4 +180,5 @@ $$(\hat{x}_i+\delta \hat{x}_i-\tfrac{\hat{w}_i}{2},\ \hat{y}_i+\delta \hat{y}_i-
 - [CornerNet: Detecting Objects as Paired Keypoints](https://arxiv.org/pdf/1808.01244)
 - [CornerNet Code](https://github.com/princeton-vl/CornerNet)
 - [CenterNet: Objects as Points](https://arxiv.org/pdf/1904.07850)
-- [CenterNet Code](https://github.com/see--/keras-centernet)
+- [CenterNet Code (Official PyTorch Impl)](https://github.com/xingyizhou/CenterNet)
+- [CenterNet Code (Keras Impl)](https://github.com/see--/keras-centernet)
