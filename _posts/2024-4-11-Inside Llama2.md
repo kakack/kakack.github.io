@@ -2,7 +2,7 @@
 
 layout: post
 tags: [Llama2, LLM, NLP]
-title: Inside Llama2
+title: Inside Llama 2
 date: 2024-04-11
 author: Kyrie Chen
 comments: true
@@ -11,7 +11,7 @@ pinned: false
 
 ---
 
-Meta的Llama2是当前开源状态最好又可以作为效果标杆的一个LLM模型，但它的官方口径好像也是个半开源，即只有inference而没有train，但是从它的模型结构和部分处理逻辑上，还是具有很高的参考价值。
+Meta 的 Llama 2 是当前开源生态里可作为效果标杆的一类 LLM。虽未开放完整训练细节，但其公开的模型结构与推理实践具有很高的参考价值。
 
 # 1 - Intro
 
@@ -113,17 +113,17 @@ def sample_top_p(probs, p):
 
 
 
-# 3 - Architcture
+# 3 - Architecture
 
-Llama3这样的主流LLM模型尝尝是沿用gpt结构，基于transformer来构建，LLM这种生成式的任务是根据给定输入文本序列的上下文信息预测下一个单词或token，所以LLM模型通常只需要使用到Transformer Decoder部分，而所谓Decoder相对于Encoder就是在计算Q*K时引入了Mask以确保当前位置只能关注前面已经生成的内容。
+Llama 系列这样的主流 LLM 常常沿用 GPT 结构，基于 Transformer 来构建。生成式任务根据给定输入序列的上下文预测下一个 token，因此通常只使用 Transformer 的 Decoder 部分；相较 Encoder，Decoder 在计算 Q·K^T 时引入因果 Mask，确保当前位置只关注已生成内容。
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_1.png)
 
 Llama2主要由32个 Transformer Block 组成，不同之处主要包括以下几点：
 
 1. 前置的**RMSNorm**层；
-2. Q在与K相乘之前，先使用**RoPE**进行位置编码；
-3. **K V Cache**，并采用**Group Query Attention**；
+2. Q 在与 K 相乘之前先使用 **RoPE** 进行位置编码；
+3. **KV Cache**，并采用 **Group Query Attention**；
 4. FeedForward层。
 
 ## 3.1 - RMSNorm
@@ -165,7 +165,7 @@ class RMSNorm(torch.nn.Module):
 
 我们知道输入数据经过tokenization之后，会得到一组单词索引序列$\{w_0, w_1, w_2, ... w_n \}$，之后经过embedding处理后也就变成了$\{x_0, x_1, x_2, ... x_n \}$，embedding后的序列通过Linear层将输入数据$x_i$转换为对应的$q_i,k_i,v_i$，之后 便会对$q_i,k_i$两者做RoPE位置编码，之后便计算Attention。
 
-其中$x_i$为第$i$个单词索引序列所对应的$d$维词嵌入向量$\{x_{i_0}, x_{i_1}, w_{i_2}, ... x_{i_{d-1}} \}$
+其中 $x_i$ 为第 $i$ 个单词所对应的 $d$ 维词嵌入向量 $\{x_{i_0}, x_{i_1}, x_{i_2}, ... , x_{i_{d-1}} \}$。
 
 在标准的transformer中，通常是在整个网络进入Transformer Block之前做一个位置编码。
 
@@ -214,7 +214,7 @@ $$
 
 $$
 \begin{align}
-f_q(x_m,m) & = (W_qx_m)[\cos(m\theta)+i\sin(m\theta)] \nonumber \\ & = (\begin{array}{cc|r} W^{11}_q & W^{12}_q \\ W^{21}_q & W^{22}_q\end{array})(\begin{array}{cc|r} x^{(1)}_m \\ x^{(2)}_m\end{array})[\cos(m\theta) + i\sin (m\theta)] \\ & =(q^{(1)}_m, q^{(2)}_n)[\cos(m\theta) + i\sin (m\theta)]
+        f_q(x_m,m) & = (W_qx_m)[\cos(m\theta)+i\sin(m\theta)] \nonumber \\ & = (\begin{array}{cc|r} W^{11}_q & W^{12}_q \\ W^{21}_q & W^{22}_q\end{array})(\begin{array}{cc|r} x^{(1)}_m \\ x^{(2)}_m\end{array})[\cos(m\theta) + i\sin (m\theta)] \\ & =(q^{(1)}_m, q^{(2)}_m)[\cos(m\theta) + i\sin (m\theta)]
 \end{align}
 $$
 
@@ -233,7 +233,7 @@ $$
 $$
 \begin{align}
 f_q(x_m, m) & = [q^{(1)}_m\cos(m\theta) - q^{(2)}_m \sin(m\theta)] + i[q^{(1)}_m \sin(m\theta) + q^{(2)}_m\cos(m\theta)] \\ 
-            & = [q^{(1)}_m\cos(m\theta) - q^{(2)}_m \sin(m\theta)], i[q^{(1)}_m \sin(m\theta) + q^{(2)}_m\cos(m\theta)]] \\
+            & = [q^{(1)}_m\cos(m\theta) - q^{(2)}_m \sin(m\theta)], \; i[q^{(1)}_m \sin(m\theta) + q^{(2)}_m\cos(m\theta)] ] \\
             & = (\begin{array}{cc|r}\cos (m\theta) & -\sin (m\theta) \\ \sin (m\theta) & \cos (m\theta)\end{array})(\begin{array}{cc|r} q_m^{(1)} \\ q_m^{(2)}\end{array})
 \end{align}
 $$
@@ -455,7 +455,19 @@ class FeedForward(nn.Module):
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_9.png)
 
-# 5 - Reference
+# 5 - 推理与部署优化
+
+推理性能常受显存带宽与注意力计算限制。实践中常结合 FlashAttention/Flash‑Decoding、Paged‑KV（分页式 KV 管理）、多流并发与批内/批间重用提升吞吐；在模型侧配合量化（INT8/INT4、AWQ、GPTQ/FP8 等）降低显存占用，并通过分块推理削峰。多卡部署时可引入张量/流水并行与高带宽互联（NVLink/NVSwitch）稳定大批量吞吐。
+
+# 6 - 对齐与微调
+
+Llama 2 的对齐通常采用“预训练 + 指令监督微调（SFT）+ 反馈优化（RLHF/RLAIF）”范式。SFT 保证遵循指令与格式，RLHF 通过偏好优化在安全性、礼貌性与有用性上做约束。行业落地常用 LoRA/QLoRA 做高效参数微调，并结合检索增强（RAG）保证知识新鲜度。
+
+# 7 - 小结
+
+Llama 2 以 RMSNorm、RoPE、GQA、SwiGLU 与高效推理技术构成“性能‑成本‑易用性”的平衡。理解其架构与工程优化，有助于在有限资源下获得稳定的任务效果。
+
+# 8 - Reference
 
 - [Transformer升级之路：2、博采众长的旋转式位置编码](https://spaces.ac.cn/archives/8265/comment-page-1)
 - [ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING](https://arxiv.org/pdf/2104.09864)
