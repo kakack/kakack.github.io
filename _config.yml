@@ -42,7 +42,7 @@ kramdown:
   syntax_highlighter: rouge
   syntax_highlighter_opts:
     css_class: "highlight"
-  math_engine: mathjax
+  math_engine: katex
 
 sass:
   style: :expanded # You might prefer to minify using :compressed

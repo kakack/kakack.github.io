@@ -228,16 +228,16 @@ $\sigma_t(\eta)^2=\eta\cdot \tilde{\beta}_t$，DDIM所选择的是基于fixedsma
 
 ## 条件生成与 Stable Diffusion（Latent Diffusion）
 
-条件扩散通过在去噪网络中引入条件向量来引导生成过程。文本到图像常用“无分类器引导”（Classifier-Free Guidance, CFG）：在同一网络中同时训练有条件与无条件两个分支，采样时用 \(\epsilon_\text{guided}=\epsilon_\text{uncond}+w\cdot(\epsilon_\text{cond}-\epsilon_\text{uncond})\) 调节引导强度 \(w\)。
+条件扩散通过在去噪网络中引入条件向量来引导生成过程。文本到图像常用“无分类器引导”（Classifier-Free Guidance, CFG）：在同一网络中同时训练有条件与无条件两个分支，采样时用 $\epsilon_{\mathrm{guided}}=\epsilon_{\mathrm{uncond}}+w\cdot(\epsilon_{\mathrm{cond}}-\epsilon_{\mathrm{uncond}})$ 调节引导强度 $w$。
 
 Stable Diffusion 使用“潜空间扩散”（Latent Diffusion）：先用 VAE 将图像编码到潜空间，再在潜空间上扩散，显著降低算力与显存开销；文本条件由文本编码器（如 CLIP/Text Encoder）经交叉注意力注入 U-Net。推理时常配合 CFG 与多步采样器以平衡保真度与多样性。
 
 ## 参数化与损失
 
-- 预测噪声（\(\epsilon\)-prediction）：标准 DDPM 形式，训练目标为 MSE(\(\epsilon\), \(\epsilon_\theta\))；
-- 预测 \(x_0\)（\(x_0\)-prediction）：直接回归干净样本，易受噪声尺度影响；
-- 预测 \(v\)（v-prediction）：在 SD v2/SDXL 中常见，兼顾数值稳定与采样质量；
-- 方差学习：可学习 \(\Sigma_\theta\)（如 GLIDE/Imagen），提升细节与稳定性；
+- 预测噪声（$\epsilon$-prediction）：标准 DDPM 形式，训练目标为 MSE($\epsilon$, $\epsilon_\theta$)；
+- 预测 $x_0$（$x_0$-prediction）：直接回归干净样本，易受噪声尺度影响；
+- 预测 $v$（v-prediction）：在 SD v2/SDXL 中常见，兼顾数值稳定与采样质量；
+- 方差学习：可学习 $\Sigma_\theta$（如 GLIDE/Imagen），提升细节与稳定性；
 - Perceptual/Adversarial/CLIP 指标：在特定场景可混入感知损失或对抗损失以增强感知质量。
 
 ## 噪声日程与采样器
