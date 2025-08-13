@@ -194,14 +194,14 @@ $$
 
 DDPM的高质量生成依赖于较大的$T$（一般为1000或以上），这就导致diffusion的前向过程非常缓慢。在denoising diffusion implicit model (DDIM)中提出了一种牺牲多样性来换取更快推断的手段。
 
-根据独立高斯分布可加性，可以得到$x_{t-1}$为：
+根据独立高斯分布可加性，可以得到 $x_{t-1}$ 为：
 $$
-\begin{align} 
-x_{t-1}&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}}\overline{z}_{t-1} \nonumber \\ 
-&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\,\overline{z}_t+\sigma_t z_t \nonumber \\ 
-&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\left(\frac{x_t-\sqrt{\overline{\alpha}_t}x_0}{\sqrt{1-\overline{\alpha}_t}}\right)+\sigma_t z_t \nonumber \\ 
-q_\sigma(x_{t-1}|x_t,x_0)&=\mathcal{N}\!\left(x_{t-1};\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma^2_t}\left(\frac{x_t-\sqrt{\overline{\alpha}_t}x_0}{\sqrt{1-\overline{\alpha}_t}}\right), \sigma_t^2\mathbf{I}\right) \nonumber 
-\end{align}
+\begin{aligned}
+x_{t-1}&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}}\overline{z}_{t-1} \\
+&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\,\overline{z}_t+\sigma_t z_t \\
+&=\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\left(\frac{x_t-\sqrt{\overline{\alpha}_t}x_0}{\sqrt{1-\overline{\alpha}_t}}\right)+\sigma_t z_t \\
+q_\sigma(x_{t-1}|x_t,x_0)&=\mathcal{N}\!\left(x_{t-1};\sqrt{\overline{\alpha}_{t-1}}x_0+\sqrt{1-\overline{\alpha}_{t-1}-\sigma^2_t}\left(\frac{x_t-\sqrt{\overline{\alpha}_t}x_0}{\sqrt{1-\overline{\alpha}_t}}\right), \sigma_t^2\mathbf{I}\right)
+\end{aligned}
 $$
 
 这里将方差$\sigma^2_t$引入均值汇总，当$\sigma^2_t=\tilde{\beta}_t=\frac{1-\bar{\alpha}_{t-1}}{1-\bar{\alpha}_t}\beta_t$时，等价于最初的$q(x_{t-1}\vert x_t,x_0)$。这种经过贝叶斯的到$q_\theta(x_t\vert x_{t-1},x_0)$称为非马尔科夫过程，因为$x_t$的概率同时依赖于$x_{t-1}$和$x_0$。DDIM进一步定义了$\sigma_t(\eta)^2=\eta\cdot\tilde{\beta}_t$，当$\eta=0$时，diffusion的sample过程会丧失所有随机性从而得到一个deterministic的结果，当$\eta=1$时，则DDIM等价于DDPM。
