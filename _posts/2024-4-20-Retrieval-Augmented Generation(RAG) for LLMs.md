@@ -13,7 +13,7 @@ pinned: false
 
 RAG ，检索增强生成技术（Retrieval-Augmented Generation，RAG），通过在语言模型生成答案之前，先从广泛的文档数据库中检索相关信息，然后利用这些信息来引导生成过程，极大地提升了内容的准确性和相关性。RAG 有效地**缓解了幻觉问题**，提高了**知识更新的速度**，并增强了内容生成的**可追溯性**，使得大型语言模型在实际应用中变得更加**实用和可信**。
 
-# 1 - 前言
+## 1 - 前言
 
 解决问题：
 
@@ -34,9 +34,9 @@ RAG适用场景：
   
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-1.png)
 
-# 2 - RAG方法概述
+## 2 - RAG方法概述
 
-## 2.1 - 朴素RAG（Naive RAG）
+### 2.1 - 朴素RAG（Naive RAG）
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-2.png)
 
@@ -49,17 +49,17 @@ RAG适用场景：
 - Sentence‑window retrieval：对单句做 embedding 并检索，命中后用该句周围更大窗口替换，以引入上下文。
 - Auto‑Merging retrieval：构建树状 chunk 节点结构；当父节点的多数子节点被命中时，用父节点替换子节点，减少冗余。
 
-## 2.2 - 进阶的 RAG（Advanced RAG）
+### 2.2 - 进阶的 RAG（Advanced RAG）
 
 Advanced RAG 范式增加了 `预检索` 、 `检索后处理` 等步骤。在检索前阶段可以使用**问题重写**、**路由**和**扩充**等方式对齐问题与文档块之间的语义差异；在检索后阶段可以通过对候选文档进行**重排序（rerank）**以避免 “Lost in the Middle” 现象，或通过上下文筛选与压缩缩短窗口长度。
 
-## 2.3 - 模块化 RAG（Modular RAG）
+### 2.3 - 模块化 RAG（Modular RAG）
 
 模块化 RAG 在结构上它更加自由的和灵活，引入了更多的具体功能模块，例如**查询搜索引擎**、**融合多个回答**。技术上将检索与微调、强化学习等技术融合。流程上也对 RAG 模块之间进行设计和编排，出现了多种的 RAG 模式。然而，模块化 RAG 并不是突然出现的，三个范式之间是继承与发展的关系。Advanced RAG 是 Modular RAG 的一种特例形式，而 Naive RAG 则是 Advanced RAG 的一种特例。
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-3.png)
 
-# 3 - 检索增强
+## 3 - 检索增强
 
 RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强” 和 “生成”。正好也对应的 RAG 中的三个首字母。想要构建一个好的 RAG 系统，增强部分是核心，则需要考虑三个关键问题：**检索什么？什么时候检索？怎么用检索的内容？**
 
@@ -69,7 +69,7 @@ RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强
 
 **检索增强的过程**：最初的检索是一次性过程，在 RAG 发展过程中逐渐出现了迭代检索、递归检索以及交由 LLMs 自行判断检索时刻的自适应检索方法。
 
-# 4 - RAG关键问题
+## 4 - RAG关键问题
 
 1. 检索什么：
     1. Token：KNN‑LM 擅长处理长尾和跨域问题，计算效率高，但需要大量存储；
@@ -92,7 +92,7 @@ RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强
     - 检索选择：BERT、Roberta、BGE…
     - 生成选择：GPT、Llama、T5…
 
-# 5 - RAG关键技术：
+## 5 - RAG关键技术：
 
 1. 数据索引优化：
     1. 核心是chunk策略：
@@ -114,7 +114,7 @@ RAG 系统中主要包含三个核心部分，分别是 “检索”，“增强
  6. 检索流程优化：可采用迭代式（Iterative）与自适应（Adaptive）检索。
 7. Hybrid (RAG+Fine-tuning) 融合RAG和FT：既可以检索FT，也可以生成FT，还可以进行检索，生成联合FT
 
-# 6 - 和微调对比
+## 6 - 和微调对比
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-4.png)
 
@@ -122,7 +122,7 @@ RAG 就像给模型一本教科书，用于定制的信息检索，非常适合�
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-5.png)
 
-# 7 - 如何评价RAG
+## 7 - 如何评价RAG
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-6.png)
 
@@ -145,26 +145,26 @@ RAG 优点：
 - **可解释性 (Interpretability)**：检索到的项目作为模型预测中来源的参考
 - **多功能性 (Versatility)**：RAG 可以针对多种任务进行微调和定制，包括QA、文本摘要、对话系统等。
 
-# 8 - RAG 技术生态
+## 8 - RAG 技术生态
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240420-8.png)
 
-# 9 - 落地架构与性能工程
+## 9 - 落地架构与性能工程
 
 一个稳定的 RAG 系统更像一条“检索—重排—压缩—生成”的流水线。服务端通常通过批处理、并发与缓存来降低时延。向量检索层面可以为热点集合建立多级缓存（ANN 结果缓存、倒排/稠密混合预计算）；重排阶段需注意模型大小与吞吐的权衡（轻量 cross‑encoder 或列表截断）；压缩阶段要在“信息保真”与“窗口长度”间平衡。生成侧，合理的并发与 KV Cache 复用可以显著降低端到端时延。
 
-# 10 - 提示工程与答案组织
+## 10 - 提示工程与答案组织
 
 提示设计直接决定“检索到的信息如何被使用”。常见有效做法包括：显式要求“仅基于上下文作答/不足则拒答”；要求逐条引用来源并在末尾给出引用列表；先抽取与聚合，再生成最终答案（extract‑then‑generate）；在多段来源矛盾时，要求模型标注冲突并优先更高置信来源。对需求复杂的问题，Map‑Reduce 与 Router‑expert 模式能减少一次性上下文挤压带来的丢失。
 
-# 11 - 常见陷阱与排错
+## 11 - 常见陷阱与排错
 
 “Lost in the Middle” 与“Query Drift”是两类高频问题。前者可通过重排与窗口分配策略缓解；后者需在改写阶段对 query 做语义保持约束。此外，embedding 漂移（模型升级）会导致召回不一致，需做离线对比与兼容迁移；归一化/去重不充分会引入重复证据，放大偏见。建议上线“检索—重排—生成”各层可观测指标（召回@k、重排 NDCG、窗口利用率、拒答率、引用完整性），并做失败样例库。
 
-# 12 - 隐私合规与数据治理
+## 12 - 隐私合规与数据治理
 
 针对私域与敏感数据，RAG 的安全边界需要在摄入与生成两侧共同治理。摄入侧应做文档级与字段级脱敏（PII/PHI），并在索引中携带访问控制标签（ABAC/RBAC）；检索侧做策略过滤与审计；生成侧对输出做敏感信息检测与引用一致性校验。对跨域与外部检索，应避免把用户上下文泄露给第三方服务，或采用代理检索与最小化传输。
 
-# 13 - 结语
+## 13 - 结语
 
 RAG 的核心价值在于让“外部知识”以结构化的方式进入生成过程。把“检索—重排—压缩—生成”这条链路打通，并以可靠的评测与可观测性持续迭代，才能在真实业务场景里获得稳定、可解释、可演进的效果。

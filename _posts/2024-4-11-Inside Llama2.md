@@ -13,13 +13,13 @@ pinned: false
 
 Meta 的 Llama 2 是当前开源生态里可作为效果标杆的一类 LLM。虽未开放完整训练细节，但其公开的模型结构与推理实践具有很高的参考价值。
 
-# 1 - Intro
+## 1 - Intro
 
 - [Paper](https://link.zhihu.com/?target=https%3A//arxiv.org/abs/2307.09288)
 - [Code](https://link.zhihu.com/?target=https%3A//github.com/facebookresearch/llama)
 - [Checkpoint](https://huggingface.co/meta-llama)
 
-# 2 - Process
+## 2 - Process
 
 关于通用的LLM对于文本的处理一般是以下流程：
 
@@ -113,7 +113,7 @@ def sample_top_p(probs, p):
 
 
 
-# 3 - Architecture
+## 3 - Architecture
 
 Llama 系列这样的主流 LLM 常常沿用 GPT 结构，基于 Transformer 来构建。生成式任务根据给定输入序列的上下文预测下一个 token，因此通常只使用 Transformer 的 Decoder 部分；相较 Encoder，Decoder 在计算 Q·K^T 时引入因果 Mask，确保当前位置只关注已生成内容。
 
@@ -126,7 +126,7 @@ Llama2主要由32个 Transformer Block 组成，不同之处主要包括以下�
 3. **KV Cache**，并采用 **Group Query Attention**；
 4. FeedForward层。
 
-## 3.1 - RMSNorm
+### 3.1 - RMSNorm
 
 Transformer中的Normalization层一般都是采用LayerNorm来对Tensor进行归一化，LayerNorm可以被表达成：
 
@@ -159,7 +159,7 @@ class RMSNorm(torch.nn.Module):
         return output * self.weight
 ```
 
-## 3.2 - RoPE（Rotary Positional Encoding）
+### 3.2 - RoPE（Rotary Positional Encoding）
 
 在通用LLM中，为了强调各个token的位置信息被传入计算attention中，往往将每个token的位置信息以`position embedding`的形式被编码进实际的`input sequence idx`中。
 
@@ -183,7 +183,7 @@ $$
 
 与绝对位置编码相比，RoPE的引入是为了通过绝对位置编码的方式实现相对位置编码，其实用之处在于可以拓展到线性Attention中，这一特性使得RoPE在处理长文本任务中具有显著优势。同时随着文本位置的增加，RoPE旋转位置编码的影响力逐渐减弱。这种特性使得模型在关注重要信息时，能够减少冗余信息的干扰。RoPe通过模拟旋转矩阵来实现对序列中每个位置的编码。
 
-### 3.2.1 - RoPE的数学原理
+#### 3.2.1 - RoPE的数学原理
 
 为了实现上述目的，通过下列运算给$q$和$k$添加了绝对位置信息：
 
@@ -244,7 +244,7 @@ $$f_k(x_n,n) = (\begin{array}{cc|r}\cos (n\theta) & -\sin (n\theta) \\ \sin (n\t
 
 其中，$\theta$是由位置$p$确定的旋转角度。在RoPe中，旋转角度$\theta$通常是位置$p$的函数，例如$\theta = \frac{p}{\sqrt d}$，$d$是维度。
 
-### 3.2.2 - 多维空间的拓展
+#### 3.2.2 - 多维空间的拓展
 
 而对于多维词嵌入向量而言，即$d>2$的情况，同样可以通过，两两一组的方式来实现这种机制，即
 
@@ -258,7 +258,7 @@ $$f_k(x_n,n) = (\begin{array}{cc|r}\cos (n\theta) & -\sin (n\theta) \\ \sin (n\t
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_5.png)
 
-### 3.2.3 - RoPE Code
+#### 3.2.3 - RoPE Code
 
 ```python
 def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
@@ -333,7 +333,7 @@ class Attention(nn.Module):
   # ......
 ```
 
-## 3.3 - KV Cache
+### 3.3 - KV Cache
 
 大模型推理性能优化的一个常用技术是KV Cache，那么什么是K V Cache呢？首先这里的K V 值得分别是Attention计算时的KV，而非哈希存储引擎中的Key和Value，这里的Cache也不是那个会发生Cache Missing的Cache , 这里的K V Cache就是将Attention 中的KV缓存下来，通过空间换时间的方式来加速计算Attention。
 
@@ -390,7 +390,7 @@ def mha(x, c_attn, c_proj, n_head, kvcache=None):  # [n_seq, n_embd] -> [n_seq, 
 
 ```
 
-## 3.4 - Group Query Attention
+### 3.4 - Group Query Attention
 
 但你转念一下，可是K,V 真的能缓存的了吗？我们来算笔账，以Llama 7B模型为例，hidden_size为4096，也就说每个K,V有4096 个数据，假设是半精度浮点数据float16，一个Transformer Block中就有 4096* 2 *2 = 16KB的单序列 K,V缓存空间，而Llama 2一共32个Transformer Block，所以单序列整个模型需要16 * 32 = 512KB的缓存空间，那多序列呢？如果此时句子长度为1024 ，那是不是就得512MB 的缓存空间了。而现在英伟达最好的卡 H100 的 SRAM 缓存大概是 50MB，而 A100 则是 40MB. 而 7B 模型都这样，175B 模型就更不用说了[5]。
 
@@ -404,7 +404,7 @@ def mha(x, c_attn, c_proj, n_head, kvcache=None):  # [n_seq, n_embd] -> [n_seq, 
 
 就如图例所言，多头注意力机制(MHA)就是多个头各自拥有自己的Q,K,V来算各自的Self-Attention，而MQA(Multi Query Attention)就是Q依然保持多头，但是K,V只有一个，所有多头的Q共享一个K,V ,这样做虽然能最大程度减少KV Cache所需的缓存空间，但是可想而知参数的减少意味着精度的下降，所以为了在精度和计算之间做一个trade-off，GQA (Group Query Attention)孕育而生，即Q依然是多头，但是分组共享K,V,即减少了K,V缓存所需的缓存空间，也暴露了大部分参数不至于精度损失严重。
 
-## 3.5 - FeedForward
+### 3.5 - FeedForward
 
 与标准的Transformer一样，经过Attention层之后就进行FeedForward层的处理，但LLama2的FeedForward与标准的Transformer FeedForward有一些细微的差异，这块没啥好讲的，看代码就行,需要注意的地方就是SiLU激活函数
 
@@ -437,7 +437,7 @@ class FeedForward(nn.Module):
         return self.w2(F.silu(self.w1(x)) * self.w3(x))
 ```
 
-# 4 - Training
+## 4 - Training
 
 超参数：
 - AdamW 优化器，β1 = 0.9, β2 = 0.95, eps = 10.5
@@ -455,19 +455,19 @@ class FeedForward(nn.Module):
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_9.png)
 
-# 5 - 推理与部署优化
+## 5 - 推理与部署优化
 
 推理性能常受显存带宽与注意力计算限制。实践中常结合 FlashAttention/Flash‑Decoding、Paged‑KV（分页式 KV 管理）、多流并发与批内/批间重用提升吞吐；在模型侧配合量化（INT8/INT4、AWQ、GPTQ/FP8 等）降低显存占用，并通过分块推理削峰。多卡部署时可引入张量/流水并行与高带宽互联（NVLink/NVSwitch）稳定大批量吞吐。
 
-# 6 - 对齐与微调
+## 6 - 对齐与微调
 
 Llama 2 的对齐通常采用“预训练 + 指令监督微调（SFT）+ 反馈优化（RLHF/RLAIF）”范式。SFT 保证遵循指令与格式，RLHF 通过偏好优化在安全性、礼貌性与有用性上做约束。行业落地常用 LoRA/QLoRA 做高效参数微调，并结合检索增强（RAG）保证知识新鲜度。
 
-# 7 - 小结
+## 7 - 小结
 
 Llama 2 以 RMSNorm、RoPE、GQA、SwiGLU 与高效推理技术构成“性能‑成本‑易用性”的平衡。理解其架构与工程优化，有助于在有限资源下获得稳定的任务效果。
 
-# 8 - Reference
+## 8 - Reference
 
 - [Transformer升级之路：2、博采众长的旋转式位置编码](https://spaces.ac.cn/archives/8265/comment-page-1)
 - [ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING](https://arxiv.org/pdf/2104.09864)

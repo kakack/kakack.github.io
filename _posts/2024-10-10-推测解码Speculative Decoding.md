@@ -17,7 +17,7 @@ pinned: false
 
 这使得大模型避免了逐个 token 推理的过程，大幅减少计算时间，同时保留了生成的连贯性和准确性。如果利用得当，推测解码可以在不牺牲大模型生成质量的情况下，大幅增加大模型的解码速度。
 
-# 分类
+## 分类
 
 目前的推测解码（Speculative Decoding）方法可以大致分为 3 类：
 
@@ -25,19 +25,19 @@ pinned: false
 - 直接将大模型同时作为起草模型和验证模型。这种方法往往会对原始模型结构做一些修改，或使用额外数据再微调大模型；
 - 从外部数据中（如外部数据库或 prompt）检索获取草稿来源。
 
-# 术语与评价指标
+## 术语与评价指标
 
 在工程实践中，我们通常用几类量来刻画推测解码是否“又快又稳”。接受率（Acceptance）衡量被大模型验证通过的草稿比例，它直接决定加速的上限；草稿的深度与宽度反映一次起草的长度和分支数，深且宽往往提升接受率，但也会推高显存开销；验证成本（Verify cost）对应大模型单次前向的算力与带宽消耗，若采用树状验证，成本可以在多个候选之间摊薄。最后，评估应同时给出端到端吞吐与时延（如 tok/s、P50/P95）以及质量指标（BLEU、BERTScore 或人评），避免只看速度而忽略输出质量。
 
-# Acceptance 规则与一致性
+## Acceptance 规则与一致性
 
 不同方法对“验证是否通过”的定义并不相同。严格的一致性要求候选与大模型在目标策略下的选择完全一致（例如贪婪路径或与温度采样等价的随机过程），优点是分布无偏，缺点是接受率通常较低。相对宽松的“典型接受”会在给定阈值内接纳高概率候选，显著提高接受率，但需要额外监控质量漂移并在高风险场景（如代码、医疗）回退到严格规则。对于温度、Top‑k 或核采样（Top‑p）等非贪婪策略，还应明确接受规则与采样过程的一致性，以免引入统计偏移。
 
-# 工程化实践与建议
+## 工程化实践与建议
 
 要把速度优势转化为稳定的线上收益，核心在于数据与算力的管线化。首先复用并精确管理 KV Cache，在树状验证时用“只看祖先”的掩码确保语义正确；其次通过长度分桶、动态 padding 或连续批处理缓解批内对齐问题，并关注验证分支的内核效率。起草模型可以是小模型、特征外推器（如 EAGLE）或层跳跃版本，选型应比较“接受率 × 起草速度 × 验证成本”的乘积而非单点指标。最后，配套一套可观测性面板，持续跟踪接受率分布、草稿深度、验证利用率以及端到端吞吐/时延与质量，便于快速定位瓶颈。
 
-# 小模型draft+大模型verify
+## 小模型draft+大模型verify
 
 推测解码的核心思想在于充分利用大模型的 logits 层输出信息，而不仅仅是最后一个输出的 logits 向量的信息，在单次前向传播中实现对多个候选后续序列的验证。
 
@@ -51,7 +51,7 @@ pinned: false
 
 在贪婪解码情境下，推测解码之所以能够在理论上保留与大模型原本逐步生成相同的概率分布特征，其关键在于“确认”步骤的严格性。贪婪解码策略下，大模型在每个位置都会选择当前概率分布中最高概率的下一个 token。推测解码既没有改变大模型给出概率分布的方式，也没有在最终决策上偏离大模型的“贪婪”选择逻辑。它只是在过程中预先尝试一批潜在的后续 token，并使用大模型原本的概率分布为标准进行严格筛选。一旦筛选通过，就说明这些 token 本来就是大模型在逐 token 解码中所可能给出的最高概率路径，从而保证最终输出与传统自回归解码的结果在理论上是一致的。这一过程并未更改大模型本来的输出分布，只是通过“提前拟合 + 后验验证”的方式，加快了确认下一个最优 token 的决策速度。
 
-## Eagle
+### Eagle
 
 Eagle 是 Google 的一个开源项目，它利用了 Speculative Decoding 的思想，实现了一种基于大模型 Drafting 的方法，以加速大模型的解码速度。它的创新点在于，不直接对下一步 token 进行预测，而是对原始大模型内部的最后一个隐藏层特征（来自 lm_head 前面一层的 feature）进行外推（extrapolate）。
 
@@ -78,7 +78,7 @@ EAGLE 引入了一个轻量级的自回归头（Auto-regression Head），基于
 4. 验证（单次前向评估原LLM）：
 对通过树状起草的候选序列进行验证，即使用原始LLM进行一次前向传播，验证这些猜测路径中哪些分支的token是与原LLM分布一致的，并选出要接受的token。
 
-## Eagle-2
+### Eagle-2
 
 相比EAGLE-1的改进：
 
@@ -101,13 +101,13 @@ Attention Mask 的调整。因为最终输入给 LLM 验证的序列来自一棵
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-06.png)
 
-# 大模型draft+verify
+## 大模型draft+verify
 
-## Medusa
+### Medusa
 
 Medusa 是一种不需要小草稿模型，而是通过扩展大模型结构本身来实现推测解码的方法。它在大模型中添加多个额外的并行解码头 "Medusa heads"，这些解码头与原始模型无缝集成，并且使用 tree-based attention 并行验证多个候选序列。Medusa Heads 需要经过微调，主干网络会被冻结。
 
-### Medusa Heads
+#### Medusa Heads
 
 每个 Medusa Head 实现为单层前馈网络，并通过残差连接进行对齐。每个 Medusa Head 位于大模型的 lm_head 之前，接受 last hidden state 作为输入，输出预测的单个 token。在单次前向传播中，第一个 Medusa Head 预测输入序列的下一个（第i+1）token，第二个 Medusa Head 预测输入序列的偏移量为(i+2)个 token。
 
@@ -121,7 +121,7 @@ self.medusa_head = nn.ModuleList([
   ])
 ```
 
-### Tree-based Attention
+#### Tree-based Attention
 
 Medusa 使用 tree-based attention 并行验证多个候选序列。在每个 Medusa Head 中，使用 tree-based attention 来计算每个候选序列的 logits。Medusa 采用自上而下的方法构建树，对于每个 Medusa Head 生成的候选 token 作笛卡尔积（Cartesian product）：
 
@@ -131,13 +131,13 @@ Medusa 使用 tree-based attention 并行验证多个候选序列。在每个 Me
 
 为了保证每个 Token 只访问其前驱，本文重新设计了 attention mask，它只允许 Attention 从当前 Token 流回其前驱 Token。位置编码的位置索引（position idx）会根据此结构进行调整。
 
-### Sparse Tree
+#### Sparse Tree
 
 当每个 Medusa Head 取 top-k个（而不是top-1）草稿 token 时，树的路径数就会急剧增多，因此设计了一种稀疏化注意力树的方法。在实验中，具有 64 个节点的稀疏树比具有 256 个节点的密集树显示出更好的加速比。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-08.png)
 
-### Implementation
+#### Implementation
 
 首先调用 [utils.py] 的 generate_medusa_buffers 函数，得到一个初始化的稀疏树结构，这个函数为每条路径创建一个祖先节点索引列表，以便在后续进行验证时能够快速找到与当前节点路径相关的所有祖先路径：
 
@@ -205,7 +205,7 @@ medusa_logits, logits, outputs = tree_decoding(
 )
 ```
 
-### 小结
+#### 小结
 
 Medusa 真正吸引人的地方在于它上一步生成草稿，后续就可以直接把生成的草稿送进 lm_head 验证，在单次前向传播中同时做到草稿+验证，这一点看起来比 Draft & Verify 好，也避免了生成草稿阶段的推理延迟和显存占用问题。
 
@@ -215,7 +215,7 @@ Medusa 真正吸引人的地方在于它上一步生成草稿，后续就可以�
 
 在贪婪解码下，虽然接受率很低（约 0.6），但从文章的测试结果来看，整体加速比也能达到不错的效果，这可能主要来源于整体“草稿 + 验证”流水的提速。
 
-## Hydra
+### Hydra
 
 Hydra 是对Medusa 的改进，它对 Medusa Heads 的结构进行了简单的更改。在 Medusa 中，所有Medusa Heads都是独立的，但 Hydra Heads 会将 candidate 序列中的早期 tokens 作为附加输入：
 
@@ -239,7 +239,7 @@ for i in range(self.hydra_num_heads):
     hydra_hidden_states.append(self.hydra_mlp[i](head_input))
 ```
 
-## Hydra++
+### Hydra++
 
 Hydra++ 是对 Hydra 的改进，它在 Hydra 基础上，引入了一个新的 Hydra Head 结构，这个 Hydra Head 可以同时处理多个候选序列，从而进一步提升了整体的推理速度。
 
@@ -248,7 +248,7 @@ Hydra++ 是对 Hydra 的改进，它在 Hydra 基础上，引入了一个新的 
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-10.png)
 
-## Draft & Verify
+### Draft & Verify
 
 这个方法在起草阶段同样使用大模型进行推理，但是选择性地跳过一些层，起到将大模型作为小草稿模型来使用的效果。因此本文需要解决两个问题：
 
@@ -274,9 +274,9 @@ AR &\leftarrow \beta_1 AR + (1 - \beta_1) AR_e, \\
 
 其中 $\alpha$ 是大模型接受率， $\epsilon$ 是更新步长，$\beta_1$ 和 $\beta_2$ 是用于减小 $$\gamma$$ （生成草稿长度） 和表示自回归波动的因子。在每个验证阶段后更新$$\gamma$$ 。这种更新规则确保接受率保持在接近大模型接受率 $\alpha$ 的范围内。
 
-## Lookahead Decoding
+### Lookahead Decoding
 
-### Jacobi Decoding
+#### Jacobi Decoding
 
 本文受到 Accelerating Transformer Inference for Translation via Parallel Decoding 的启发，这篇工作提出了一种将 llm 的自回归解码转换为可并行求解的非线性方程组的方法，称为 Jacobi Decoding，它使用固定点 Jacobi 迭代方法来实现并行化解码。
 
@@ -293,14 +293,14 @@ y_n^{(j+1)} = \arg \max_y \, p(y \mid y_{1:n}^{(j)}, \mathbf{x})
 其中，$y_1,y_2,…,y_n$ 表示模型生成的序列的各个位置上的 token。每个迭代步骤可能会预测多个正确的tokens（“正确”是指与贪婪采样策略下的自回归解码结果对齐），从而实现并行化解码。
 然而，在实践中，原始的 Jacobi Decoding 方法的加速比很小。这是因为当前一个 token 错误时，LLM 很少能生成下一个正确的 token；同时，大模型很难在一次迭代中同时实现对多个 token 的准确解码和定位。
 
-### Jacobi Trajectory
+#### Jacobi Trajectory
 
 在上述Jacobi Decoding 的目标方程组中，$\mathcal{J} := \{\mathbf{y}^{(1)}, \ldots, \mathbf{y}^{(k)}\}$ 称为雅可比轨迹（Jacobi Trajectory）。雅可比轨迹代表了模型在生成文本时，通过并行优化每个解码位置的预测结果逐渐逼近最终输出的过程。
 当 $y(j+1)=y(j)$ 时，解码过程收敛，最终固定点 $y*$ 即为模型解码输出。雅可比轨迹为理解解码的收敛性提供了直观解释，通过分析轨迹，可以评估解码的效率（需要多少次迭代达到收敛）以及模型的稳定性（是否总能收敛到合理的结果）。
 例如，假设我们使用雅可比解码生成一句话，初始预测为随机的 token $\mathbf{y}^{(1)}$ ，第一轮预测输出一些不连贯的文本。随着迭代次数增加 $（\mathbf{y}^{(2)}，\mathbf{y}^{(3)}）$，每个位置的 token 都会基于更准确的上下文被逐步修正，直到得到连贯的句子作为固定点 $y*$ 。这一修正和优化过程便是雅可比轨迹的现实体现。
 总之，雅可比轨迹展示了通过并行更新逐步逼近最终解码结果的过程，反映了 LLM 的解码机制从局部优化走向整体稳定的动态变化。
 
-### Lookahead Decoding
+#### Lookahead Decoding
 
 本文注意到在 Jacobi Decoding 中，单个位置的每个新 token 都是根据之前迭代的历史值进行解码的，这会在每个 token 的位置创建历史标记的轨迹，形成许多n-gram。例如，通过 3 次 Jacobi iterations，可以在每个 token 位置形成 3-gram。Lookahead decoding 通过从雅可比轨迹（Jacobi trajectory）中收集和缓存这些 n-grams，并将它们作为草稿。同时，维护一个 n-gram pool 来缓存历史生成的 n-gram。
 
@@ -313,9 +313,9 @@ Lookahead decoding 使用雅可比迭代对未来 tokens 执行并行解码，�
 - lookahead branch 维护一个固定大小的 2D 窗口，以根据雅可比迭代轨迹生成 n-gram。
 - verification branch 选择并验证有前途的 n-gram 候选序列。
 
-# 通过检索生成draft
+## 通过检索生成draft
 
-## REST
+### REST
 
 REST: Retrieval-Based Speculative Decoding 是一种基于字符串检索的推测解码方法，可以与任何llm无缝集成。作者在 HumanEval 和 MT-Bench 上做了实验，可以达到不错的效果
 
@@ -330,7 +330,7 @@ for span_id, token_span in enumerate(token_spans):
     retrieved_token_list, _draft_attn_mask, _tree_indices, _draft_position_ids, _retrieve_indices = datastore.search(this_token, choices=max_num_draft)
 ```
 
-## Prompt Lookup Decoding
+### Prompt Lookup Decoding
 
 这个工作简单而有效，目前已经集成自transformers库，可以直接调用。它的优势在于不需要额外训练和外部数据库，同样是一种基于字符串检索的方法，但是应用场景有限。
 
@@ -370,9 +370,9 @@ for idx in match_indices:
 如果未找到匹配的 n-gram，就返回当前输入序列，使用传统的自回归解码。最后将候选序列与输入序列使用 torch.cat 拼接，return 给验证阶段。
 
 
-# 与稀疏 KV Cache 结合
+## 与稀疏 KV Cache 结合
 
-## MagicDec
+### MagicDec
 
 MagicDec: Breaking the Latency-Throughput Tradeoff for Long Context Generation with Speculative Decoding
 
@@ -394,25 +394,25 @@ The fixed draft KV budget naturally raises concern about the acceptance rate, wh
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/241010-13.png)
 
-# 正确性与一致性（非贪婪采样）
+## 正确性与一致性（非贪婪采样）
 
 当我们把贪婪解码切换为温度采样、Top‑k 或核采样（Top‑p）时，推测解码的“验证”不再等同于重放单一路径。要保持分布一致，核心是让接受规则与目标抽样等价：起草阶段从近似分布 q 生成候选，验证阶段依据目标分布 p 的 logits 逐位校验；若候选与 p 下的采样结果一致，则整段接受，否则立即回退到用 p 抽样该位并丢弃剩余草稿。这个过程本质上是逐位的拒绝采样，可在理论上保证与目标采样过程一致。工程上，典型接受（Typical Acceptance）会用“典型性/熵阈值”等准则放宽校验以提高通过率，但需用困惑度、任务指标与人评持续回归，避免质量漂移；对代码、医疗等高风险域建议固定为严格一致。另一个容易忽视的细节是随机性：应将草稿与验证的随机流分离并记录温度、种子、Top‑k/Top‑p 等参数到日志，确保可审计与可复现。
 
-# 批处理与调度
+## 批处理与调度
 
 在真实服务中，请求以批为单位进入系统。由于“单步可接受长度”服从截断的几何分布，其方差会导致批内步幅不同步，出现“头阻塞”：快样本空等慢样本。实践上可以从两端发力：其一，对批内样本做轻量整形，让草稿深度更接近（长度分桶、动态 padding），并在时间维度采用连续批处理（continuous batching）滚动并入新请求，减少空转；其二，根据实时接受率的指数滑动均值与显存水位，自适应调整 micro‑batch 大小与步幅，平衡吞吐与时延。调度层建议区分 SLA 建立分级队列，并为每个批次记录接受长度分布、丢弃比例与 P50/P95 时延。这样既能发现“长尾”样本拖慢全批的问题，也方便做有损/有界时延的权衡策略。
 
-# KV Cache 管理细节
+## KV Cache 管理细节
 
 树状起草与验证会在同一上下文上分出多条候选路径；若 KV Cache 管理不当，很容易触发大规模拷贝与碎片化，直接拖慢带宽。一个通用准则是“共享前缀，惰性物化”：分支尽量共享祖先 KV，只有在某条分支被真正接受并继续前推时才进行写时复制（copy‑on‑write）。为此，建议使用页式/池化分配器统一 KV 块尺寸与步幅，降低碎片；配合分层账本分别统计 context/草稿/验证占用，并设置高水位触发回收与轻量整理。长上下文场景可以结合稀疏或压缩 KV（如 SnapKV、StreamingLLM）以减少读写放大与 PCIe 传输。实现层面要特别注意两点：其一，树验证必须使用“仅可见祖先”的注意力掩码与位置编码（RoPE）对齐，避免跨分支“看见兄弟”；其二，优先使用异步内存接口（如 cudaMallocAsync）与流内事件，减少分配/回收的同步抖动。
 
-# 框架生态与落地清单
+## 框架生态与落地清单
 
 在已有生态中，vLLM 提供了推测采样与 Prompt Lookup 的实现，易与连续批处理和分页式 KV 管理协同；TensorRT‑LLM 在 Medusa/Hydra 一类的树式验证上做了较深的内核融合与图优化，适合追求极致吞吐的在线/离线部署；Transformers 更适合研究与原型，工程化时通常需要联用 vLLM/Triton 后端以获得稳定的吞吐与时延。落地建议是先用“接受率 × 起草速度 × 验证成本”的乘积构建 A/B 基线，再上线可观测看板，持续跟踪接受率分布、草稿深度、验证利用率、端到端吞吐/时延与质量回退率。对高风险域默认启用严格一致并配自动回退，同时把起草/验证规则、随机种子与版本固化到文档与日志，保证复现与审计。
 
 ---
 
-# Reference
+## Reference
 
 - [Speculative Decoding: Exploiting Speculative Execution for Accelerating Seq2seq Generation](https://arxiv.org/abs/2203.16487)
 - [Fast Inference from Transformers via Speculative Decoding, Yaniv Leviathan et al., 2023](https://arxiv.org/abs/2211.17192)
