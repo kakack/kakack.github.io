@@ -41,7 +41,7 @@ Diffusion Model的灵感来自 non-equilibrium thermodynamics (非平衡热力�
 
 更具体地说，扩散模型是一种隐变量模型(latent variable model)，使用马尔可夫链(Markov Chain)映射到隐空间(latent space)。通过马尔科夫链，在每一个时间步$t$中逐渐将噪声添加到数据$x_i$中。Diffusion Model分为正向的扩散过程和反向的逆扩散过程。
 
-# 前向过程（Diffusion）
+## 前向过程（Diffusion）
 前向diffusion过程即向原始风格图片上增加噪声。给定真实图片$x_0\thicksim q(x)$,diffusion前向过程通过$T$次累计对其添加高斯噪声，得到$x_0, x_1,...,x_T$，然后给定一系列高斯分布方差的超参数$\{\beta_t \in (0, 1)\}^T_{t=1}$，前向过程由于每个时刻$t$只与$t−1$时刻有关，所以也可以看做马尔科夫过程：
 
 $$
@@ -85,7 +85,7 @@ $$
 
 对于每次diffusion过程中都乘以$\sqrt{1-\beta_t}$的行为，一来是作为权重保证其$< 1$，二来是为了当$T\rightarrow\infty,x_T\thicksim\mathcal{N}(0,I)$时，能保证$x_T$最后收敛到方差是1的标准高斯分布。
 
-# 逆向过程（Denoise）
+## 逆向过程（Denoise）
 
 逆向过程denoise就是diffusion去噪推断的过程，如果逐步得到逆转后的分布$q(x_{t-1}\vert x_t)$，就可以从完全的标准高斯分布$x_T\thicksim\mathcal{N}(0,I)$还原出原图分布$x_0$。然而我们无法简单推断$q(x_{t-1}\vert x_t)$，因此使用深度学习模型（参数为$\theta$，目前主流是U-Net+attention的结构）去预测这样的一个逆向的分布$p_\theta$：
 
@@ -137,7 +137,7 @@ $$
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240109-7.png)
 
-# 训练
+## 训练
 
 由上述diffusion和denoise的过程，那么diffusion model的训练目的就是得到合适的高斯分布均值$\mu_\theta(x_t,t)$和方差$\sum_\theta(x_t, t)$，通过对真实数据分布下，最大化模型预测分布的对数似然，即优化在$x_0\thicksim q(x_0)$下的$p_\theta(x_0)$交叉熵：
 
@@ -190,7 +190,7 @@ $$
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240109-12.jpeg)
 
-# 采样和方差的选择（DDIM）
+## 采样和方差的选择（DDIM）
 
 DDPM的高质量生成依赖于较大的$T$（一般为1000或以上），这就导致diffusion的前向过程非常缓慢。在denoising diffusion implicit model (DDIM)中提出了一种牺牲多样性来换取更快推断的手段。
 
