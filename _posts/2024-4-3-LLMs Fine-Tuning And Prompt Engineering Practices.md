@@ -15,7 +15,7 @@ pinned: false
 
 ---
 
-# Fine-Tuning vs Prompt
+## Fine-Tuning vs Prompt
 
 Fine-Tuning 是将 pre-trained model 适配到特定任务/领域的过程（如分类、问答）。例如，可在产品文档或客服语料上 fine-tuning，以帮助更好地理解专业术语与格式约束。过程上通过梯度下降更新全部或部分参数。通常相较预训练阶段，fine-tuning 所需数据量要少得多（常低于 1%）。但若目标领域在预训练数据中覆盖较少，则可能需要更大的标注集才能达到期望性能。
 
@@ -56,7 +56,7 @@ Prompt 优化类型：
 
 ---
 
-# Fine-Tuning LLMs
+## Fine-Tuning LLMs
 
 **Fully Fine-Tuning**：取一个 pre-trained model，并 fine-tuning 以优化特定任务。可分为三类路径：
 
@@ -72,7 +72,7 @@ Prompt 优化类型：
   - Fine-tuned model可能会在较小的数据集上过拟合或学习不稳定，意味着每个新任务都需要一个新的大数据集。
   - 与in-context learning或者prompt-based方法相比，fine-tuned models可能会缺少一些分布外的泛化能力（out-of-distribution generalization capabilities）。
 
-## 数据准备与质量治理（Fine-Tuning 前）
+### 数据准备与质量治理（Fine-Tuning 前）
 
 在实践中，“数据质量 > 算法细节”。建议：
 
@@ -81,7 +81,7 @@ Prompt 优化类型：
 - 覆盖与难度：覆盖目标领域关键意图、边界条件与反例，按难度分层（easy/medium/hard），保证“可学习信号”；
 - 安全与合规：对指令与输出做安全标注（拒答/转接），为后续对齐与守护（guardrail）打基础。
 
-## 训练 Recipe（建议默认）
+### 训练 Recipe（建议默认）
 
 - 优化器：AdamW（β1=0.9, β2=0.95, eps=1e‑8），线性/余弦学习率，3–5% warmup；
 - 学习率范围（参考 7B/13B）：全量 FT 2e‑5 ~ 5e‑5；PEFT（LoRA）5e‑4 ~ 1e‑3；
@@ -90,7 +90,7 @@ Prompt 优化类型：
 - LoRA 配置：秩 r=8/16/32，α=16/32，target=[q_proj,k_proj,v_proj,o_proj,gate,up,down]；
 - 训练时长：以验证集曲线/早停控制，避免过拟合；必要时混入小比例通用语料做“维持训练”。
 
-## 避免遗忘与对齐退化
+### 避免遗忘与对齐退化
 
 - Catastrophic Forgetting：混入少量通用语料（rehearsal）、KL 约束或 L2‑SP 正则；
 - 格式与风格漂移：统一对齐模板与系统提示；加入“格式/风格”对照样本；
@@ -116,7 +116,7 @@ Prompt 优化类型：
   - 在一些任务（如大数据量摘要）上可能不如 fully fine-tuning；
   - 往往需要比 prompt engineering 更多的监督样本。
 
-## 适配器管理与部署（Serving）
+### 适配器管理与部署（Serving）
 
 - 适配器装载：推理时“热插拔” LoRA/Prefix，便于多任务共用底模；
 - 合并与回写：极简部署可将 LoRA 合并回权重（牺牲灵活性换简化）；
@@ -124,7 +124,7 @@ Prompt 优化类型：
 - 版本与评估：多任务多适配器时，按环境（dev/staging/prod）管理版本与 A/B 实验。
 ---
 
-# Prompting
+## Prompting
 
 **Prompt-tuning**：与 prefix-tuning 相似，可视为简化版。冻结底模，仅为每个任务添加一组可学习的 soft tokens 并置于输入前，使其在少样本下压缩监督信号、缩小与 fully fine-tuning 的质量差距；易于在多任务共用一个底模时扩展。
 
@@ -158,7 +158,7 @@ RLHF步骤：
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/llm-practice4.png)
 
-### DPO/IPO/RLAIF 简述
+#### DPO/IPO/RLAIF 简述
 
 - DPO（Direct Preference Optimization）：直接用偏好对比数据优化策略，无需显式训练奖励模型，稳定、计算轻；
 - IPO/KTO：将偏好优化建模为信息投影或温度调度，缓解过拟合与偏置；
@@ -203,7 +203,7 @@ Prompt Engineering 优劣分析：
 
 **Prompt chaining**：将整体任务拆解为沿 DAG 的子任务链，使用上一步输出作为下一步输入，以更透明可控地完成复杂任务。与 ReAct（推理 + 行动）模式、工具调用结合可进一步提升可解释性与成功率。
 
-## Prompt 设计与防护实践
+### Prompt 设计与防护实践
 
 - 结构化输出：使用 JSON/函数调用或语法约束（Grammar/Regex），减少解析错误；
 - Few‑shot 选择：基于语义相似度自动选择示例，避免随机样本带来噪声；
@@ -225,7 +225,7 @@ Prompt Engineering 优劣分析：
 - 评估体系：同时跟踪“内在指标”（困惑度、准确率、F1）与“外在指标”（延迟、吞吐、成本、拒答率）。
 - 部署与成本：优先考虑量化（INT8/INT4）、KV 复用、批处理与连续批处理；用 LoRA/QLoRA 在共享底模上热插拔任务适配器以降低多任务成本。
 
-### 一些可复用的超参与经验（参考）
+#### 一些可复用的超参与经验（参考）
 
 - LoRA：r=16/32，α=32/64，dropout=0.05；target=[q,k,v,o,gate,up,down]；
 - 学习率：PEFT 5e‑4 ~ 1e‑3；全量 2e‑5 ~ 5e‑5；warmup 3–5%；

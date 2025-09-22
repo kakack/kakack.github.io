@@ -37,7 +37,7 @@ pinned: false
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220527-2.jpeg)
 
-# FCN（Fully Convolutional Network）
+## FCN（Fully Convolutional Network）
 
 这是将深度学习应用于图像分割中的一大基石，证明了可以在可变大小的图像上以端到端的方式训练深层网络进行语义分割。FCN模型具有非常可观的有效性和普遍性，然而却存在推理性能较慢，无法有效考虑全局上下文信息，也不容易转换为3D图像。FCN的核心贡献在于：
 
@@ -53,7 +53,7 @@ pinned: false
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220527-6.jpeg)
 
-# RCNN‑Based Model
+## RCNN‑Based Model
 
 
 
@@ -64,7 +64,7 @@ RCNN 及其系列（Fast‑RCNN、Faster‑RCNN）将 region proposal 与 CNN �
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220527-4.jpeg)
 
-# U‑Net
+## U‑Net
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220527-3.jpeg)
 
@@ -72,31 +72,31 @@ RCNN 及其系列（Fast‑RCNN、Faster‑RCNN）将 region proposal 与 CNN �
 
 在 U‑Net 的下采样路径中，常用卷积与最大池化逐步减小宽高并增加通道；在上采样路径中，使用转置卷积/插值上采样恢复分辨率并减少通道，左右对齐的 skip 连接提供细粒度边界信息。
 
-# DeepLab 系列（Atrous + ASPP）
+## DeepLab 系列（Atrous + ASPP）
 
 DeepLab 系列通过空洞卷积在不降低感受野的前提下保持较高分辨率特征，并使用多尺度空洞率的 ASPP（Atrous Spatial Pyramid Pooling）聚合上下文。DeepLabv3+ 进一步引入轻量解码器，常在 Cityscapes/ADE20K 上取得领先的 mIoU。早期版本还结合 CRF 精化边界。
 
-# PSPNet（Pyramid Pooling Module）
+## PSPNet（Pyramid Pooling Module）
 
 PSPNet 通过金字塔池化在多尺度上全局汇聚上下文，然后与局部特征融合，显著改善大场景与大目标的语义一致性。
 
-# 实例与全景分割简述
+## 实例与全景分割简述
 
 - Mask R‑CNN：在 Faster‑RCNN 的基础上增加 mask 分支，实现实例级掩膜预测。
 - Panoptic Segmentation：同时输出“事物（things）”与“背景（stuff）”，指标使用 PQ；可采用 Panoptic‑FPN/Panoptic‑DeepLab 等方法。
 
-# 训练与工程实践
+## 训练与工程实践
 
 - 数据与增广：多尺度、随机裁剪/旋转/翻转、颜色抖动；注意类别不平衡与长尾问题（重采样/加权）。
 - 优化与正则：AdamW/SGD，余弦退火或 Poly 学习率；SyncBN、Dropout、Label Smoothing（可选）。
 - 轻量与实时：MobileNet、BiSeNet、DDRNet 等骨干；蒸馏与量化便于部署。
 - 推理：多尺度/左右翻转测试 TTA；部署到 TensorRT/ONNX，关注延迟与显存。
 
-# Conclude
+## Conclude
 
 如果只关注图像分割，我个人实践中尝试过FCN和UNet两种模型，其核心思想还是有很多类似之处，比如对于反卷积上采样和跳跃连接的应用。但是现在单纯以分割为目的的结构和应用其实是非常少的，因为首先这个领域整体发展就非常缓慢，几乎已经陷入瓶颈期，而且消耗算力较大，而我们工程上往往采取end-to-end的结构，把分割过程融入于目标识别的过程当中。但是其中一些特殊难点方面如小尺寸目标分割、轻量级语义分割、点云分割、实时分割等，仍具有一定挖掘价值。
 
-# Reference
+## Reference
 
 - [RCNN系列详解](https://blog.51cto.com/u_13977270/3397361)
 - [2020入坑图像分割，我该从哪儿入手？](https://zhuanlan.zhihu.com/p/145009250)
