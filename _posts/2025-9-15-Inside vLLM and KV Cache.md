@@ -27,5 +27,67 @@ pinned: false
 
 **动态扩缩容与服务化**：作为一个面向生产的推理框架，vLLM不仅关注性能优化，还提供了完整的服务化能力，包括请求路由、负载均衡、自动扩缩容等功能，使得用户能够轻松构建高可用、高性能的LLM服务集群。
 
-通过对这些关键技术的深入分析，我们将展现vLLM如何通过系统性的优化设计，在保证推理质量的前提下，实现了相比传统方案数倍甚至数十倍的性能提升。这些技术创新不仅推动了LLM推理服务的发展，也为整个AI基础设施领域提供了宝贵的设计思路和实践经验。
+通过对这些关键技术的深入分析，我们将展现vLLM如何通过系统性的优化设计，在保证推理质量的前提下，实现了相比传统方案数倍甚至数十倍的性能提升。这些技术创新不仅推动了LLM推理服务的发展，也为整个AI基础设施领域提供了宝贵的设计思路和实践经验。一共分为五个部分：
 
+• **LLM engine**以及**engine core**：包含了vLLM的基础架构（调度、paged attention、continous batching）
+• **Advanced Features 高级特性**：chunked prefill(分块预填充)、prefix caching(前缀缓存)、guided&speculative decoding(引导预测编码)、disaggregated P/D(Prefill-decoding分离)
+• **Scaling Up**：单进程执行到多进程多GPU
+• **Server Layer**：分布式集群服务化部署
+• **Benchmarks**与**Auto-tuning**：平衡延迟和吞吐
+
+## LLM Engine & Engine Core
+
+在vLLM中，LLM Engine是最基础的block，在离线场景中，它本身就支持高吞土地推理。以下是一个简单的离线推理例子：
+
+```Python
+from vllm import LLM, SamplingParams
+
+prompts = [
+    "Hello, my name is",
+    "The president of the United States is",
+]
+
+sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+
+def main():
+    llm = LLM(model="TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+
+    outputs = llm.generate(prompts, sampling_params)
+
+if __name__ == "__main__":
+    main()
+
+## Environment vars:
+##   VLLM_USE_V1="1" # we're using engine V1
+##   VLLM_ENABLE_V1_MULTIPROCESSING="0" # we're running in a single process
+## 
+```
+
+这些配置有：
+
+- 离线模式（无Web服务或分布式系统架构）；
+- 同步执行（所有执行都在单个阻塞进程中进行）；
+- 单GPU（无数据/模型/流水线/专家并行；DP/TP/PP/EP = 1）；
+- 使用标准transformer结构（支持像Jamba这样的混合模型需要更复杂的混合KV缓存内存分配器）。
+
+在这个例子中，我们做了两件事：
+    1. 实例化了一个engine；
+    2. 通过给定的prompt来调用 `generate` 方法去做采样。
+
+## LLM Engine constructor
+
+对于engine而言，核心的组成部分有：
+
+  - vLLM config：包含模型配置的全部信息、cache、并行策略等；
+  - processer：通过validation、tokenization和processing将 `raw input` -> `EngineCoreRequests`;
+  - engine core client：在我们的例子中使用了 `InprocClient` ，基本上等于 `EngineCore` ，会逐步搭建成 `DPLBAsyncMPClient` ，允许大规模提供服务；
+  - output processor：将 `raw EngineCoreOutputs` -> `RequestOutputs` 转换给用户看。
+
+至于 `EngineCore` 本身由以下组件组成：
+
+    - 模型执行器 (Model Executor): 驱动模型的前向传播。我们目前接触的是在单个GPU上使用单个Worker进程的 `UniProcExecutor`，后续会逐步扩展到支持多GPU的 `MultiProcExecutor`。
+- 结构化输出管理器 (Structured Output Manager): 用于引导式解码（稍后会详细介绍）。
+- 调度器 (Scheduler): 决定哪些请求进入下一个引擎步骤，它进一步包含：
+    - 策略设置 (policy setting): 可以是FCFS（先到先得）或优先级（高优先级请求优先处理）。
+    - 等待和运行队列 (waiting and running queues)。
+    - KV缓存管理器 (KV cache manager): PagedAttention机制的核心。
