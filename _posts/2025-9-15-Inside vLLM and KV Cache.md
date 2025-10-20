@@ -85,9 +85,47 @@ if __name__ == "__main__":
 
 至于 `EngineCore` 本身由以下组件组成：
 
-    - 模型执行器 (Model Executor): 驱动模型的前向传播。我们目前接触的是在单个GPU上使用单个Worker进程的 `UniProcExecutor`，后续会逐步扩展到支持多GPU的 `MultiProcExecutor`。
+- 模型执行器 (Model Executor): 驱动模型的前向传播。我们目前接触的是在单个GPU上使用单个Worker进程的 `UniProcExecutor`，后续会逐步扩展到支持多GPU的 `MultiProcExecutor`。
 - 结构化输出管理器 (Structured Output Manager): 用于引导式解码（稍后会详细介绍）。
 - 调度器 (Scheduler): 决定哪些请求进入下一个引擎步骤，它进一步包含：
     - 策略设置 (policy setting): 可以是FCFS（先到先得）或优先级（高优先级请求优先处理）。
     - 等待和运行队列 (waiting and running queues)。
     - KV缓存管理器 (KV cache manager): PagedAttention机制的核心。
+
+KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache blocks组成的资源池；规模往往能到几十万，取决于显存与块大小。当paged attention 执行时，这些块承担索引作用，将各个 token 对应到它们的 KV Cache block。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250916-1.png)
+
+
+```
+其中对于一个标准transformer层（非MLA）的block size可以通过以下方式计算：
+
+2 (key/value) * block_size (default=16) * num_kv_heads * head_size * dtype_num_bytes (e.g. 2 for bf16)
+```
+
+当model excutor构建时，会创建一个 `Worker` 对象，并执行三个主要步骤（在使用 `MultiProcExecutor` 时，这些步骤会在不同 GPU 上的每个 worker 进程中独立运行）：
+
+- 初始化设备:
+    - 为该 worker 分配 CUDA 设备（e.g. `cuda:0` ），并检查模型的 dtype 是否受支持（e.g. `bf16` ）
+    - 根据设定的 `gpu_memory_utilization` （e.g. 0.8 → 80% of total VRAM）验证显存是否充足
+    - 配置分布式设置（ DP / TP / PP / EP, etc.）
+    - 实例化 `model_runner` （包含采样器、KV cache，以及forward pass的buffers如 `input_ids` 、 `positions`, etc.）
+    - 实例化 `InputBatch` 对象（包含 CPU-side forward pass buffering、KV cache indexing、sampling metadata等）
+
+- 加载模型:
+    - 实例化模型架构
+    - 加载模型权重
+    - 调用 `model.eval()` （PyTorch 的推理模式）
+    - 可选：对模型调用 `torch.compile()`
+
+- 初始化 KV Cache:
+    - 获取按层的 KV cache spec。通常为 `FullAttentionSpec` （同质 Transformer），但在引入混合模型（滑动窗口、Transformer/SSM，如 Jamba）后变得更复杂
+    - 运行一次dummy/profiling forward pass，并记录 GPU 内存快照，用于计算在可用显存中能容纳多少 KV cache blocks
+    - 为注意力层分配、reshape并绑定 KV cache tensors
+    - 准备 `attention metadata`（如将后端设置为 `FlashAttention` ），供后续前向过程中的内核使用
+    - 若未提供 `--enforce-eager` ，则针对若干预热批大小进行空跑并捕获 CUDA graph。CUDA graph会把整段 GPU 工作记录为一个 DAG；之后在前向过程中，我们会启动/回放这些预先捕获（预烘焙）的 CUDA graph，削减 kernel 启动开销，因而时延更低。
+
+我们在这里抽象掉了许多底层细节，但以上是后文将反复引用的核心组件与流程。引擎初始化完成后，继续进入 `generate` 函数。
+
+## Generate function
+
