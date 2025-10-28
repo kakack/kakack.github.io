@@ -155,3 +155,30 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-2.png)
 
+在流式模式中，我们会在生成过程中实时发送中间 token，但这里暂不展开。接下来，我们将更详细地讨论调度。
+
+## Scheduler
+
+推理引擎处理两种主要类型的工作负载：
+
+- **Prefill 请求** ： 对所有 prompt token 进行前向传播。这些通常是计算密集型的（阈值取决于硬件和prompt长度）。最后，我们从最终 token 位置的概率分布中采样一个 token。
+- **Decode 请求** ： 仅对最新的 token 进行前向传播。所有较早的 KV 向量已经被缓存。这些是 `memory-bandwidth-bound` 的，因为我们仍然需要加载所有 LLM 权重（和 KV cache）来计算一个 token。
+
+V1 scheduler 可以在同一步骤中混合处理两种类型的请求，这得益于更智能的设计选择。相比之下，V0 engine 一次只能处理 prefill 或 decode 中的一种 workload。
+
+Scheduler 优先处理 decode 请求——即那些已经在运行队列中的请求。对于每个这样的请求，它会：
+1. 计算要生成的新 token 数量（由于推测解码和异步调度，不总是会在第一步做这些事情，——稍后会详细介绍）。
+2. 调用 KV cache manager 的 `allocate_slots` 函数（详细信息见下文）。
+3. 更新 token budget：不断减少第 1 步计算得到的 token 数量。
+
+之后，它处理等待队列中的 prefill 请求：
+1. 检索已计算块的数量（如果禁用前缀缓存则返回 0——稍后会介绍）。
+2. 调用 KV cache manager 的 `allocate_slots` 函数。
+3. 将请求从等待队列中弹出并移动到运行队列，将其状态设置为 `RUNNING`。
+4. 更新 token budget。
+
+现在让我们看看 `allocate_slots` 的作用：
+1. **计算块数量** — 确定必须分配多少个新的 KV 缓存块（n）。每个块默认存储 16 个 token。例如，如果一个 prefill 请求有 17 个新 token，我们需要 ceil(17/16) = 2 个块。
+2. **检查可用性** — 如果管理器池中没有足够的块，则提前退出。根据是 decode 还是 prefill 请求，引擎可能会尝试重计算抢占（V0 中支持交换抢占），通过驱逐低优先级请求（调用 `kv_cache_manager.free` 将 KV 块返回到块池），或者可能跳过调度并继续执行。
+3. **分配块** — 通过 KV 缓存管理器的协调器，从块池（前面提到的 `free_block_queue` 双向链表）中获取前 n 个块。存储到 `req_to_blocks`，这是将每个 `request_id` 映射到其 KV 缓存块列表的字典。
+
