@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
 KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache blocks组成的资源池；规模往往能到几十万，取决于显存与块大小。当paged attention 执行时，这些块承担索引作用，将各个 token 对应到它们的 KV Cache block。
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250916-1.png)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-1.png)
 
 
 ```
@@ -128,4 +128,30 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 我们在这里抽象掉了许多底层细节，但以上是后文将反复引用的核心组件与流程。引擎初始化完成后，继续进入 `generate` 函数。
 
 ## Generate function
+
+第一步是对请求进行校验并送入 engine 。对于每个 prompt，我们会：
+
+1. 创建一个唯一的请求 ID，并记录其到达时间。
+2. 调用输入预处理器对 prompt 进行标记化（tokenize），返回一个字典 dictionary，包含 `prompt` 、 `prompt_token_ids` ，以及一个 `type`（如 text、tokens、embeds, etc.）。
+3. 将这些信息打包成一个 `EngineCoreRequest` ，并添加优先级、采样参数及其他元数据。
+4. 将请求传入 engine core，core 会将其包装为一个 `Request` 对象并将状态设为 `WAITING` ；随后把该请求加入调度器的等待队列（若为先来先服务 FCFS 则使用 append；若为优先级调度则使用 heap-push）。
+
+至此，引擎已经“进料”，执行即可开始。在同步引擎示例中，只会处理这些初始 prompt——运行过程中无法插入新请求。相反，异步引擎支持在运行中注入请求（即“持续批处理” continuous batching）：在每一步之后，同时考虑新请求与已有请求。
+
+```
+前向传播将 batch 扁平化为单序列，配合高效的定制 kernel 处理路径，使得即使在同步引擎中也天然具备 continuous batching 能力。
+```
+
+接下来，只要仍有请求待处理，引擎就会反复调用 `step()` 函数。每一步包含三个阶段：
+- 调度（Schedule）：选择本步要运行的请求（ decode ，and/or (chunked) prefill ）。
+- 前向传播（Forward pass）：运行模型并进行 token 采样。
+- 后处理（Postprocess）：将采样得到的 token ID 追加到各个 `Request` ，执行反标记化（`detokenize`），并检查停止条件。若某个请求已完成，则进行清理（例如把它的 KV Cache block 归还到 `free_block_queue` ），并提前返回该请求的输出。
+
+📝 停止条件包括：
+- 请求超过长度上限（ `max_model_length` 或其自身的 `max_tokens` ）。
+- 采样到 EOS ID（除非启用了 `ignore_eos` → 在 benchmarking 中可用于强制生成固定数量的输出 token）。
+- 采样到的 token 匹配到采样参数中指定的任意 `stop_token_ids` 。
+- 输出中出现停止字符串（stop strings）——我们会将输出截断到首次出现停止字符串的位置，并在引擎中终止该请求（注意： stop_token_ids 会保留在输出中，而停止字符串不会保留）。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-2.png)
 
