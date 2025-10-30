@@ -67,8 +67,8 @@ if __name__ == "__main__":
 
 主要步骤如下：
 
-- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他元数据（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
-- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力元数据。
+- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他metadata（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
+- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力metadata。
 - **前向传播** —— 使用自定义的 PagedAttention 内核运行模型。所有序列会被展平并连接为一个长的“超级序列”。位置索引与注意力掩码确保每个序列只关注自己的 token，从而在不使用右侧填充的情况下实现持续批处理。
 - **收集最后一个 token 的状态** —— 为每个序列的最终位置提取隐藏状态并计算 `logits`。
 - **采样** —— 按照采样配置（贪心、温度、`top-p`、`top-k` 等）从计算出的 `logits` 中采样 token。
@@ -148,7 +148,7 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 
 1. 创建一个唯一的请求 ID，并记录其到达时间。
 2. 调用输入预处理器对 prompt 进行标记化（tokenize），返回一个字典 dictionary，包含 `prompt` 、 `prompt_token_ids` ，以及一个 `type`（如 text、tokens、embeds, etc.）。
-3. 将这些信息打包成一个 `EngineCoreRequest` ，并添加优先级、采样参数及其他元数据。
+3. 将这些信息打包成一个 `EngineCoreRequest` ，并添加优先级、采样参数及其他metadata。
 4. 将请求传入 engine core，core 会将其包装为一个 `Request` 对象并将状态设为 `WAITING` ；随后把该请求加入调度器的等待队列（若为先来先服务 FCFS 则使用 append；若为优先级调度则使用 heap-push）。
 
 至此，引擎已经“进料”，执行即可开始。在同步引擎示例中，只会处理这些初始 prompt——运行过程中无法插入新请求。相反，异步引擎支持在运行中注入请求（即“持续批处理” continuous batching）：在每一步之后，同时考虑新请求与已有请求。
@@ -207,8 +207,8 @@ Scheduler 优先处理 decode 请求——即那些已经在运行队列中的�
 
 主要步骤如下：
 
-- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他元数据（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
-- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力元数据。
+- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他metadata（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
+- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力metadata。
 - **前向传播** —— 使用自定义的 PagedAttention 内核运行模型。所有序列会被展平并拼接为一个长的“超级序列”。位置索引与注意力掩码确保每个序列只关注自身的 token，从而在不进行右侧填充的情况下实现 continuous batching。
 - **收集最后一个 token 的状态** —— 为每个序列的最终位置提取隐藏状态并计算 `logits`。
 - **采样** —— 按照采样配置（greedy、temperature、top-p、top-k 等）从计算得到的 `logits` 中采样 token。
@@ -288,7 +288,7 @@ Prefix caching 用于避免对多个 prompt 共享的开头部分重复计算（
 在首次 `generate` 调用的调度阶段，`kv_cache_manager.get_computed_blocks` 内，engine 会调用 `hash_request_tokens`：
 
 - 将 `long_prefix + prompts[0]` 按 16-token 切分为 chunks。
-- 对每个完整 chunk 计算一个 hash（使用内建 `hash` 或 `SHA-256`，后者更慢但 hash 冲突更少）。该 hash 组合了上一块的 hash、当前 tokens 以及可选元数据。可选元数据包括：`MM hash`、`LoRA ID`、`cache salt`（注入首块的 hash，保证只有携带该 `cache salt` 的请求能复用这些块）。
+ - 对每个完整 chunk 计算一个 hash（使用内建 `hash` 或 `SHA-256`，后者更慢但 hash 冲突更少）。该 hash 组合了上一块的 hash、当前 tokens 以及可选metadata。可选metadata包括：`MM hash`、`LoRA ID`、`cache salt`（注入首块的 hash，保证只有携带该 `cache salt` 的请求能复用这些块）。
 - 每个结果以 `BlockHash` 对象存储，包含其 hash 与 token IDs；函数返回一个 block hashes 列表。
 
 该列表写入 `self.req_to_block_hashes[request_id]`。
@@ -440,10 +440,10 @@ vLLM 中的工作方式：
 
 1. 用大模型运行常规的 prefill 步骤。
 2. 前向传播和标准采样后，调用 `propose_draft_token_ids(k)` 从 draft model 采样 `k` 个草稿 token。
-3. 将这些存储在 `request.spec_token_ids` 中（更新请求元数据）。
+3. 将这些存储在 `request.spec_token_ids` 中（更新请求metadata）。
 4. 在下一个 engine step 中，当请求处于运行队列时，将 `len(request.spec_token_ids)` 加到"新 token"计数中，以便 `allocate_slots` 为前向传播预留足够的 KV 块。
 5. 将 `spec_token_ids` 复制到 `input_batch.token_ids_cpu` 中，形成（上下文 + 草稿）token。
-6. 通过 `_calc_spec_decode_metadata` 计算元数据（从 `input_batch.token_ids_cpu` 复制 token，准备 logits 等），然后在草稿 token 上运行大模型前向传播。
+6. 通过 `_calc_spec_decode_metadata` 计算metadata（从 `input_batch.token_ids_cpu` 复制 token，准备 logits 等），然后在草稿 token 上运行大模型前向传播。
 7. 不使用常规的 logits 采样，而是用 `rejection_sampler` 从左到右接受/拒绝并产生 `output_token_ids`。
 8. 重复步骤 2-7，直到满足停止条件。
 
@@ -454,6 +454,107 @@ vLLM 中的工作方式：
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-12.png)
 
 ## Disaggregated P/D
+
+我此前已经提到过进行 P/D（prefill/decode）解耦的动机。
+
+在实际推理生产过程中，`prefill` 与 `decode` 具有截然不同的性能画像（前者更偏计算受限 compute-bound，后者更偏内存带宽受限 memory-bandwidth-bound），因此将它们的执行拆分是一个合理的设计。这能更紧致地控制延迟——包括 `TFTT`（time-to-first-token）与 `ITL`（inter-token latency），其细节在基准测试章节会进一步展开。
+
+在实践中，我们会运行 `N` 个 vLLM prefill 实例与 `M` 个 vLLM decode 实例，并根据实时请求的混合情况进行自动扩缩。Prefill worker 会将 KV 写入一个专用的 KV-cache 服务；decode worker 则从中读取。这样可以将长且突发的 prefill 与稳定、对延迟敏感的 decode 有效隔离。
+
+那么在 vLLM 中如何实现？为便于说明，下面的示例使用 `SharedStorageConnector`：这是一个用于展示机制细节的调试型 connector 实现。其中`Connector` 是 vLLM 用于在实例之间交换 KV 的抽象。`Connector` 接口目前尚不稳定，短期内计划进行一些改进，这些改动可能包含不兼容的变更。
+
+我们会启动两个 vLLM 实例（`GPU 0` 用于 prefill，`GPU 1` 用于 decode），然后在它们之间传输 KV cache：
+
+```python
+
+import os
+import time
+from multiprocessing import Event, Process
+import multiprocessing as mp
+
+from vllm import LLM, SamplingParams
+from vllm.config import KVTransferConfig
+
+prompts = [
+    "Hello, my name is",
+    "The president of the United States is",
+]
+
+def run_prefill(prefill_done):
+  os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+  sampling_params = SamplingParams(temperature=0, top_p=0.95, max_tokens=1)
+
+  ktc=KVTransferConfig(
+      kv_connector="SharedStorageConnector",
+      kv_role="kv_both",
+      kv_connector_extra_config={"shared_storage_path": "local_storage"},
+  )
+
+  llm = LLM(model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", kv_transfer_config=ktc)
+  llm.generate(prompts, sampling_params)
+
+  prefill_done.set()  # notify decode instance that KV cache is ready
+
+  # To keep the prefill node running in case the decode node is not done;
+  # otherwise, the script might exit prematurely, causing incomplete decoding.
+  try:
+      while True:
+          time.sleep(1)
+  except KeyboardInterrupt:
+      print("Script stopped by user.")
+
+def run_decode(prefill_done):
+  os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
+  sampling_params = SamplingParams(temperature=0, top_p=0.95)
+
+  ktc=KVTransferConfig(
+      kv_connector="SharedStorageConnector",
+      kv_role="kv_both",
+      kv_connector_extra_config={"shared_storage_path": "local_storage"},
+  )
+
+  llm = LLM(model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", kv_transfer_config=ktc)
+
+  prefill_done.wait()  # block waiting for KV cache from prefill instance
+
+  # Internally it'll first fetch KV cache before starting the decoding loop
+  outputs = llm.generate(prompts, sampling_params)
+
+if __name__ == "__main__":
+  prefill_done = Event()
+  prefill_process = Process(target=run_prefill, args=(prefill_done,))
+  decode_process = Process(target=run_decode, args=(prefill_done,))
+
+  prefill_process.start()
+  decode_process.start()
+
+  decode_process.join()
+  prefill_process.terminate()
+```
+
+vLLM 中的步骤如下：
+
+1. 实例化（引擎构造期间）, connector 会在两个地方被创建：
+  - 在 worker 的设备初始化流程中（`init_worker_distributed_environment` 下），以角色 "worker" 创建 connector；
+  - 在 scheduler 的构造函数中，以角色 "scheduler" 创建 connector；
+2. Cache 查找：当 scheduler 从等待队列处理 prefill 请求（在本地 prefix-cache 检查之后），会调用 connector 的 `get_num_new_matched_tokens`，以检测 KV-cache 服务中是否存在外部缓存的 token。prefill 场景下该值始终为 0；decode 场景下可能命中。结果会在调用 `allocate_slots` 之前加到本地计数中；
+3. 状态更新：scheduler 随后调用 `connector.update_state_after_alloc`，记录命中 cache 的请求（对 prefill 而言是 no-op）；
+4. metadata构建：在调度末尾，scheduler 调用 `meta = connector.build_connector_meta`：
+    - prefill 将所有 `is_store=True` 的请求加入（用于上传 KV）；
+    - decode 将所有 `is_store=False` 的请求加入（用于获取 KV）；
+5. Context Manager：在前向传播之前，engine 进入一个 KV-connector 的 context manager：
+    - 进入时：调用 `kv_connector.start_load_kv`，对 decode 而言，它会从外部服务器加载 KV 并注入到分页内存；对 prefill 而言是 no-op；
+    - 退出时：调用 `kv_connector.wait_for_save`，对 prefill 而言，它会阻塞直至 KV 上传到外部服务器；对 decode 而言是 no-op。
+
+下图给出一个可视化示例：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-13.png)
+
+- 对于 `SharedStorageConnector`，所谓的“external server”其实只是本地文件系统。
+- 依据配置，KV 也可以按层进行传输（在每个注意力层前/后进行加载/保存）。
+- `decode` 仅在其请求的第一步加载一次外部 KV；之后便在本地进行计算与存储。
 
 # From UniprocExecutor to MultiProcExecutor
 
