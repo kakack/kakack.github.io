@@ -433,15 +433,15 @@ vLLM 中的工作方式：
 
 **设置阶段（引擎构造期间）：**
 
-- **初始化设备**：创建一个 `drafter`（草稿模型，例如 `NgramProposer`）和一个 `rejection_sampler`（其部分代码用 Triton 编写）。
-- **加载模型**：加载草稿模型权重（对 n-gram 而言为空操作）。
+1. **初始化设备**：创建一个 `drafter`（草稿模型，例如 `NgramProposer`）和一个 `rejection_sampler`（其部分代码用 Triton 编写）。
+2. **加载模型**：加载草稿模型权重（对 n-gram 而言为空操作）。
 
-**生成函数中的后续步骤（假设收到全新请求）：**
+**在 `generate` 函数中的后续步骤（假设收到全新请求）：**
 
 1. 用大模型运行常规的 prefill 步骤。
-2. 前向传播和标准采样后，调用 `propose_draft_token_ids(k)` 从草稿模型采样 `k` 个草稿 token。
+2. 前向传播和标准采样后，调用 `propose_draft_token_ids(k)` 从 draft model 采样 `k` 个草稿 token。
 3. 将这些存储在 `request.spec_token_ids` 中（更新请求元数据）。
-4. 在下一个引擎步中，当请求处于运行队列时，将 `len(request.spec_token_ids)` 加到"新 token"计数中，以便 `allocate_slots` 为前向传播预留足够的 KV 块。
+4. 在下一个 engine step 中，当请求处于运行队列时，将 `len(request.spec_token_ids)` 加到"新 token"计数中，以便 `allocate_slots` 为前向传播预留足够的 KV 块。
 5. 将 `spec_token_ids` 复制到 `input_batch.token_ids_cpu` 中，形成（上下文 + 草稿）token。
 6. 通过 `_calc_spec_decode_metadata` 计算元数据（从 `input_batch.token_ids_cpu` 复制 token，准备 logits 等），然后在草稿 token 上运行大模型前向传播。
 7. 不使用常规的 logits 采样，而是用 `rejection_sampler` 从左到右接受/拒绝并产生 `output_token_ids`。
