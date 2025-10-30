@@ -310,11 +310,148 @@ Prefix caching 用于避免对多个 prompt 共享的开头部分重复计算（
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-8.png)
 
+如果最初的请求仍在运行，这些块的引用计数（reference count）会增加（例如变为 2）。在本例中，第一个请求已经完成，因此这些块被释放回到池中，其引用计数重置为 0。由于我们能够从 `cached_block_hash_to_block` 取回它们，表明这些块仍然有效（KV cache manager 的逻辑就是这样设计的），所以我们只需再次将它们从 `free_block_queue` 中移除即可复用。
+
+`KV cache` blocks 只有在即将从 `free_block_queue`（从左端弹出）重新分配时才会被判定为“无效”。此时如果发现该块仍有关联的 hash 并存在于 `cached_block_hash_to_block` 中，我们会清除该块的 hash，并将其从 `cached_block_hash_to_block` 中移除，以确保它不能再通过 prefix caching 被复用（至少不能用于旧的前缀）。
+
+这就是 prefix caching 的核心：不要重复计算已经见过的前缀——直接复用它们的 `KV cache`！
+
+如果理解了这个示例，也就理解了 PagedAttention 的工作方式。
+
+Prefix caching 默认启用。若要关闭：将 `enable_prefix_caching = False`。
 
 ## Guided Decoding (FSM)
 
+Guided decoding（引导式解码）是一种在每个解码步对 `logits` 施加约束的技术，约束由基于语法的有限状态机（FSM）定义。这确保了只会采样语法允许的 token。
+
+这是一个非常强大的设定：你可以强制执行从正则语法（Chomsky type-3，例如任意正则表达式模式）到上下文无关语法（type-2，覆盖大多数编程语言）的一切约束。
+
+为使其更具体，我们先从最简单的示例入手，并在先前的代码基础上继续构建：
+
+```python
+from vllm import LLM, SamplingParams
+from vllm.sampling_params import GuidedDecodingParams
+
+prompts = [
+    "This sucks",
+    "The weather is beautiful",
+]
+
+guided_decoding_params = GuidedDecodingParams(choice=["Positive", "Negative"])
+sampling_params = SamplingParams(guided_decoding=guided_decoding_params)
+
+def main():
+    llm = LLM(model="TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+
+    outputs = llm.generate(prompts, sampling_params)
+
+if __name__ == "__main__":
+    main()
+```
+
+在给出的 toy example 中（假设字符级 tokenization）：在 prefill 阶段，FSM 会对 `logits` 进行掩蔽，使得只有 “P” 或 “N” 可以被采样。若采样到 “P”，FSM 将转入 “Positive” 分支；下一步仅允许 “o”，依此类推。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-9.png)
+
+vLLM 中的工作方式：
+
+1. 在构造 LLM 引擎时，会创建 `StructuredOutputManager`；它可访问 tokenizer，并维护一个 `_grammar_bitmask` 张量；
+2. 当添加请求时，状态被设置为 `WAITING_FOR_FSM`，`grammar_init` 会选择后端编译器（例如 `xgrammar` ，这里的大部分复杂度都隐藏在诸如 `xgrammar` 等第三方库中）；
+3. 针对该请求的语法会异步编译；
+4. 在调度过程中，如果异步编译已完成，状态切换为 `WAITING`，并将 `request_id` 加入 `structured_output_request_ids`；否则将其放入 `skipped_waiting_requests`，在下一次引擎步（engine step）重试。
+5. 在调度循环结束后（仍处于调度阶段），如果存在 FSM 请求，`StructuredOutputManager` 会让后端准备/更新 `_grammar_bitmask`。
+6. 当前向传播产生 `logits` 后，`xgr_torch_compile` 的函数会将位掩码展开到词表大小（由于使用 32 位整数，展开比例为 32×），并将不允许的 `logits` 置为 `-∞`。
+7. 在采样下一个 token 之后，通过 `accept_tokens` 推进该请求的 FSM。直观上我们在 FSM 图上移动到下一个状态。
+
+其中第 6 步值得进一步澄清：
+
+若 `vocab_size = 32`，`_grammar_bitmask` 是一个整数；其二进制表示编码了哪些 token 被允许（“1”）与不允许（“0”）。例如，“101…001”会展开为长度为 32 的数组 `[1, 0, 1, …, 0, 0, 1]`；值为 0 的位置对应的 `logits` 被置为 `-∞`。
+
+对更大的词表，会使用多个 32 位字，并按需展开/拼接。后端（例如 `xgrammar`）负责依据当前 FSM 状态生成这些位模式。
+
+以下还有一个更简单的示例：`vocab_size = 8` 且使用 8 位整数（适合结合可视化来理解）。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-10.png)
+
+在 vLLM 中，你可以通过传入所需的 `guided_decoding` 配置来启用该功能。
 
 ## Speculative Decoding
+
+在自回归生成（autoregressive generation）中，每产生一个新 token 都需要对 LLM 做一次前向传播（forward pass）。这个操作的计算开销非常大，因为每一步都要重新加载并应用全部模型权重，只为计算一个 token！（假设 `batch size == 1`，更一般的情况是 `B`）
+
+`Speculative decoding` 通过引入一个更小的 `“Draft LM”` 来加速。Draft LM 以更低成本提出 `k` 个 token 的候选。但我们并不希望最终从这个小模型的结果中直接采样，因为它只是用来猜测可能的续写。我们最终的采样结果仍由大型模型来决定哪些候选是有效的。
+
+具体步骤如下：
+
+1. **Draft** ：使用小模型在当前上下文上运行，提出 `k` 个 token；
+2. **Verify** ：使用大模型在“上下文 + k 个草稿 token”上运行一次。这会为这 `k` 个位置外加一个额外位置产生概率（因此得到 `k+1` 个候选）；
+3. **Accept/Reject** ：从左到右遍历这 `k` 个草稿 token：
+  - 若大模型对该草稿 token 的概率 ≥ 草稿模型的概率，则接受它；
+  - 否则，以 `p_large(token) / p_draft(token)` 的概率接受它；
+  - 在第一次拒绝处停止，或者接受所有 `k` 个草稿 token；
+    - 若所有 `k` 个草稿 token 都被接受，还可以从大模型“免费”采样额外的第 `k+1` 个 token（因为我们已经计算了该分布）。
+    - 若发生了拒绝，则在该位置构造一个重新平衡的分布（`p_large - p_draft`，最小值钳制为 0，并归一化为 1），并从中采样最后一个 token。
+
+**Why this works**：尽管我们使用小模型提出候选，但accept/reject规则保证了在期望意义上，序列的分布与逐 token 从大型模型采样的结果完全一致。这意味着 speculative decoding 在统计上等价于标准的自回归解码，但潜在获得更快的decoding速度，因为一次大型模型的前向传播即可产出至多 `k+1` 个 token。
+
+vLLM V1 不支持“LLM draft model”的方法，而是实现了更快但精度较低的提议方案：`n-gram`、`EAGLE` 和 `Medusa`。
+
+三者的一句话概述：
+- `n-gram`：取最后 `prompt_lookup_max` 个 token；在序列中寻找此前的匹配；若找到，则提出紧随该匹配之后的 `k` 个 token；否则减小窗口并重试，直到 `prompt_lookup_min`。
+- `EAGLE`：对 LLM 做一次 `“model surgery”` ，保留 embeddings 与 LM head，用轻量级 MLP 替换 transformer stack；将其微调为一个廉价draft。
+- `Medusa`：在大型模型的顶端（embeddings before LM head）训练 auxiliary linear head，用于并行预测接下来的 `k` 个 token；这些 head 能比单独运行一个小 LM 更高效地提出 token 候选。
+
+在 vLLM 中使用 `ngram` 作为草稿方法来调用 speculative decoding 的方式如下：
+
+```python
+from vllm import LLM, SamplingParams
+
+prompts = [
+    "Hello, my name is",
+    "The president of the United States is",
+]
+
+sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+
+speculative_config={
+    "method": "ngram",
+    "prompt_lookup_max": 5,
+    "prompt_lookup_min": 3,
+    "num_speculative_tokens": 3,
+}
+
+def main():
+    llm = LLM(model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", speculative_config=speculative_config)
+
+    outputs = llm.generate(prompts, sampling_params)
+
+if __name__ == "__main__":
+    main()
+```
+
+vLLM 中的工作方式：
+
+**设置阶段（引擎构造期间）：**
+
+- **初始化设备**：创建一个 `drafter`（草稿模型，例如 `NgramProposer`）和一个 `rejection_sampler`（其部分代码用 Triton 编写）。
+- **加载模型**：加载草稿模型权重（对 n-gram 而言为空操作）。
+
+**生成函数中的后续步骤（假设收到全新请求）：**
+
+1. 用大模型运行常规的 prefill 步骤。
+2. 前向传播和标准采样后，调用 `propose_draft_token_ids(k)` 从草稿模型采样 `k` 个草稿 token。
+3. 将这些存储在 `request.spec_token_ids` 中（更新请求元数据）。
+4. 在下一个引擎步中，当请求处于运行队列时，将 `len(request.spec_token_ids)` 加到"新 token"计数中，以便 `allocate_slots` 为前向传播预留足够的 KV 块。
+5. 将 `spec_token_ids` 复制到 `input_batch.token_ids_cpu` 中，形成（上下文 + 草稿）token。
+6. 通过 `_calc_spec_decode_metadata` 计算元数据（从 `input_batch.token_ids_cpu` 复制 token，准备 logits 等），然后在草稿 token 上运行大模型前向传播。
+7. 不使用常规的 logits 采样，而是用 `rejection_sampler` 从左到右接受/拒绝并产生 `output_token_ids`。
+8. 重复步骤 2-7，直到满足停止条件。
+
+理解这一过程的最佳方式是启动调试器并逐步执行代码库，但本节希望能让你对此有所了解。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-11.png)
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-12.png)
 
 ## Disaggregated P/D
 
