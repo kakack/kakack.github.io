@@ -29,13 +29,13 @@ pinned: false
 
 通过对这些关键技术的深入分析，我们将展现vLLM如何通过系统性的优化设计，在保证推理质量的前提下，实现了相比传统方案数倍甚至数十倍的性能提升。这些技术创新不仅推动了LLM推理服务的发展，也为整个AI基础设施领域提供了宝贵的设计思路和实践经验。一共分为五个部分：
 
-• **LLM engine**以及**engine core**：包含了vLLM的基础架构（调度、paged attention、continous batching）
+• **LLM engine**以及**engine core**：包含了vLLM的基础架构（调度、PagedAttention、continous batching）
 • **Advanced Features 高级特性**：chunked prefill(分块预填充)、prefix caching(前缀缓存)、guided&speculative decoding(引导预测编码)、disaggregated P/D(Prefill-decoding分离)
 • **Scaling Up**：单进程执行到多进程多GPU
 • **Server Layer**：分布式集群服务化部署
 • **Benchmarks**与**Auto-tuning**：平衡延迟和吞吐
 
-## LLM Engine & Engine Core
+# LLM Engine & Engine Core
 
 在vLLM中，LLM Engine是最基础的block，在离线场景中，它本身就支持高吞土地推理。以下是一个简单的离线推理例子：
 
@@ -62,6 +62,21 @@ if __name__ == "__main__":
 ##   VLLM_ENABLE_V1_MULTIPROCESSING="0" # we're running in a single process
 ## 
 ```
+
+我们调用模型执行器的 `execute_model`，它会委派给 `Worker`，而 `Worker` 又会继续委派给 `model runner`。
+
+主要步骤如下：
+
+- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他元数据（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
+- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力元数据。
+- **前向传播** —— 使用自定义的 PagedAttention 内核运行模型。所有序列会被展平并连接为一个长的“超级序列”。位置索引与注意力掩码确保每个序列只关注自己的 token，从而在不使用右侧填充的情况下实现持续批处理。
+- **收集最后一个 token 的状态** —— 为每个序列的最终位置提取隐藏状态并计算 `logits`。
+- **采样** —— 按照采样配置（贪心、温度、`top-p`、`top-k` 等）从计算出的 `logits` 中采样 token。
+
+前向步骤本身有两种执行模式：
+
+- **Eager 模式** —— 在启用 eager 执行时运行标准的 PyTorch 前向传播。
+- **“捕获”模式** —— 在未强制启用 eager 的情况下，执行或回放预先捕获的 CUDA Graph（还记得在引擎构建的初始化 KV cache 过程中我们已经捕获了它们）。
 
 这些配置有：
 
@@ -92,7 +107,7 @@ if __name__ == "__main__":
     - 等待和运行队列 (waiting and running queues)。
     - KV缓存管理器 (KV cache manager): PagedAttention机制的核心。
 
-KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache blocks组成的资源池；规模往往能到几十万，取决于显存与块大小。当paged attention 执行时，这些块承担索引作用，将各个 token 对应到它们的 KV Cache block。
+KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache blocks组成的资源池；规模往往能到几十万，取决于显存与块大小。当 PagedAttention 执行时，这些块承担索引作用，将各个 token 对应到它们的 KV Cache block。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-1.png)
 
@@ -178,7 +193,87 @@ Scheduler 优先处理 decode 请求——即那些已经在运行队列中的�
 4. 更新 token budget。
 
 现在让我们看看 `allocate_slots` 的作用：
-1. **计算块数量** — 确定必须分配多少个新的 KV 缓存块（n）。每个块默认存储 16 个 token。例如，如果一个 prefill 请求有 17 个新 token，我们需要 ceil(17/16) = 2 个块。
+1. **计算块数量** — 确定必须分配多少个新的 KV cache 块（n）。每个块默认存储 16 个 token。例如，如果一个 prefill 请求有 17 个新 token，我们需要 ceil(17/16) = 2 个块。
 2. **检查可用性** — 如果管理器池中没有足够的块，则提前退出。根据是 decode 还是 prefill 请求，引擎可能会尝试重计算抢占（V0 中支持交换抢占），通过驱逐低优先级请求（调用 `kv_cache_manager.free` 将 KV 块返回到块池），或者可能跳过调度并继续执行。
-3. **分配块** — 通过 KV 缓存管理器的协调器，从块池（前面提到的 `free_block_queue` 双向链表）中获取前 n 个块。存储到 `req_to_blocks`，这是将每个 `request_id` 映射到其 KV 缓存块列表的字典。
+3. **分配块** — 通过 KV cache manager 的协调器，从块池（前面提到的 `free_block_queue` 双向链表）中获取前 n 个块。存储到 `req_to_blocks`，这是将每个 `request_id` 映射到其 KV cache block list的字典。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-3.png)
+
+最终，我们准备好做一次前向传递了。
+
+## Run Forward pass
+
+我们调用模型执行器的 `execute_model`，它会委派给 `Worker`，而 `Worker` 又进一步委派给 `model runner`。
+
+主要步骤如下：
+
+- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他元数据（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
+- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力元数据。
+- **前向传播** —— 使用自定义的 PagedAttention 内核运行模型。所有序列会被展平并拼接为一个长的“超级序列”。位置索引与注意力掩码确保每个序列只关注自身的 token，从而在不进行右侧填充的情况下实现 continuous batching。
+- **收集最后一个 token 的状态** —— 为每个序列的最终位置提取隐藏状态并计算 `logits`。
+- **采样** —— 按照采样配置（greedy、temperature、top-p、top-k 等）从计算得到的 `logits` 中采样 token。
+
+前向步骤本身有两种执行模式：
+
+- **Eager Mode* —— 启用 eager 执行时运行标准的 PyTorch 前向传播。
+- **“Capture” Mode** —— 在未强制启用 eager 的情况下，执行/回放预先捕获的 CUDA Graph（还记得我们在引擎构建的初始化 KV cache 过程中已捕获这些 graph）。
+
+下面是一个具体示例，可帮助你更清晰地理解 continuous batching 和 PagedAttention：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-4.png)
+
+# Advanced Features — extending the core engine logic
+
+在掌握基本的引擎流程后，我们可以继续了解一些高级特性。
+
+我们已经讨论了抢占（preemption）、PagedAttention 和 continuous batching。
+
+接下来，我们将深入讲解：
+
+- Chunked prefill
+- Prefix caching
+- Guided decoding
+- Speculative decoding
+- Disaggregated P/D
+
+## Chunked prefill
+
+## Prefix Caching
+
+## Guided Decoding (FSM)
+
+## Speculative Decoding
+
+## Disaggregated P/D
+
+# From UniprocExecutor to MultiProcExecutor
+
+# Distributed system serving vLLM
+
+## On the headless server node
+
+## On the API server node
+
+# Benchmarks and auto-tuning - latency vs throughput
+
+# Epilogue
+
+# Acknowledgements
+
+A huge thank you to Hyperstack for providing me with H100s for my experiments over the past year!
+
+Thanks to Nick Hill (core vLLM contributor, RedHat), Mark Saroufim (PyTorch), Kyle Krannen (NVIDIA, Dynamo), and Ashish Vaswani for reading pre-release version of this blog post and providing feedback!
+
+References
+vLLM https://github.com/vllm-project/vllm
+"Attention Is All You Need", https://arxiv.org/abs/1706.03762
+"Efficient Memory Management for Large Language Model Serving with PagedAttention", https://arxiv.org/abs/2309.06180
+"DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model", https://arxiv.org/abs/2405.04434
+"Jenga: Effective Memory Management for Serving LLM with Heterogeneity", https://arxiv.org/abs/2503.18292
+"Orca: A Distributed Serving System for Transformer-Based Generative Models", https://www.usenix.org/conference/osdi22/presentation/yu
+"XGrammar: Flexible and Efficient Structured Generation Engine for Large Language Models", https://arxiv.org/abs/2411.15100
+"Accelerating Large Language Model Decoding with Speculative Sampling", https://arxiv.org/abs/2302.01318
+"EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty", https://arxiv.org/abs/2401.15077
+"Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads", https://arxiv.org/abs/2401.10774
+LMCache, https://github.com/LMCache/LMCache
 
