@@ -238,9 +238,81 @@ Scheduler 优先处理 decode 请求——即那些已经在运行队列中的�
 
 ## Chunked prefill
 
+Chunked prefill（分块式 prefill）是一种通过将长 prompt 的 prefill 步骤拆分为更小的 chunk 来处理长 prompt 的技术。若不使用该方法，一个非常长的请求可能会在某次 `engine step` 中长时间独占执行，阻止其他 prefill 请求运行，从而推迟所有其他请求并显著提高它们的延迟。
+
+例如，令每个 chunk 包含 n (=8) 个 token，并用小写字母以 “-” 分隔来标记。一个长提示 `P` 可以表示为 `x-y-z`，其中 `z` 是未完成的 chunk（例如仅包含 2 个 tokens）。执行 `P` 的完整 prefill 至少需要 ≥ 3 个 `engine step`（如果某一步未被调度执行，还可能需要更多），并且只有在最后一个分块 prefill 步骤中我们才会采样一个新 token。
+
+以下是同一示例的可视化说明：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-5.png)
+
+实现很直接：为每个 engine step 设定“新增 token 数量”的上限。当请求的数量超过 `long_prefill_token_threshold` 时，将其重置为该阈值。其余流程由底层的索引逻辑（前文已述）自动处理。
+
+在 vLLM V1 中，通过将 `long_prefill_token_threshold` 设置为正整数即可启用 chunked prefill。（从技术上讲，即使未显式设置也可能发生：若 prompt 长度超过 token 预算，我们会先截断它，并以分块 prefill 的方式运行。）
+
 ## Prefix Caching
 
+为了解释 prefix caching 的工作原理，可以参考以下代码：
+
+```python
+from vllm import LLM, SamplingParams
+
+long_prefix = "<a piece of text that is encoded into more than block_size tokens>"
+
+prompts = [
+    "Hello, my name is",
+    "The president of the United States is",
+]
+
+sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+
+def main():
+    llm = LLM(model="TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+
+    outputs = llm.generate(long_prefix + prompts[0], sampling_params)
+    outputs = llm.generate(long_prefix + prompts[1], sampling_params)
+
+if __name__ == "__main__":
+    main()
+```
+Prefix caching 用于避免对多个 prompt 共享的开头部分重复计算（因此称为 **“前缀 Prefix”** ）。
+
+关键在于 `long_prefix`：它被定义为长度超过一个 KV cache block 的前缀（默认每块 16 tokens）。为简化示例，假设 `long_prefix` 的长度恰好为 `n × block_size`（其中 `n ≥ 1`）。
+
+也就是说，它必须与块边界完全对齐——否则我们必须重新计算 `long_prefix_len % block_size` 个 tokens，因为不完整的块无法被缓存。若不使用 prefix caching，每次处理一个具有相同 `long_prefix` 的新请求时，都要重新计算这 `n × block_size` 个 tokens。
+
+而使用 prefix caching 时，这些 tokens 只需计算一次（其 KV 存入分页的 `KV cache` 内存）并被复用，因此仅需处理新的 prompt tokens。这会显著加速 prefill 请求（但对 decode 无帮助）。
+
+那么在 vLLM 中如何工作？
+
+在首次 `generate` 调用的调度阶段，`kv_cache_manager.get_computed_blocks` 内，engine 会调用 `hash_request_tokens`：
+
+- 将 `long_prefix + prompts[0]` 按 16-token 切分为 chunks。
+- 对每个完整 chunk 计算一个 hash（使用内建 `hash` 或 `SHA-256`，后者更慢但 hash 冲突更少）。该 hash 组合了上一块的 hash、当前 tokens 以及可选元数据。可选元数据包括：`MM hash`、`LoRA ID`、`cache salt`（注入首块的 hash，保证只有携带该 `cache salt` 的请求能复用这些块）。
+- 每个结果以 `BlockHash` 对象存储，包含其 hash 与 token IDs；函数返回一个 block hashes 列表。
+
+该列表写入 `self.req_to_block_hashes[request_id]`。
+
+随后，engine 调用 `find_longest_cache_hit`，检查这些 hash 是否已存在于 `cached_block_hash_to_block` 中。对于首个请求，通常不会有命中。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-6.png)
+
+
+然后我们调用 `allocate_slots`，它会进一步调用 `coordinator.cache_blocks`，将新的 `BlockHash` 条目与已分配的 `KV cache` blocks 关联，并把映射记录到 `cached_block_hash_to_block`。
+
+随后，前向传播会在分页的 `KV cache` 内存中填充对应的 KV，覆盖我们上面分配的这些 `KV cache` blocks。
+
+在经历多个 `engine step` 后，系统会继续分配更多 `KV cache` blocks。但在本示例中这并不重要，因为前缀在 `long_prefix` 之后就立即发生了差异。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-7.png)
+
+第二次以相同前缀调用 `generate` 时，前述步骤 1–3 会再次执行，但此时 `find_longest_cache_hit` 会（通过线性搜索）为全部 `n` 个块找到命中，engine 可直接复用这些 `KV cache` blocks。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-8.png)
+
+
 ## Guided Decoding (FSM)
+
 
 ## Speculative Decoding
 
