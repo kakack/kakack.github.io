@@ -558,13 +558,212 @@ vLLM 中的步骤如下：
 
 # From UniprocExecutor to MultiProcExecutor
 
+在核心技术已经就位后，我们可以开始讨论扩容（scaling up）。假设你的模型权重已经无法放入单张 GPU 的显存。首选方案是在同一节点上使用张量并行（tensor parallelism，TP），将模型在多块 GPU 之间分片（例如 `TP=8`）。如果模型仍然无法容纳，下一步是跨节点的流水线并行（pipeline parallelism，PP）。但是在实际操作中，我们注意到几个点：
+
+- 同一节点内的带宽（intranode）显著高于跨节点（internode），这也是为什么在实践中通常优先选择张量并行（TP）而非流水线并行（PP）。同时也成立的是，PP 的通信量通常少于 TP。
+- 本文不讨论专家并行（expert parallelism，EP），因为我们聚焦的是标准 Transformer 而非 MoE；也不覆盖序列并行（sequence parallelism），原因是 TP 与 PP 在实践中最为常用。
+
+到了这个阶段，我们需要多个 GPU 进程（workers）以及一个编排层来协调它们。这正是 `MultiProcExecutor` 所提供的能力。
+
+vLLM 的 `MultiProcExecutor` 运行机制如下：
+
+1. 初始化阶段：`MultiProcExecutor` 创建 `rpc_broadcast_mq` 消息队列（底层以共享内存实现）。
+2. 进程派生：构造函数按 `world_size` 循环（例如 `TP=8 ⇒ world_size=8`），通过 `WorkerProc.make_worker_process` 为每个 `rank` 派生守护进程。
+3. 管道建立：对每个 worker，父进程先创建一对 `pipe`（reader 与 writer）。
+4. 子进程入口：新进程运行 `WorkerProc.worker_main`，在其中实例化 worker，并按 `UniProcExecutor` 的同样顺序进行 `init device`、`load model` 等初始化。
+5. 角色判定与队列设置：每个 worker 判断自己是否为驱动（TP 组的 `rank 0`）或普通 worker；并各自设置两条队列：
+  - `rpc_broadcast_mq`（与父进程共享），用于接收工作；
+  - `worker_response_mq`，用于向父进程发送执行结果。
+6. 进程间协调完成：初始化期间，每个子进程通过 `pipe` 将其 `worker_response_mq` 句柄发回父进程；父进程在收齐所有句柄后解除阻塞，这一步标志着协调完成。
+7. 工作循环：workers 进入忙循环，阻塞在 `rpc_broadcast_mq.dequeue`；工作项到达后，执行该项（路径与 `UniProcExecutor` 相同，但内容为 TP/PP 特定的分片任务），并通过 `worker_response_mq.enqueue` 发送结果。
+8. 运行时调度：当请求抵达引擎，`MultiProcExecutor` 会以非阻塞方式将其广播入队到所有子 worker 的 `rpc_broadcast_mq`；随后在指定输出 `rank` 的 `worker_response_mq.dequeue` 上等待，以收集最终结果。
+
+从引擎视角，所有的接口保持不变。多进程的复杂度被 `model executor.execute_model` 通过调用 model excutor 的 `execute_model` 函数所抽象：
+
+- `UniProcExecutor`：`execute_model` 直接触达单个 worker 的 `execute_model`；
+- `MultiProcExecutor`：`execute_model` 通过 `rpc_broadcast_mq` 间接触达每个 worker 的 `execute_model`。
+
+借助上述机制，我们可以在不改变引擎接口的前提下，按资源上限运行更大的模型。下一步是继续横向扩展：启用数据并行（`DP > 1`）在多节点复制模型，加入轻量级 DP 协调层，做跨副本的负载均衡，并在前面部署一个或多个 API 服务器处理进入流量。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-14.png)
+
 # Distributed system serving vLLM
 
+在生产环境中，搭建推理服务基础设施的方式有很多。为保持具体，这里举一个例子：假设我们有两台 H100 节点，并希望在它们上运行四个 vLLM 引擎。如果模型需要 `TP=4`，可以将节点按如下方式进行配置。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-15.png)
+
+在第一台节点上，以 `headless mode` （不启用 API 服务器）运行引擎，使用如下参数：
+
+```bash
+vllm serve <model-name>
+  --tensor-parallel-size 4
+  --data-parallel-size 4
+  --data-parallel-size-local 2
+  --data-parallel-start-rank 0
+  --data-parallel-address <master-ip>
+  --data-parallel-rpc-port 13345
+  --headless
+```
+
+以同样的命令在另一个节点上运行，但是进行两处调整，不实用 `--headless`， 并且修改 `--data-parallel-start-rank` 为 `2`。
+
+```bash
+vllm serve <model-name>
+  --tensor-parallel-size 4
+  --data-parallel-size 4
+  --data-parallel-size-local 2
+  --data-parallel-start-rank 2
+  --data-parallel-address <master-ip>
+  --data-parallel-rpc-port 13345
+```
+
 ## On the headless server node
+ 
+在 headless 节点上，`CoreEngineProcManager` 会启动 2 个进程（由 `--data-parallel-size-local` 指定），每个进程运行 `EngineCoreProc.run_engine_core`。这些函数各自创建一个 `DPEngineCoreProc`（引擎核心），随后进入其忙循环。
+
+`DPEngineCoreProc` 会初始化其父 `EngineCoreProc`（`EngineCore` 的子组件），其步骤包括：
+
+1. 创建 `input_queue` 与 `output_queue`（`queue.Queue`）；
+2. 使用 `DEALER` ZMQ 套接字（异步消息库）与另一节点的前端进行初始握手，并接收协调地址信息；
+3. 初始化数据并行（DP）通信组（例如使用 `NCCL` 后端）；
+4. 使用 `MultiProcExecutor` 初始化 `EngineCore`（如前述，在 4 张 GPU 上配置 `TP=4`）；
+5. 创建 `ready_event`（`threading.Event`）；
+6. 启动输入守护线程（`threading.Thread`）运行 `process_input_sockets(..., ready_event)`，并以类似方式启动输出线程；
+7. 在主线程中等待 `ready_event`，直到跨 2 节点的全部 4 个进程的输入线程完成协调握手，最后执行 `ready_event.set()`；
+8. 一旦解除阻塞，向前端发送携带 `metadata` 的“ready”消息（例如分页 KV 缓存内存中可用的 `num_gpu_blocks`）；
+9. 随后主线程、输入线程和输出线程分别进入各自的忙循环。
+
+最终会有 4 个子进程（每个对应一个 DP 副本），每个进程都运行主线程、输入线程和输出线程。它们与 DP 协调器和前端完成协调握手后，三个线程将进入稳态的忙循环。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-16.png)
+
+**当前稳态运行：**
+
+- **输入线程** — 阻塞在 input socket 上，直到从 API 服务器路由来请求；收到请求后，解码载荷，通过 `input_queue.put_nowait(...)` 将工作项入队，然后返回继续阻塞在套接字上；
+- **主线程** — 在 `input_queue.get(...)` 上被唤醒，将请求传递给引擎；`MultiProcExecutor` 运行前向传播并将结果入队到 `output_queue`；
+- **输出线程** — 在 `output_queue.get(...)` 上被唤醒，将结果发送回 API 服务器，然后恢复阻塞状态。
+
+**附加机制：**
+
+- **DP 波次计数器** — 系统跟踪"波次"；当所有引擎变为空闲时它们会静默，当新工作到达时计数器递增（用于协调/指标）。
+- **控制消息** — API 服务器可以发送的不仅仅是推理请求（例如中止和实用/控制 RPC）。
+- **锁步的虚拟步骤** — 如果任何 DP 副本有工作，所有副本都执行前向步骤；没有请求的副本执行虚拟步骤以参与必需的同步点（避免阻塞活跃副本）。
+- **锁步澄清**：这实际上只对 MoE 模型是必需的，其中专家层形成 EP 或 TP 组，而注意力层仍然是 DP。目前总是与 DP 一起执行 - 这只是因为"内置"非 MoE DP 的用途有限，因为你可以只运行多个独立的 vLLM 并以正常方式在它们之间进行负载均衡。
+
+现在来看第二部分，API 服务器节点上发生了什么？
 
 ## On the API server node
 
+在前端（API 服务器）节点，我们实例化一个 `AsyncLLM` 对象（对 LLM 引擎的 `asyncio` 封装）。其内部会创建 `DPLBAsyncMPClient`（数据并行、负载均衡、异步、多进程客户端）。
+
+在 `MPClient` 的父类中，`launch_core_engines` 函数会执行，并：
+
+1. 创建用于启动握手的 ZMQ 地址（与 headless 节点上的做法一致）；
+2. 启动一个 `DPCoordinator` 进程；
+3. 创建一个 `CoreEngineProcManager`（与 headless 节点相同）。
+
+在 `AsyncMPClient`（`MPClient` 的子类）中，我们：
+
+1. 创建 `outputs_queue`（`asyncio.Queue`）；
+2. 创建 `asyncio` 任务 `process_outputs_socket`，通过输出套接字与所有 4 个 `DPEngineCoreProc` 的输出线程通信，并写入 `outputs_queue`；
+3. 随后由 `AsyncLLM` 启动另一个 `asyncio` 任务 `output_handler`，从该队列读取，最终将信息发送到 `create_completion` 函数。
+
+在 `DPAsyncMPClient` 中，我们创建 `asyncio` 任务 `run_engine_stats_update_task`，与 DP 协调器通信。
+
+DP 协调器在前端（API 服务器）与后端（引擎核心）之间进行调解，它：
+
+- 周期性地向前端的 `run_engine_stats_update_task` 发送负载均衡信息（队列大小、等待/运行中的请求）；
+- 处理来自前端的 `SCALE_ELASTIC_EP` 命令，通过动态改变引擎数量（仅在 Ray 后端可用）；
+- 向后端发送 `START_DP_WAVE` 事件（由前端触发时），并回报波次状态更新。
+
+总结一下，前端（`AsyncLLM`）运行若干 `asyncio` 任务（注意：并发而非并行）：
+
+- 一类任务通过 `generate` 路径处理输入请求（每个新的客户端请求都会生成一个新的 `asyncio` 任务）；
+- 两个任务（`process_outputs_socket`、`output_handler`）处理来自底层引擎的输出消息；
+- 一个任务（`run_engine_stats_update_task`）维持与 DP 协调器的通信：发送波次触发、轮询负载均衡状态，以及处理动态扩缩请求。
+
+最后，主服务器进程创建一个 `FastAPI` 应用并挂载诸如 `OpenAIServingCompletion` 和 `OpenAIServingChat` 的端点，提供 `/completion`、`/chat/completion` 等接口；整个栈通过 `Uvicorn` 对外服务。
+
+把这些拼在一起，就是完整的请求生命周期！你会在终端中发送：
+
+```bash
+curl -X POST http://localhost:8000/v1/completions -H "Content-Type: application/json" -d '{
+  "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "prompt": "The capital of France is",
+  "max_tokens": 50,
+  "temperature": 0.7
+}'
+```
+
+接下来会发生什么：
+
+1. 请求命中 API 服务器上的 `OpenAIServingCompletion.create_completion` 路由；
+2. 该函数以异步方式对提示进行分词，并准备 metadata（请求 ID、采样参数、时间戳等）；
+3. 随后调用 `AsyncLLM.generate`，其流程与同步引擎一致，最终会触发 `DPAsyncMPClient.add_request_async`；
+4. 该调用进一步执行 `get_core_engine_for_request`，根据 DP 协调器的状态在各个引擎间做负载均衡（选择得分最低/负载最低的引擎：`score = len(waiting) * 4 + len(running)`）；
+5. 将 `ADD` 请求发送到选定引擎的 `input_socket`；
+6. 在该引擎上：
+    - 输入线程 — 解除阻塞，从输入套接字解码数据，并将工作项放入主线程的 `input_queue`；
+    - 主线程 — 在 `input_queue` 上解除阻塞，将请求加入引擎，并反复调用 `engine_core.step()`，在满足停止条件前不断将中间结果入队到 `output_queue`；
+    - 输出线程 — 在 `output_queue` 上解除阻塞，并通过输出套接字将结果发送回去；
+7. 这些结果会触发 `AsyncLLM` 的输出类 `asyncio` 任务（`process_outputs_socket` 与 `output_handler`），它们把 token 逐步传递回 `FastAPI` 的 `create_completion` 路由；
+8. `FastAPI` 将附加 metadata（结束原因、logprobs、使用信息等），并通过 `Uvicorn` 返回 `JSONResponse` 到你的终端！
+
+就这样，你的补全结果返回了——整个分布式系统都隐藏在一个简单的 `curl` 命令背后！当增加更多 API 服务器时，负载均衡主要由操作系统/套接字层处理。从应用视角看，几乎无需改动——复杂性被抽象掉了。而当使用 Ray 作为 DP 后端时，可以暴露一个 URL 端点（`/scale_elastic_ep`），以实现对引擎副本数量的自动扩缩。
+
 # Benchmarks and auto-tuning - latency vs throughput
+
+到目前为止，我们一直在分析 “gas particles” ——请求如何在 engine /系统内部流动的细节。现在是时候拉远视角，整体审视系统，并提出一个问题：如何度量一个推理系统的性能？
+
+在最高层面，有两项彼此 “竞争” 或者说 “冲突” 的指标：
+
+- 延迟（Latency）——从请求提交到返回 tokens 的时间
+- 吞吐量（Throughput）——系统每秒能够生成/处理的 tokens/请求数量
+
+延迟在交互式应用中最为重要，因为用户在等待响应。吞吐量在离线工作负载中更重要，例如用于预训练/后训练运行的合成数据生成、数据清洗/处理，以及一般的离线批量推理作业。在解释为何延迟与吞吐量会互相“竞争”之前，先定义一些常见的推理指标：
+
+| **Metric** | **Definition** |
+| --- | --- |
+| `TTFT` (time to first token) | Time from request submission until the first output token is received |
+| `ITL`(inter-token latency) | Time between two consecutive tokens (e.g., from token i-1 to token i) |
+| `TPOT`(time per output token) | The average ITL across all output tokens in a request |
+| `Latency / E2E`(end-to-end latency) | Total time to process a request, i.e. TTFT + sum of all ITLs, or equivalently the time between submitting request and receiving the last output token |
+| `Throughput`	 | Total tokens processed per second (input, output, or both), or alternatively requests per second |
+| `Goodput`	 | Throughput that meets service-level objectives (SLOs) such as max TTFT, TPOT, or e2e latency. For example, only tokens from requests meeting those SLOs are counted |
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-17.png)
+
+下面给出一个简化模型来解释这两项指标为何相互“竞争”。假设：权重 I/O 而非 KV 缓存 I/O 占主导，即我们处理的是短序列。
+
+当观察批大小 `B` 对单次解码步的影响时，这种权衡会变得清晰：当 `B ↓ → 1` 时，`ITL`（Inter-Token Latency，token 间延迟）下降——每步的工作更少，且该 token 不再与其他 token “竞争”；当 `B ↑ → ∞` 时，`ITL` 上升，因为每步需要执行更多 FLOPs；但吞吐量会提高（直到达到峰值性能），因为权重 I/O 被更多 token 分摊。
+
+屋顶线（Roofline）模型有助于理解：当批量低于饱和批 `B_sat` 时，步时由 `HBM` 带宽主导（逐层将权重流入片上内存），因此步延迟近乎平坦——计算 1 个与 10 个 token 所需时间相近。超过 `B_sat` 后，内核会转为计算受限，步时大致随 `B` 增长；每增加一个 token 都会增加 `ITL`。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-18.png)
+
+更严谨的分析还需要考虑内核自动调优（kernel auto-tuning）：随着批量 `B` 增大，运行时可能会针对该形状切换到更高效的内核，从而改变实际达到的性能 `P_kernel`。步延迟可表示为 `t = FLOPs_step / P_kernel`，其中 `FLOPs_step` 是该步的计算工作量。可以看到，当 `P_kernel` 接近峰值性能 `P_peak` 时，每步的计算量增加会直接导致延迟上升。
+
+## How to benchmark in vLLM
+
+vLLM 提供 `vllm bench {serve,latency,throughput}` 命令行工具（CLI），它封装了 `vllm/benchmarks/{server,latency,throughput}.py` 三个脚本，便于统一运行与统计。
+
+脚本功能如下：
+- `latency`：使用较短的输入（默认 32 tokens），以较小的批（默认 8）采样 128 个输出 token。脚本会运行多次迭代，并报告该批的一端到端（e2e）延迟。
+- `throughput`：一次性提交一组固定的提示（默认：1000 条 ShareGPT 样本），即 QPS=Inf 模式；并在整次运行中统计并报告输入/输出/总 token 以及每秒请求数（RPS）。
+- `serve`：启动一个 vLLM 服务器，并通过从泊松分布（或更一般地，Gamma 分布）抽取请求到达间隔来模拟真实世界负载。在给定时间窗内发送请求，测量前述各项指标；同时可以选择在服务端启用最大并发限制（通过信号量实现，例如限制为 64 个并发请求）。
+
+示例：运行 `latency` 脚本（其中Benchmark configs used in CI live under .buildkite/nightly-benchmarks/tests.）
+
+```bash
+vllm bench latency
+  --model <model-name>
+  --input-tokens 32
+  --output-tokens 128
+  --batch-size 8
+```
+
+此外，还提供一个自动调优脚本：它通过驱动 `serve` 基准测试来搜索满足目标 SLO 的参数设置（例如：“在保持 p99 端到端延迟 < 500 ms 的同时最大化吞吐量”），并返回一个建议配置。
 
 # Epilogue
 
@@ -574,16 +773,17 @@ A huge thank you to Hyperstack for providing me with H100s for my experiments ov
 
 Thanks to Nick Hill (core vLLM contributor, RedHat), Mark Saroufim (PyTorch), Kyle Krannen (NVIDIA, Dynamo), and Ashish Vaswani for reading pre-release version of this blog post and providing feedback!
 
-References
-vLLM https://github.com/vllm-project/vllm
-"Attention Is All You Need", https://arxiv.org/abs/1706.03762
-"Efficient Memory Management for Large Language Model Serving with PagedAttention", https://arxiv.org/abs/2309.06180
-"DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model", https://arxiv.org/abs/2405.04434
-"Jenga: Effective Memory Management for Serving LLM with Heterogeneity", https://arxiv.org/abs/2503.18292
-"Orca: A Distributed Serving System for Transformer-Based Generative Models", https://www.usenix.org/conference/osdi22/presentation/yu
-"XGrammar: Flexible and Efficient Structured Generation Engine for Large Language Models", https://arxiv.org/abs/2411.15100
-"Accelerating Large Language Model Decoding with Speculative Sampling", https://arxiv.org/abs/2302.01318
-"EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty", https://arxiv.org/abs/2401.15077
-"Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads", https://arxiv.org/abs/2401.10774
-LMCache, https://github.com/LMCache/LMCache
+# References
+
+1. vLLM https://github.com/vllm-project/vllm
+2. "Attention Is All You Need", https://arxiv.org/abs/1706.03762
+3. "Efficient Memory Management for Large Language Model Serving with PagedAttention", https://arxiv.org/abs/2309.06180
+4. "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model", https://arxiv.org/abs/2405.04434
+5. "Jenga: Effective Memory Management for Serving LLM with Heterogeneity", https://arxiv.org/abs/2503.18292
+6. "Orca: A Distributed Serving System for Transformer-Based Generative Models", https://www.usenix.org/conference/osdi22/presentation/yu
+7. "XGrammar: Flexible and Efficient Structured Generation Engine for Large Language Models", https://arxiv.org/abs/2411.15100
+8. "Accelerating Large Language Model Decoding with Speculative Sampling", https://arxiv.org/abs/2302.01318
+9. "EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty", https://arxiv.org/abs/2401.15077
+10. "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads", https://arxiv.org/abs/2401.10774
+11. LMCache, https://github.com/LMCache/LMCache
 
