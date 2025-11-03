@@ -727,8 +727,8 @@ curl -X POST http://localhost:8000/v1/completions -H "Content-Type: application/
 | `ITL`(inter-token latency) | Time between two consecutive tokens (e.g., from token i-1 to token i) |
 | `TPOT`(time per output token) | The average ITL across all output tokens in a request |
 | `Latency / E2E`(end-to-end latency) | Total time to process a request, i.e. TTFT + sum of all ITLs, or equivalently the time between submitting request and receiving the last output token |
-| `Throughput`	 | Total tokens processed per second (input, output, or both), or alternatively requests per second |
-| `Goodput`	 | Throughput that meets service-level objectives (SLOs) such as max TTFT, TPOT, or e2e latency. For example, only tokens from requests meeting those SLOs are counted |
+| `Throughput` | Total tokens processed per second (input, output, or both), or alternatively requests per second |
+| `Goodput` | Throughput that meets service-level objectives (SLOs) such as max TTFT, TPOT, or e2e latency. For example, only tokens from requests meeting those SLOs are counted |
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-17.png)
 

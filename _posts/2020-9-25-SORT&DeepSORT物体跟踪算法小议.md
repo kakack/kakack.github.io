@@ -32,7 +32,7 @@ pinned: false
 - [Deep SORT Paper](https://arxiv.org/abs/1703.07402)
 - [Deep SORT Open Source Code](https://github.com/nwojke/deep_sort)
 
-- - -
+---
 
 # Kalman filter
 
@@ -76,7 +76,7 @@ pinned: false
 - `新的最佳估计` 是基于 `原最佳估计` 和 `已知外部影响` 校正后得到的预测；
 - `新的不确定性` 是基于 `原不确定性` 和 `外部环境的不确定性` 得到的预测。
 
-- - -
+---
 
 # SORT
 
@@ -90,7 +90,7 @@ SORT 使用匈牙利指派算法进行数据关联，使用的 cost 矩阵为原
 
 但是在 SORT 中，目标仅仅根据 IoU 来进行匹配，必然会导致 ID Switch 非常频繁。
 
-- - -
+---
 
 # Deep SORT
 
@@ -142,7 +142,7 @@ $$d^{(1)}(i,j)=(d_j-y_i)^T S_i^{-1} (d_j-y_i)$$
 - 对匹配结果进行筛选，删去外观信息差距过大（即余弦距离过大）的配对；
 - 得到初步的匹配结果和未匹配成功的检测结果及轨迹。
 
-- - -
+---
 
 ## 实践建议与评价指标（可选）
 
@@ -151,7 +151,7 @@ $$d^{(1)}(i,j)=(d_j-y_i)^T S_i^{-1} (d_j-y_i)$$
 - 适度的 NMS 与置信度阈值可降低误检对关联的扰动；
 - 评价指标：MOTA、IDF1、ID Switch、Mostly Tracked（MT）/Mostly Lost（ML）等，可综合评估跟踪性能与身份保持能力。
 
-- - -
+---
 
 # Reference
 

@@ -46,7 +46,7 @@ Yolo算法将目标检测看成回归问题，所以采用的是均方差损失�
 
 另外一点时，由于每个单元格预测多个bounding box。但是其对应类别只有一个。那么在训练时，如果该单元格内确实存在目标，那么只选择与ground truth的IOU最大的那个bounding box来负责预测该目标，而其它bounding box认为不存在目标。这样设置的一个结果将会使一个单元格对应的bounding box更加专业化，其可以分别适用不同大小，不同高宽比的目标，从而提升模型性能。但是如果一个单元格内存在多个目标怎么办，其实这时候Yolo算法就只能选择其中一个来训练，这也是Yolo算法的缺点之一。要注意的一点时，对于不存在对应目标的bounding box，其误差项就是只有置信度，坐标项误差是没法计算的。而只有当一个单元格内确实存在目标时，才计算分类误差项，否则该项也是无法计算的。其中第一项是bounding box中心坐标的误差项， 这个1_obj_ij指的是第i个单元格存在目标，且该单元格中的第j个bounding box负责预测该目标。第二项是bounding box的高与宽的误差项。第三项是包含目标的bounding box的置信度误差项。第四项是不包含目标的bounding box也就是背景的置信度误差项。而最后一项是包含目标的单元格的分类误差项， 1_obj_i指的是第i个单元格存在目标。这里特别说一下置信度的target值Ci ，如果是不存在目标，那么Ci=0 。如果存在目标，此时需要确定IOU的值，当然希望最好的话，可以将IOU取1，这样Ci=1 ，但是在yolo v1实现中，使用了一个控制参数rescore，默认计算truth和pred之间的真实IOU。不过很多复现yolo v1的项目还是取Ci=1，这个差异应该不会太影响结果吧。
 
-- - -
+---
 # How does Yolo v1 perform
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20201216-4.jpg)
@@ -75,7 +75,7 @@ Yolo v1与Fast R-CNN的误差对比分析可以看到，Yolo v1的Correct的是�
 - Yolo v1对于目标长宽比泛化率低，在长宽比比较极端或特殊的物体上表现不佳；
 - 在目标定位方面有待提高，召回率低。
 
-- - -
+---
 
 # What does yolo v2 improve
 
@@ -155,7 +155,7 @@ yolo v2约束了bounding box的位置，改善了之前bounding box预测不准�
 
 如图中所示，同一颜色的位置，进行softmax操作，使得同一颜色中只有一个类别预测分值最大。在预测时，从树的根节点开始向下检索，每次选取预测分值最高的子节点，直到所有选择的节点预测分值连乘后小于某一阈值时停止。在训练时，如果标签为人，那么只对人这个节点以及其所有的父节点进行loss计算，而其子节点，男人、女人、小孩等，不进行loss计算。
 
-- - -
+---
 
 # How about Yolo v3
 
@@ -198,7 +198,7 @@ Yolo V3将v2中的darknet19 backbone替换成了darknet53，一方面将YOLO v2�
 - lcls：类别误差class_loss，和yolo v2的区别是改成了交叉熵；
 - lobj：置信度误差confidence_loss，和yolo v2几乎一模一样。
 
-- - -
+---
 
 # Conclusion
 

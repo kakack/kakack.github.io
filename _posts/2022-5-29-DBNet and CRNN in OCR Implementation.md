@@ -12,8 +12,8 @@ pinned: false
 
 如果将光学字符识别（OCR）技术应用于一些自然场景的图片，从而达到识别图片中文本文字的目的，通常会是一个 two-stage（双阶段） 的过程：
 
--	文字检测：找到文字在图像中的位置，返回对应位置信息（bounding box，简称 BBox）；
--	文字识别：对 BBox 区域内的文字进行识别，认出其中每个字符，最终将图像中的文字区域转化为可用的字符信息。
+- 文字检测：找到文字在图像中的位置，返回对应位置信息（bounding box，简称 BBox）；
+- 文字识别：对 BBox 区域内的文字进行识别，认出其中每个字符，最终将图像中的文字区域转化为可用的字符信息。
 
 ## 任务与评测指标
 
@@ -25,8 +25,8 @@ pinned: false
 
 目前文字检测普遍的做法有两种：
 
--	基于回归：Textboxes++、R2CNN，FEN等
--	基于分割：Pixel-Link，PSENet，PMTD，LOMO，DBNet等
+- 基于回归：Textboxes++、R2CNN，FEN 等
+- 基于分割：Pixel-Link，PSENet，PMTD，LOMO，DBNet 等
 
 DBNet 名字中的 DB 指 Differentiable Binarization（可微二值化）模块。传统的分割式文本检测通常先设定固定阈值将概率图二值化，再用启发式聚类获得文本实例；而 DBNet 将“阈值学习”与“二值化”纳入网络端到端联合优化，网络同时输出概率图 P 与阈值图 T，使阈值对不同像素自适应：
 
@@ -38,10 +38,10 @@ DBNet 名字中的 DB 指 Differentiable Binarization（可微二值化）模块
 
 DBNet 整体流程如下：
 
-1.	图像经过 FPN 网络结构，得到四个尺度特征图，分别为 $\tfrac{1}{4}$、$\tfrac{1}{8}$、$\tfrac{1}{16}$、$\tfrac{1}{32}$；
-1.	将四个特征图上采样至 $\tfrac{1}{4}$ 并 concat，得到特征图 F；
-1.	由 F 预测概率图 P 与阈值图 T；
-1.	通过 P、T 计算近似二值图 \(\hat{B}\)。
+1. 图像经过 FPN 网络结构，得到四个尺度特征图，分别为 $\tfrac{1}{4}$、$\tfrac{1}{8}$、$\tfrac{1}{16}$、$\tfrac{1}{32}$；
+2. 将四个特征图上采样至 $\tfrac{1}{4}$ 并 concat，得到特征图 F；
+3. 由 F 预测概率图 P 与阈值图 T；
+4. 通过 P、T 计算近似二值图 \(\hat{B}\)。
 
 ## 后处理与框生成（Post-processing）
 
@@ -106,14 +106,14 @@ DBNet 整体流程如下：
 
 基于 CNN 和 RNN 的文字识别结构主要有两种形式：
 
-	1.	CNN + RNN + CTC（CRNN + CTC）
-	1.	CNN + Seq2Seq + Attention
+1. CNN + RNN + CTC（CRNN + CTC）
+2. CNN + Seq2Seq + Attention
 
 其中 CRNN 的应用最为广泛。整个网络通常分为三部分：
 
-	-	Conv Layers：卷积网络提取特征映射；
-	-	Recurrent Layers：双向 LSTM/GRU 在宽度方向建模序列；
-	-	Transcription Layers：CTC 层或全连接输出字符概率分布。
+- Conv Layers：卷积网络提取特征映射；
+- Recurrent Layers：双向 LSTM/GRU 在宽度方向建模序列；
+- Transcription Layers：CTC 层或全连接输出字符概率分布。
 
 ## CTC 解码与训练细节
 
