@@ -11,35 +11,35 @@ pinned: false
 
 ---
 
-随着大语言模型(LLM)在各个领域的广泛应用，如何高效地部署和推理这些模型成为了一个关键挑战。传统的模型推理服务往往面临着内存利用率低、吞吐量受限、延迟不可控等问题，这些瓶颈严重制约了LLM在生产环境中的规模化应用。vLLM作为一个专为LLM优化的高性能推理服务框架，通过一系列创新的技术方案，有效解决了这些痛点问题。
+随着大语言模型 (LLM) 在各个领域的广泛应用，如何高效地部署和推理这些模型成为了一个关键挑战。传统的模型推理服务往往面临着内存利用率低、吞吐量受限、延迟不可控等问题，这些瓶颈严重制约了 LLM 在生产环境中的规模化应用。vLLM 作为一个专为 LLM 优化的高性能推理服务框架，通过一系列创新的技术方案，有效解决了这些痛点问题。
 
-本文将深入剖析vLLM的核心架构和关键技术实现，从底层的内存管理机制到上层的服务调度策略，全面解析其如何实现高效的LLM推理服务。我们将重点探讨以下几个核心技术模块：
+本文将深入剖析 vLLM 的核心架构和关键技术实现，从底层的内存管理机制到上层的服务调度策略，全面解析其如何实现高效的 LLM 推理服务。我们将重点探讨以下几个核心技术模块：
 
-**PagedAttention机制**：借鉴操作系统中虚拟内存管理的思想，vLLM提出了PagedAttention技术，将KV Cache按页进行管理，实现了内存的按需分配和高效利用。这种设计不仅显著降低了内存碎片化问题，还支持了动态序列长度处理，使得内存利用率相比传统方案提升了数倍。
+**PagedAttention 机制**：借鉴操作系统中虚拟内存管理的思想，vLLM 提出了 PagedAttention 技术，将 KV Cache 按页进行管理，实现了内存的按需分配和高效利用。这种设计不仅显著降低了内存碎片化问题，还支持了动态序列长度处理，使得内存利用率相比传统方案提升了数倍。
 
-**Continuous Batching(连续批处理)**：传统的静态批处理方式存在严重的计算资源浪费问题，特别是当批内序列长度差异较大时。vLLM的连续批处理技术支持序列的动态加入和完成，实现了真正的流水线式处理，大幅提升了系统吞吐量和资源利用效率。
+**Continuous Batching (连续批处理)**：传统的静态批处理方式存在严重的计算资源浪费问题，特别是当批内序列长度差异较大时。vLLM 的连续批处理技术支持序列的动态加入和完成，实现了真正的流水线式处理，大幅提升了系统吞吐量和资源利用效率。
 
-**Prefix Caching(前缀缓存)**：在实际应用中，很多请求往往共享相同的前缀内容（如系统提示词、模板等）。vLLM通过智能的前缀缓存机制，能够复用已计算的KV Cache，避免重复计算，显著降低了推理延迟和计算开销。
+**Prefix Caching (前缀缓存)**：在实际应用中，很多请求往往共享相同的前缀内容（如系统提示词、模板等）。vLLM 通过智能的前缀缓存机制，能够复用已计算的 KV Cache，避免重复计算，显著降低了推理延迟和计算开销。
 
-**Speculative Decoding(推测解码)**：为了进一步提升生成速度，vLLM集成了推测解码技术，通过使用较小的draft模型预先生成候选token，然后由主模型进行验证，实现了在保证输出质量的前提下大幅加速文本生成过程。
+**Speculative Decoding (推测解码)**：为了进一步提升生成速度，vLLM 集成了推测解码技术，通过使用较小的 draft 模型预先生成候选 token，然后由主模型进行验证，实现了在保证输出质量的前提下大幅加速文本生成过程。
 
-**分布式架构与多GPU协同**：面对大模型参数量不断增长的趋势，vLLM提供了完善的分布式解决方案，支持张量并行、流水线并行等多种并行策略，能够在多GPU、多节点环境下实现高效的模型推理，满足大规模生产环境的性能需求。
+**分布式架构与多 GPU 协同**：面对大模型参数量不断增长的趋势，vLLM 提供了完善的分布式解决方案，支持张量并行、流水线并行等多种并行策略，能够在多 GPU、多节点环境下实现高效的模型推理，满足大规模生产环境的性能需求。
 
-**动态扩缩容与服务化**：作为一个面向生产的推理框架，vLLM不仅关注性能优化，还提供了完整的服务化能力，包括请求路由、负载均衡、自动扩缩容等功能，使得用户能够轻松构建高可用、高性能的LLM服务集群。
+**动态扩缩容与服务化**：作为一个面向生产的推理框架，vLLM 不仅关注性能优化，还提供了完整的服务化能力，包括请求路由、负载均衡、自动扩缩容等功能，使得用户能够轻松构建高可用、高性能的 LLM 服务集群。
 
-通过对这些关键技术的深入分析，我们将展现vLLM如何通过系统性的优化设计，在保证推理质量的前提下，实现了相比传统方案数倍甚至数十倍的性能提升。这些技术创新不仅推动了LLM推理服务的发展，也为整个AI基础设施领域提供了宝贵的设计思路和实践经验。一共分为五个部分：
+通过对这些关键技术的深入分析，我们将展现 vLLM 如何通过系统性的优化设计，在保证推理质量的前提下，实现了相比传统方案数倍甚至数十倍的性能提升。这些技术创新不仅推动了 LLM 推理服务的发展，也为整个 AI 基础设施领域提供了宝贵的设计思路和实践经验。一共分为五个部分：
 
-• **LLM engine**以及**engine core**：包含了vLLM的基础架构（调度、PagedAttention、continous batching）
-• **Advanced Features 高级特性**：chunked prefill(分块预填充)、prefix caching(前缀缓存)、guided&speculative decoding(引导预测编码)、disaggregated P/D(Prefill-decoding分离)
-• **Scaling Up**：单进程执行到多进程多GPU
-• **Server Layer**：分布式集群服务化部署
-• **Benchmarks**与**Auto-tuning**：平衡延迟和吞吐
+ - **LLM engine** 以及 **engine core**：包含 vLLM 的基础架构（调度、PagedAttention、continuous batching）
+ - **Advanced Features（高级特性）**：chunked prefill（分块预填充）、prefix caching（前缀缓存）、guided & speculative decoding（引导解码与推测解码）、disaggregated P/D（Prefill-Decoding 分离）
+ - **Scaling Up**：单进程到多进程、多 GPU
+ - **Server Layer**：分布式集群服务化部署
+ - **Benchmarks 与 Auto-tuning**：平衡延迟与吞吐
 
 # LLM Engine & Engine Core
 
-在vLLM中，LLM Engine是最基础的block，在离线场景中，它本身就支持高吞土地推理。以下是一个简单的离线推理例子：
+在 vLLM 中，LLM Engine 是最基础的 block，在离线场景中，它本身就支持高吞吐量推理。以下是一个简单的离线推理例子：
 
-```Python
+```python
 from vllm import LLM, SamplingParams
 
 prompts = [
@@ -57,44 +57,43 @@ def main():
 if __name__ == "__main__":
     main()
 
-## Environment vars:
-##   VLLM_USE_V1="1" # we're using engine V1
-##   VLLM_ENABLE_V1_MULTIPROCESSING="0" # we're running in a single process
-## 
+# Environment vars:
+#   VLLM_USE_V1="1" # we're using engine V1
+#   VLLM_ENABLE_V1_MULTIPROCESSING="0" # we're running in a single process
 ```
 
 我们调用模型执行器的 `execute_model`，它会委派给 `Worker`，而 `Worker` 又会继续委派给 `model runner`。
 
 主要步骤如下：
 
-- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他metadata（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
-- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力metadata。
+- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他 metadata（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
+- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力 metadata。
 - **前向传播** —— 使用自定义的 PagedAttention 内核运行模型。所有序列会被展平并连接为一个长的“超级序列”。位置索引与注意力掩码确保每个序列只关注自己的 token，从而在不使用右侧填充的情况下实现持续批处理。
 - **收集最后一个 token 的状态** —— 为每个序列的最终位置提取隐藏状态并计算 `logits`。
 - **采样** —— 按照采样配置（贪心、温度、`top-p`、`top-k` 等）从计算出的 `logits` 中采样 token。
 
 前向步骤本身有两种执行模式：
 
-- **Eager 模式** —— 在启用 eager 执行时运行标准的 PyTorch 前向传播。
-- **“捕获”模式** —— 在未强制启用 eager 的情况下，执行或回放预先捕获的 CUDA Graph（还记得在引擎构建的初始化 KV cache 过程中我们已经捕获了它们）。
+- **Eager 模式（Eager Mode）** —— 在启用 eager 执行时运行标准的 PyTorch 前向传播。
+- **捕获模式（Capture Mode）** —— 在未强制启用 eager 的情况下，执行或回放预先捕获的 CUDA graph（还记得在引擎构建的初始化 KV cache 过程中我们已经捕获了它们）。
 
 这些配置有：
 
-- 离线模式（无Web服务或分布式系统架构）；
+- 离线模式（无 Web 服务或分布式系统架构）；
 - 同步执行（所有执行都在单个阻塞进程中进行）；
-- 单GPU（无数据/模型/流水线/专家并行；DP/TP/PP/EP = 1）；
-- 使用标准transformer结构（支持像Jamba这样的混合模型需要更复杂的混合KV缓存内存分配器）。
+- 单 GPU（无数据/模型/流水线/专家并行；DP/TP/PP/EP = 1）；
+- 使用标准 Transformer 结构（支持像 Jamba 这样的混合模型需要更复杂的混合 KV 缓存内存分配器）。
 
 在这个例子中，我们做了两件事：
-    1. 实例化了一个engine；
-    2. 通过给定的prompt来调用 `generate` 方法去做采样。
+    1. 实例化了一个 engine；
+    2. 通过给定的 prompt 来调用 `generate` 方法进行采样。
 
 ## LLM Engine constructor
 
 对于engine而言，核心的组成部分有：
 
   - vLLM config：包含模型配置的全部信息、cache、并行策略等；
-  - processer：通过validation、tokenization和processing将 `raw input` -> `EngineCoreRequests`;
+  - processor：通过 validation、tokenization 和 processing 将 `raw input` -> `EngineCoreRequests`;
   - engine core client：在我们的例子中使用了 `InprocClient` ，基本上等于 `EngineCore` ，会逐步搭建成 `DPLBAsyncMPClient` ，允许大规模提供服务；
   - output processor：将 `raw EngineCoreOutputs` -> `RequestOutputs` 转换给用户看。
 
@@ -113,12 +112,12 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 
 
 ```
-其中对于一个标准transformer层（非MLA）的block size可以通过以下方式计算：
+其中，对于一个标准 Transformer 层（非 MLA）的 block size 可通过以下方式计算：
 
 2 (key/value) * block_size (default=16) * num_kv_heads * head_size * dtype_num_bytes (e.g. 2 for bf16)
 ```
 
-当model excutor构建时，会创建一个 `Worker` 对象，并执行三个主要步骤（在使用 `MultiProcExecutor` 时，这些步骤会在不同 GPU 上的每个 worker 进程中独立运行）：
+当 model executor 构建时，会创建一个 `Worker` 对象，并执行三个主要步骤（在使用 `MultiProcExecutor` 时，这些步骤会在不同 GPU 上的每个 worker 进程中独立运行）：
 
 - 初始化设备:
     - 为该 worker 分配 CUDA 设备（e.g. `cuda:0` ），并检查模型的 dtype 是否受支持（e.g. `bf16` ）
@@ -138,7 +137,7 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
     - 运行一次dummy/profiling forward pass，并记录 GPU 内存快照，用于计算在可用显存中能容纳多少 KV cache blocks
     - 为注意力层分配、reshape并绑定 KV cache tensors
     - 准备 `attention metadata`（如将后端设置为 `FlashAttention` ），供后续前向过程中的内核使用
-    - 若未提供 `--enforce-eager` ，则针对若干预热批大小进行空跑并捕获 CUDA graph。CUDA graph会把整段 GPU 工作记录为一个 DAG；之后在前向过程中，我们会启动/回放这些预先捕获（预烘焙）的 CUDA graph，削减 kernel 启动开销，因而时延更低。
+    - 若未提供 `--enforce-eager`，则针对若干预热批大小进行空跑并捕获 CUDA graph。CUDA graph 会把整段 GPU 工作记录为一个 DAG；之后在前向过程中，我们会启动/回放这些预先捕获（预烘焙）的 CUDA graph，削减 kernel 启动开销，因而时延更低。
 
 我们在这里抽象掉了许多底层细节，但以上是后文将反复引用的核心组件与流程。引擎初始化完成后，继续进入 `generate` 函数。
 
@@ -147,9 +146,9 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 第一步是对请求进行校验并送入 engine 。对于每个 prompt，我们会：
 
 1. 创建一个唯一的请求 ID，并记录其到达时间。
-2. 调用输入预处理器对 prompt 进行标记化（tokenize），返回一个字典 dictionary，包含 `prompt` 、 `prompt_token_ids` ，以及一个 `type`（如 text、tokens、embeds, etc.）。
-3. 将这些信息打包成一个 `EngineCoreRequest` ，并添加优先级、采样参数及其他metadata。
-4. 将请求传入 engine core，core 会将其包装为一个 `Request` 对象并将状态设为 `WAITING` ；随后把该请求加入调度器的等待队列（若为先来先服务 FCFS 则使用 append；若为优先级调度则使用 heap-push）。
+2. 调用输入预处理器对 prompt 进行标记化（tokenize），返回一个字典 dictionary，包含 `prompt`、`prompt_token_ids`，以及一个 `type`（如 text、tokens、embeds, etc.）。
+3. 将这些信息打包成一个 `EngineCoreRequest`，并添加优先级、采样参数及其他 metadata。
+4. 将请求传入 engine core，core 会将其包装为一个 `Request` 对象并将状态设为 `WAITING`；随后把该请求加入调度器的等待队列（若为先来先服务 FCFS 则使用 append；若为优先级调度则使用 heap-push）。
 
 至此，引擎已经“进料”，执行即可开始。在同步引擎示例中，只会处理这些初始 prompt——运行过程中无法插入新请求。相反，异步引擎支持在运行中注入请求（即“持续批处理” continuous batching）：在每一步之后，同时考虑新请求与已有请求。
 
@@ -158,15 +157,17 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 ```
 
 接下来，只要仍有请求待处理，引擎就会反复调用 `step()` 函数。每一步包含三个阶段：
-- 调度（Schedule）：选择本步要运行的请求（ decode ，and/or (chunked) prefill ）。
+
+- 调度（Schedule）：选择本步要运行的请求（decode，and/or (chunked) prefill）。
 - 前向传播（Forward pass）：运行模型并进行 token 采样。
-- 后处理（Postprocess）：将采样得到的 token ID 追加到各个 `Request` ，执行反标记化（`detokenize`），并检查停止条件。若某个请求已完成，则进行清理（例如把它的 KV Cache block 归还到 `free_block_queue` ），并提前返回该请求的输出。
+- 后处理（Postprocess）：将采样得到的 token ID 追加到各个 `Request`，执行反标记化（`detokenize`），并检查停止条件。若某个请求已完成，则进行清理（例如把它的 KV Cache block 归还到 `free_block_queue`），并提前返回该请求的输出。
 
 📝 停止条件包括：
-- 请求超过长度上限（ `max_model_length` 或其自身的 `max_tokens` ）。
+
+- 请求超过长度上限（`max_model_length` 或其自身的 `max_tokens`）。
 - 采样到 EOS ID（除非启用了 `ignore_eos` → 在 benchmarking 中可用于强制生成固定数量的输出 token）。
-- 采样到的 token 匹配到采样参数中指定的任意 `stop_token_ids` 。
-- 输出中出现停止字符串（stop strings）——我们会将输出截断到首次出现停止字符串的位置，并在引擎中终止该请求（注意： stop_token_ids 会保留在输出中，而停止字符串不会保留）。
+- 采样到的 token 匹配到采样参数中指定的任意 `stop_token_ids`。
+- 输出中出现停止字符串（stop strings）——我们会将输出截断到首次出现停止字符串的位置，并在引擎中终止该请求（注意：stop_token_ids 会保留在输出中，而停止字符串不会保留）。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-2.png)
 
@@ -207,16 +208,16 @@ Scheduler 优先处理 decode 请求——即那些已经在运行队列中的�
 
 主要步骤如下：
 
-- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他metadata（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
-- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力metadata。
+- **更新状态** —— 从 `input_batch` 中裁剪已完成的请求；更新与前向传播相关的其他 metadata（例如每个请求的 KV cache 块数，用于在分页的 KV cache 内存中建立索引）。
+- **准备输入** —— 将缓冲区从 `CPU→GPU` 复制；计算位置；构建 `slot_mapping`（示例中会详细说明）；构造注意力 metadata。
 - **前向传播** —— 使用自定义的 PagedAttention 内核运行模型。所有序列会被展平并拼接为一个长的“超级序列”。位置索引与注意力掩码确保每个序列只关注自身的 token，从而在不进行右侧填充的情况下实现 continuous batching。
 - **收集最后一个 token 的状态** —— 为每个序列的最终位置提取隐藏状态并计算 `logits`。
 - **采样** —— 按照采样配置（greedy、temperature、top-p、top-k 等）从计算得到的 `logits` 中采样 token。
 
 前向步骤本身有两种执行模式：
 
-- **Eager Mode* —— 启用 eager 执行时运行标准的 PyTorch 前向传播。
-- **“Capture” Mode** —— 在未强制启用 eager 的情况下，执行/回放预先捕获的 CUDA Graph（还记得我们在引擎构建的初始化 KV cache 过程中已捕获这些 graph）。
+- **Eager 模式（Eager Mode）** —— 启用 eager 执行时运行标准的 PyTorch 前向传播。
+- **捕获模式（Capture Mode）** —— 在未强制启用 eager 的情况下，执行/回放预先捕获的 CUDA graph（还记得我们在引擎构建的初始化 KV cache 过程中已捕获这些 graph）。
 
 下面是一个具体示例，可帮助你更清晰地理解 continuous batching 和 PagedAttention：
 
@@ -275,7 +276,7 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-Prefix caching 用于避免对多个 prompt 共享的开头部分重复计算（因此称为 **“前缀 Prefix”** ）。
+Prefix caching 用于避免对多个 prompt 共享的开头部分重复计算（因此称为 **"前缀 Prefix"**）。
 
 关键在于 `long_prefix`：它被定义为长度超过一个 KV cache block 的前缀（默认每块 16 tokens）。为简化示例，假设 `long_prefix` 的长度恰好为 `n × block_size`（其中 `n ≥ 1`）。
 
@@ -288,7 +289,7 @@ Prefix caching 用于避免对多个 prompt 共享的开头部分重复计算（
 在首次 `generate` 调用的调度阶段，`kv_cache_manager.get_computed_blocks` 内，engine 会调用 `hash_request_tokens`：
 
 - 将 `long_prefix + prompts[0]` 按 16-token 切分为 chunks。
- - 对每个完整 chunk 计算一个 hash（使用内建 `hash` 或 `SHA-256`，后者更慢但 hash 冲突更少）。该 hash 组合了上一块的 hash、当前 tokens 以及可选metadata。可选metadata包括：`MM hash`、`LoRA ID`、`cache salt`（注入首块的 hash，保证只有携带该 `cache salt` 的请求能复用这些块）。
+- 对每个完整 chunk 计算一个 hash（使用内建 `hash` 或 `SHA-256`，后者更慢但 hash 冲突更少）。该 hash 组合了上一块的 hash、当前 tokens 以及可选 metadata。可选 metadata 包括：`MM hash`、`LoRA ID`、`cache salt`（注入首块的 hash，保证只有携带该 `cache salt` 的请求能复用这些块）。
 - 每个结果以 `BlockHash` 对象存储，包含其 hash 与 token IDs；函数返回一个 block hashes 列表。
 
 该列表写入 `self.req_to_block_hashes[request_id]`。
@@ -392,7 +393,7 @@ vLLM 中的工作方式：
     - 若所有 `k` 个草稿 token 都被接受，还可以从大模型“免费”采样额外的第 `k+1` 个 token（因为我们已经计算了该分布）。
     - 若发生了拒绝，则在该位置构造一个重新平衡的分布（`p_large - p_draft`，最小值钳制为 0，并归一化为 1），并从中采样最后一个 token。
 
-**Why this works**：尽管我们使用小模型提出候选，但accept/reject规则保证了在期望意义上，序列的分布与逐 token 从大型模型采样的结果完全一致。这意味着 speculative decoding 在统计上等价于标准的自回归解码，但潜在获得更快的decoding速度，因为一次大型模型的前向传播即可产出至多 `k+1` 个 token。
+**Why this works**：尽管我们使用小模型提出候选，但 accept/reject 规则保证了在期望意义上，序列的分布与逐 token 从大型模型采样的结果完全一致。这意味着 speculative decoding 在统计上等价于标准的自回归解码，但潜在获得更快的 decoding 速度，因为一次大型模型的前向传播即可产出至多 `k+1` 个 token。
 
 vLLM V1 不支持“LLM draft model”的方法，而是实现了更快但精度较低的提议方案：`n-gram`、`EAGLE` 和 `Medusa`。
 
@@ -578,7 +579,7 @@ vLLM 的 `MultiProcExecutor` 运行机制如下：
 7. 工作循环：workers 进入忙循环，阻塞在 `rpc_broadcast_mq.dequeue`；工作项到达后，执行该项（路径与 `UniProcExecutor` 相同，但内容为 TP/PP 特定的分片任务），并通过 `worker_response_mq.enqueue` 发送结果。
 8. 运行时调度：当请求抵达引擎，`MultiProcExecutor` 会以非阻塞方式将其广播入队到所有子 worker 的 `rpc_broadcast_mq`；随后在指定输出 `rank` 的 `worker_response_mq.dequeue` 上等待，以收集最终结果。
 
-从引擎视角，所有的接口保持不变。多进程的复杂度被 `model executor.execute_model` 通过调用 model excutor 的 `execute_model` 函数所抽象：
+从引擎视角，所有的接口保持不变。多进程的复杂度被 `model executor.execute_model` 通过调用 model executor 的 `execute_model` 函数所抽象：
 
 - `UniProcExecutor`：`execute_model` 直接触达单个 worker 的 `execute_model`；
 - `MultiProcExecutor`：`execute_model` 通过 `rpc_broadcast_mq` 间接触达每个 worker 的 `execute_model`。
@@ -606,7 +607,7 @@ vllm serve <model-name>
   --headless
 ```
 
-以同样的命令在另一个节点上运行，但是进行两处调整，不实用 `--headless`， 并且修改 `--data-parallel-start-rank` 为 `2`。
+以同样的命令在另一个节点上运行，但进行两处调整：不使用 `--headless`，并修改 `--data-parallel-start-rank` 为 `2`。
 
 ```bash
 vllm serve <model-name>
@@ -749,11 +750,11 @@ curl -X POST http://localhost:8000/v1/completions -H "Content-Type: application/
 vLLM 提供 `vllm bench {serve,latency,throughput}` 命令行工具（CLI），它封装了 `vllm/benchmarks/{server,latency,throughput}.py` 三个脚本，便于统一运行与统计。
 
 脚本功能如下：
-- `latency`：使用较短的输入（默认 32 tokens），以较小的批（默认 8）采样 128 个输出 token。脚本会运行多次迭代，并报告该批的一端到端（e2e）延迟。
+- `latency`：使用较短的输入（默认 32 tokens），以较小的批（默认 8）采样 128 个输出 token。脚本会运行多次迭代，并报告该批的端到端（e2e）延迟。
 - `throughput`：一次性提交一组固定的提示（默认：1000 条 ShareGPT 样本），即 QPS=Inf 模式；并在整次运行中统计并报告输入/输出/总 token 以及每秒请求数（RPS）。
 - `serve`：启动一个 vLLM 服务器，并通过从泊松分布（或更一般地，Gamma 分布）抽取请求到达间隔来模拟真实世界负载。在给定时间窗内发送请求，测量前述各项指标；同时可以选择在服务端启用最大并发限制（通过信号量实现，例如限制为 64 个并发请求）。
 
-示例：运行 `latency` 脚本（其中Benchmark configs used in CI live under .buildkite/nightly-benchmarks/tests.）
+示例：运行 `latency` 脚本（其中Benchmark configs used in CI live under `.buildkite/nightly-benchmarks/tests`.）
 
 ```bash
 vllm bench latency
@@ -767,23 +768,29 @@ vllm bench latency
 
 # Epilogue
 
-# Acknowledgements
+我们从基本的引擎核心（UniprocExecutor）开始，添加了投机解码和前缀缓存等高级功能，扩展到 MultiProcExecutor（TP/PP > 1），最后进行横向扩展，将所有内容包装在异步引擎和分布式服务堆栈中——最后介绍了如何测量系统性能。
 
-A huge thank you to Hyperstack for providing me with H100s for my experiments over the past year!
+vLLM 还包含一些被我们略过的专门处理。例如：
 
-Thanks to Nick Hill (core vLLM contributor, RedHat), Mark Saroufim (PyTorch), Kyle Krannen (NVIDIA, Dynamo), and Ashish Vaswani for reading pre-release version of this blog post and providing feedback!
+- **Diverse hardware backends**：TPUs、AWS Neuron（Trainium/Inferentia）等；
+- **Architectures/techniques**：MLA、MoE、编码器-解码器（例如 Whisper）、池化/嵌入模型、EPLB、m-RoPE、LoRA、ALiBi、无注意力变体、滑动窗口注意力、多模态 LM 和状态空间模型（例如 Mamba/Mamba-2、Jamba）；
+- **TP/PP/SP**；
+- **Hybrid KV-cache logic (Jenga)**，更复杂的采样方法如束搜索采样等；
+- **实验性功能**：异步调度。
+
+好的一点是，这些大部分都与上述描述的主要流程正交——你几乎可以将它们视为"插件"（当然，在实践中存在一些耦合）。
 
 # References
 
-1. vLLM https://github.com/vllm-project/vllm
-2. "Attention Is All You Need", https://arxiv.org/abs/1706.03762
-3. "Efficient Memory Management for Large Language Model Serving with PagedAttention", https://arxiv.org/abs/2309.06180
-4. "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model", https://arxiv.org/abs/2405.04434
-5. "Jenga: Effective Memory Management for Serving LLM with Heterogeneity", https://arxiv.org/abs/2503.18292
-6. "Orca: A Distributed Serving System for Transformer-Based Generative Models", https://www.usenix.org/conference/osdi22/presentation/yu
-7. "XGrammar: Flexible and Efficient Structured Generation Engine for Large Language Models", https://arxiv.org/abs/2411.15100
-8. "Accelerating Large Language Model Decoding with Speculative Sampling", https://arxiv.org/abs/2302.01318
-9. "EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty", https://arxiv.org/abs/2401.15077
-10. "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads", https://arxiv.org/abs/2401.10774
-11. LMCache, https://github.com/LMCache/LMCache
+1. [vLLM](https://github.com/vllm-project/vllm)
+2. ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762)
+3. ["Efficient Memory Management for Large Language Model Serving with PagedAttention"](https://arxiv.org/abs/2309.06180)
+4. ["DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model"](https://arxiv.org/abs/2405.04434)
+5. ["Jenga: Effective Memory Management for Serving LLM with Heterogeneity"](https://arxiv.org/abs/2503.18292)
+6. ["Orca: A Distributed Serving System for Transformer-Based Generative Models"](https://www.usenix.org/conference/osdi22/presentation/yu)
+7. ["XGrammar: Flexible and Efficient Structured Generation Engine for Large Language Models"](https://arxiv.org/abs/2411.15100)
+8. ["Accelerating Large Language Model Decoding with Speculative Sampling"](https://arxiv.org/abs/2302.01318)
+9. ["EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty"](https://arxiv.org/abs/2401.15077)
+10. ["Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads"](https://arxiv.org/abs/2401.10774)
+11. [LMCache](https://github.com/LMCache/LMCache)
 

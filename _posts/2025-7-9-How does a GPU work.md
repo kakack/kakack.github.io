@@ -181,7 +181,7 @@ CPU是整个系统的核心，是总指挥，GPU的任务指令是由CPU分配�
 
 ### **CPU实现**
 
-```C++
+```c++
 #include <iostream>
 #include <math.h>
 #include <chrono>
@@ -231,7 +231,7 @@ int main(void)
 
 性能表现：
 
-```Bash
+```bash
 g++ add.cpp -o add
 time ./add
 
@@ -255,7 +255,7 @@ sys 0m4.400s
 3. 执行Kernel函数: 在GPU上启动addKernel函数，利用其大规模并行能力进行计算。
 4. 数据传回 (D2H): 将GPU计算完成的结果 (d_y) 拷贝回CPU内存 (h_y) 以便后续使用或验证。
 
-```C++
+```c++
 #include <iostream>
 #include <math.h>
 
@@ -341,7 +341,7 @@ int main(void)
 
 性能表现：
 
-```Bash
+```bash
 nvcc  add.cu -o add_cu -gencode arch=compute_75,code=sm_75
 time ./add_cu
 

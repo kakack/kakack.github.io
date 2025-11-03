@@ -65,7 +65,7 @@ DBNet 整体流程如下：
 
 由 F 计算得到 P 和 T 可以表示为：
 
-```Python
+```python
 1         binary = self.binarize(fuse)   #由F得到P,fuse为特征图F
 2         if self.training:
 3             result = OrderedDict(binary=binary)
@@ -81,7 +81,7 @@ DBNet 整体流程如下：
 
 其中第一行通过 `fuse` 得到 `binary`（即 P），具体实现在 `self.binarize`：
 
-```Python
+```python
 1         self.binarize = nn.Sequential(
 2             nn.Conv2d(inner_channels, inner_channels //
 3                       4, 3, padding=1, bias=bias),   #shape:(batch,256,1/4W,1/4H)
