@@ -111,11 +111,10 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-1.png)
 
 
-```
 其中，对于一个标准 Transformer 层（非 MLA）的 block size 可通过以下方式计算：
 
-2 (key/value) * block_size (default=16) * num_kv_heads * head_size * dtype_num_bytes (e.g. 2 for bf16)
-```
+`2 (key/value) * block_size (default=16) * num_kv_heads * head_size * dtype_num_bytes (e.g. 2 for bf16)`
+
 
 当 model executor 构建时，会创建一个 `Worker` 对象，并执行三个主要步骤（在使用 `MultiProcExecutor` 时，这些步骤会在不同 GPU 上的每个 worker 进程中独立运行）：
 
@@ -152,9 +151,7 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 
 至此，引擎已经“进料”，执行即可开始。在同步引擎示例中，只会处理这些初始 prompt——运行过程中无法插入新请求。相反，异步引擎支持在运行中注入请求（即“持续批处理” continuous batching）：在每一步之后，同时考虑新请求与已有请求。
 
-```
 前向传播将 batch 扁平化为单序列，配合高效的定制 kernel 处理路径，使得即使在同步引擎中也天然具备 continuous batching 能力。
-```
 
 接下来，只要仍有请求待处理，引擎就会反复调用 `step()` 函数。每一步包含三个阶段：
 
