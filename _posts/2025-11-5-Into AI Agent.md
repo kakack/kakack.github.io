@@ -27,7 +27,18 @@ pinned: false
 
 当需要更高的复杂性时，对于定义明确的任务，workflows 提供了可预测性（predictability）和一致性（consistency），而当需要大规模的灵活性和模型驱动的决策时，agents 则是更好的选择。然而，对于许多应用程序来说，通过检索和上下文示例来优化单次 LLM 调用通常就足够了。
 
+# 什么时候如何使用 framworks
 
+当前有许多 frameworks 可以用来帮助 agentic systems 更简单地被用到，包括：
+
+- The [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview);
+- Amazon Bedrock's [AI Agent framework](https://aws.amazon.com/bedrock/agents/);
+- [Rivet](https://rivet.ironcladapp.com/), a drag and drop GUI LLM workflow builder; and
+- [Vellum](https://www.vellum.ai/), another GUI tool for building and testing complex workflows.
+
+这些框架通过简化标准的底层任务（如调用 LLMs、定义和解析 tools、以及将调用链接在一起）来让起步变得容易。然而，它们常常会创造出额外的抽象层，这可能会掩盖底层的提示（prompts）和响应，从而使调试变得更加困难。它们也可能诱使你在一个更简单的设置就足够的情况下增加不必要的复杂性。
+
+我们建议开发者从直接使用 LLM APIs 开始：许多模式只需几行代码即可实现。如果你确实使用了框架，请确保你理解其底层代码。对底层机制的错误假设是客户出错的一个常见来源。
 
 
 大模型 Agent 和 workflow 的区别在哪里？ - yuan的回答 - 知乎
