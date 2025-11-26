@@ -1,15 +1,13 @@
 ---
 ---
 
-//
-// IMPORTS
-//
+/* IMPORTS */
 
 @import "reset";
 @import "open-color";
 @import "variables";
 
-// Syntax highlighting @import is at the bottom of this file
+/* Syntax highlighting @import is at the bottom of this file */
 
 /**************/
 /* BASE RULES */
@@ -266,7 +264,7 @@ a.footnote {
 img {
   display: block;
   max-width: 100%;
-  margin: 0 0 1em;
+  margin: 0 auto 1em;
   border-radius: 5px;
 }
 
