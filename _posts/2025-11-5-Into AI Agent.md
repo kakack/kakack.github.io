@@ -87,9 +87,11 @@ LLM 有时可以同时处理一个任务，并以编程方式聚合它们的输�
 - **分片 (Sectioning)**：将一个任务分解为并行运行的独立子任务。
 - **投票 (Voting)**：多次运行同一个任务以获得多样化的输出。
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/251105-04.png)
+
 **何时使用此 workflow**：当划分的_子任务可以为了速度而并行化时，或者当需要多个视角或尝试以获得更高置信度的结果时，并行化 (Parallelization) 是有效的。对于具有多种考虑因素的复杂任务，LLM 通常在每个考虑因素由单独的 LLM 调用处理时表现更好，从而可以集中关注每个特定方面。
 
-**并行化有用的例子**：
+**适用于并行化 workflow 场景的例子**：
 
 **分片 (Sectioning)**：
 - 实现 `guardrails`，其中一个模型实例处理用户查询，而另一个实例筛选不当内容或请求。这通常比让同一个 LLM 调用同时处理 `guardrails` 和核心响应表现得更好。
@@ -99,12 +101,68 @@ LLM 有时可以同时处理一个任务，并以编程方式聚合它们的输�
 - 审查一段代码的漏洞，其中几个不同的 `prompts` 会审查代码，如果发现问题就进行标记。
 - 评估一段给定的内容是否不当，通过多个 `prompts` 评估不同方面或要求不同的投票阈值来平衡假阳性和假阴性。
 
+## Workflow: Orchestrator-workers
+
+在 orchestrator-workers (协调器-工作者) workflow 中，一个中心的 LLM 会动态地分解任务，将它们委托给 worker LLMs，并综合它们的结果。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/251105-05.png)
+
+**何时使用此 workflow**：此 workflow 非常适用于你无法预测所需子任务的复杂任务（例如，在编码中，需要更改的文件数量以及每个文件中更改的性质可能取决于任务）。虽然它在拓扑上与并行化相似，但关键区别在于其灵活性——子任务不是预先定义的，而是由 orchestrator (协调器) 根据具体输入决定的。
+
+**适用于 Orchestrator-workers workflow 场景的例子**：
+
+- 每次都对多个文件进行复杂更改的编码产品。
+- 涉及从多个来源收集和分析信息以获取可能相关信息的搜索任务。
+
+## Workflow: Evaluator-optimizer
+
+在 evaluator-optimizer (评估器-优化器) workflow 中，一个 LLM 调用生成响应，而另一个 LLM 则在循环中提供评估和反馈。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/251105-06.png)
+
+**何时使用此 workflow**：当我们有明确的评估标准，并且迭代优化能提供可衡量的价值时，此 workflow 特别有效。两个合适的迹象是：首先，当人类明确表达他们的反馈时，LLM 的响应可以得到明显改善；其次，LLM 能够提供此类反馈。这类似于人类作者在撰写一篇精炼文档时可能经历的迭代写作过程。
+
+**适用于 Evaluator-optimizer workflow 场景的例子**：
+
+- 文学翻译，其中存在翻译器 LLM 最初可能无法捕捉到的细微差别，但评估器 LLM 可以提供有用的评论。
+- 复杂的搜索任务，需要多轮搜索和分析以收集全面的信息，其中评估器决定是否需要进一步搜索。
+
+# Agents
+
+随着 LLMs 在关键能力——理解复杂输入、进行推理和规划、可靠地使用 tools、以及从错误中恢复——方面日趋成熟，Agents 正在生产环境中崭露头角。Agents 的工作始于人类用户的命令或互动式讨论。一旦任务明确，agents 就会独立规划和操作，并可能返回给人类以获取更多信息或判断。在执行过程中，至关重要的是 agents 在每一步都从环境中获取“ground truth”（例如 tool 调用结果或代码执行情况）来评估其进展。然后，Agents 可以在 checkpoints 或遇到 blockers 时暂停以获取人类反馈。任务通常在完成后终止，但包含停止条件（例如最大迭代次数）以保持控制也很常见。
+
+Agents 可以处理复杂的任务，但它们的实现通常很简单。它们通常只是在循环中基于环境反馈使用 tools 的 LLMs。因此，清晰周到地设计 toolsets 及其文档至关重要。我们将在附录2（“Prompt Engineering your Tools”）中详细阐述工具开发的最佳实践。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/251105-07.png)
+
+**何时使用 agents**：Agents 可用于开放式问题，这些问题难以或不可能预测所需的步骤数，并且你无法硬编码固定的路径。LLM 可能会运行多轮，你必须对其决策有一定程度的信任。Agents 的自主性使其成为在受信任环境中扩展任务的理想选择。
+
+agents 的自主性意味着更高的成本和复合错误的潜力。我们建议在沙盒环境中进行广泛测试，并配备适当的 `guardrails`。
+
+**适用于 agents 场景的例子**：
+
+以下示例来自我们自己的实现：
+
+- 一个用于解决 SWE-bench 任务的编码 Agent，其中涉及根据任务描述对多个文件进行编辑；
+- 我们的“计算机使用”参考实现，其中 Claude 使用计算机来完成任务。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/251105-08.png)
+
+# Combining and customizing these patterns
+
+这些构建块并非规定性的。它们是开发者可以根据不同用例塑造和组合的常见模式。成功的关键，与任何 LLM 功能一样，在于衡量性能和迭代实现。重申一遍：只有在能够证明增加复杂性可以显著改善结果时，你才应该考虑这样做。
+
+# Summary
+
+在 LLM 领域取得成功，关键不在于构建最复杂的系统，而在于构建满足你需求的正确系统。从简单的 prompts 开始，通过全面的评估来优化它们，只有在更简单的解决方案无法满足需求时，才添加多步骤的 agentic systems。
+
+在实现 agents 时，我们尝试遵循三个核心原则：
+
+- 保持 agent 设计的简洁性。
+- 通过明确展示 agent 的规划步骤来优先考虑透明度。
+- 通过详尽的 tool 文档和测试，精心打造你的 agent-computer interface (ACI)。
+
+Frameworks 可以帮助你快速入门，但在转向生产环境时，不要犹豫，减少抽象层，用基础组件来构建。通过遵循这些原则，你可以创建出不仅功能强大，而且可靠、可维护、并受用户信赖的 agents。
 
 
-
-
-大模型 Agent 和 workflow 的区别在哪里？ - yuan的回答 - 知乎
-https://www.zhihu.com/question/1896707093580448857/answer/1943828960061419721
-
-
-https://www.anthropic.com/engineering/building-effective-agents
+原文：[Building effective agents by Anthropic](https://www.anthropic.com/engineering/building-effective-agents)
