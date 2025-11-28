@@ -35,7 +35,7 @@ pinned: false
  - **Server Layer**：分布式集群服务化部署
  - **Benchmarks 与 Auto-tuning**：平衡延迟与吞吐
 
-# LLM Engine & Engine Core
+## LLM Engine & Engine Core
 
 在 vLLM 中，LLM Engine 是最基础的 block，在离线场景中，它本身就支持高吞吐量推理。以下是一个简单的离线推理例子：
 
@@ -57,9 +57,9 @@ def main():
 if __name__ == "__main__":
     main()
 
-# Environment vars:
-#   VLLM_USE_V1="1" # we're using engine V1
-#   VLLM_ENABLE_V1_MULTIPROCESSING="0" # we're running in a single process
+## Environment vars:
+##   VLLM_USE_V1="1" ## we're using engine V1
+##   VLLM_ENABLE_V1_MULTIPROCESSING="0" ## we're running in a single process
 ```
 
 我们调用模型执行器的 `execute_model`，它会委派给 `Worker`，而 `Worker` 又会继续委派给 `model runner`。
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     1. 实例化了一个 engine；
     2. 通过给定的 prompt 来调用 `generate` 方法进行采样。
 
-## LLM Engine constructor
+### LLM Engine constructor
 
 对于engine而言，核心的组成部分有：
 
@@ -140,7 +140,7 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 
 我们在这里抽象掉了许多底层细节，但以上是后文将反复引用的核心组件与流程。引擎初始化完成后，继续进入 `generate` 函数。
 
-## Generate function
+### Generate function
 
 第一步是对请求进行校验并送入 engine 。对于每个 prompt，我们会：
 
@@ -170,7 +170,7 @@ KV Cache Manager 维护了 `free_block_queue`，也就是可用的 KV Cache bloc
 
 在流式模式中，我们会在生成过程中实时发送中间 token，但这里暂不展开。接下来，我们将更详细地讨论调度。
 
-## Scheduler
+### Scheduler
 
 推理引擎处理两种主要类型的工作负载：
 
@@ -199,7 +199,7 @@ Scheduler 优先处理 decode 请求——即那些已经在运行队列中的�
 
 最终，我们准备好做一次前向传递了。
 
-## Run Forward pass
+### Run Forward pass
 
 我们调用模型执行器的 `execute_model`，它会委派给 `Worker`，而 `Worker` 又进一步委派给 `model runner`。
 
@@ -220,7 +220,7 @@ Scheduler 优先处理 decode 请求——即那些已经在运行队列中的�
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-4.png)
 
-# Advanced Features — extending the core engine logic
+## Advanced Features — extending the core engine logic
 
 在掌握基本的引擎流程后，我们可以继续了解一些高级特性。
 
@@ -234,7 +234,7 @@ Scheduler 优先处理 decode 请求——即那些已经在运行队列中的�
 - Speculative decoding
 - Disaggregated P/D
 
-## Chunked prefill
+### Chunked prefill
 
 Chunked prefill（分块式 prefill）是一种通过将长 prompt 的 prefill 步骤拆分为更小的 chunk 来处理长 prompt 的技术。若不使用该方法，一个非常长的请求可能会在某次 `engine step` 中长时间独占执行，阻止其他 prefill 请求运行，从而推迟所有其他请求并显著提高它们的延迟。
 
@@ -248,7 +248,7 @@ Chunked prefill（分块式 prefill）是一种通过将长 prompt 的 prefill �
 
 在 vLLM V1 中，通过将 `long_prefill_token_threshold` 设置为正整数即可启用 chunked prefill。（从技术上讲，即使未显式设置也可能发生：若 prompt 长度超过 token 预算，我们会先截断它，并以分块 prefill 的方式运行。）
 
-## Prefix Caching
+### Prefix Caching
 
 为了解释 prefix caching 的工作原理，可以参考以下代码：
 
@@ -318,7 +318,7 @@ Prefix caching 用于避免对多个 prompt 共享的开头部分重复计算（
 
 Prefix caching 默认启用。若要关闭：将 `enable_prefix_caching = False`。
 
-## Guided Decoding (FSM)
+### Guided Decoding (FSM)
 
 Guided decoding（引导式解码）是一种在每个解码步对 `logits` 施加约束的技术，约束由基于语法的有限状态机（FSM）定义。这确保了只会采样语法允许的 token。
 
@@ -373,7 +373,7 @@ vLLM 中的工作方式：
 
 在 vLLM 中，你可以通过传入所需的 `guided_decoding` 配置来启用该功能。
 
-## Speculative Decoding
+### Speculative Decoding
 
 在自回归生成（autoregressive generation）中，每产生一个新 token 都需要对 LLM 做一次前向传播（forward pass）。这个操作的计算开销非常大，因为每一步都要重新加载并应用全部模型权重，只为计算一个 token！（假设 `batch size == 1`，更一般的情况是 `B`）
 
@@ -451,7 +451,7 @@ vLLM 中的工作方式：
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-12.png)
 
-## Disaggregated P/D
+### Disaggregated P/D
 
 我此前已经提到过进行 P/D（prefill/decode）解耦的动机。
 
@@ -492,10 +492,10 @@ def run_prefill(prefill_done):
   llm = LLM(model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", kv_transfer_config=ktc)
   llm.generate(prompts, sampling_params)
 
-  prefill_done.set()  # notify decode instance that KV cache is ready
+  prefill_done.set()  ## notify decode instance that KV cache is ready
 
-  # To keep the prefill node running in case the decode node is not done;
-  # otherwise, the script might exit prematurely, causing incomplete decoding.
+  ## To keep the prefill node running in case the decode node is not done;
+  ## otherwise, the script might exit prematurely, causing incomplete decoding.
   try:
       while True:
           time.sleep(1)
@@ -515,9 +515,9 @@ def run_decode(prefill_done):
 
   llm = LLM(model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", kv_transfer_config=ktc)
 
-  prefill_done.wait()  # block waiting for KV cache from prefill instance
+  prefill_done.wait()  ## block waiting for KV cache from prefill instance
 
-  # Internally it'll first fetch KV cache before starting the decoding loop
+  ## Internally it'll first fetch KV cache before starting the decoding loop
   outputs = llm.generate(prompts, sampling_params)
 
 if __name__ == "__main__":
@@ -554,7 +554,7 @@ vLLM 中的步骤如下：
 - 依据配置，KV 也可以按层进行传输（在每个注意力层前/后进行加载/保存）。
 - `decode` 仅在其请求的第一步加载一次外部 KV；之后便在本地进行计算与存储。
 
-# From UniprocExecutor to MultiProcExecutor
+## From UniprocExecutor to MultiProcExecutor
 
 在核心技术已经就位后，我们可以开始讨论扩容（scaling up）。假设你的模型权重已经无法放入单张 GPU 的显存。首选方案是在同一节点上使用张量并行（tensor parallelism，TP），将模型在多块 GPU 之间分片（例如 `TP=8`）。如果模型仍然无法容纳，下一步是跨节点的流水线并行（pipeline parallelism，PP）。但是在实际操作中，我们注意到几个点：
 
@@ -585,7 +585,7 @@ vLLM 的 `MultiProcExecutor` 运行机制如下：
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/250715-14.png)
 
-# Distributed system serving vLLM
+## Distributed system serving vLLM
 
 在生产环境中，搭建推理服务基础设施的方式有很多。为保持具体，这里举一个例子：假设我们有两台 H100 节点，并希望在它们上运行四个 vLLM 引擎。如果模型需要 `TP=4`，可以将节点按如下方式进行配置。
 
@@ -616,7 +616,7 @@ vllm serve <model-name>
   --data-parallel-rpc-port 13345
 ```
 
-## On the headless server node
+### On the headless server node
  
 在 headless 节点上，`CoreEngineProcManager` 会启动 2 个进程（由 `--data-parallel-size-local` 指定），每个进程运行 `EngineCoreProc.run_engine_core`。这些函数各自创建一个 `DPEngineCoreProc`（引擎核心），随后进入其忙循环。
 
@@ -651,7 +651,7 @@ vllm serve <model-name>
 
 现在来看第二部分，API 服务器节点上发生了什么？
 
-## On the API server node
+### On the API server node
 
 在前端（API 服务器）节点，我们实例化一个 `AsyncLLM` 对象（对 LLM 引擎的 `asyncio` 封装）。其内部会创建 `DPLBAsyncMPClient`（数据并行、负载均衡、异步、多进程客户端）。
 
@@ -710,7 +710,7 @@ curl -X POST http://localhost:8000/v1/completions -H "Content-Type: application/
 
 就这样，你的补全结果返回了——整个分布式系统都隐藏在一个简单的 `curl` 命令背后！当增加更多 API 服务器时，负载均衡主要由操作系统/套接字层处理。从应用视角看，几乎无需改动——复杂性被抽象掉了。而当使用 Ray 作为 DP 后端时，可以暴露一个 URL 端点（`/scale_elastic_ep`），以实现对引擎副本数量的自动扩缩。
 
-# Benchmarks and auto-tuning - latency vs throughput
+## Benchmarks and auto-tuning - latency vs throughput
 
 到目前为止，我们一直在分析 “gas particles” ——请求如何在 engine /系统内部流动的细节。现在是时候拉远视角，整体审视系统，并提出一个问题：如何度量一个推理系统的性能？
 
@@ -742,7 +742,7 @@ curl -X POST http://localhost:8000/v1/completions -H "Content-Type: application/
 
 更严谨的分析还需要考虑内核自动调优（kernel auto-tuning）：随着批量 `B` 增大，运行时可能会针对该形状切换到更高效的内核，从而改变实际达到的性能 `P_kernel`。步延迟可表示为 `t = FLOPs_step / P_kernel`，其中 `FLOPs_step` 是该步的计算工作量。可以看到，当 `P_kernel` 接近峰值性能 `P_peak` 时，每步的计算量增加会直接导致延迟上升。
 
-## How to benchmark in vLLM
+### How to benchmark in vLLM
 
 vLLM 提供 `vllm bench {serve,latency,throughput}` 命令行工具（CLI），它封装了 `vllm/benchmarks/{server,latency,throughput}.py` 三个脚本，便于统一运行与统计。
 
@@ -763,7 +763,7 @@ vllm bench latency
 
 此外，还提供一个自动调优脚本：它通过驱动 `serve` 基准测试来搜索满足目标 SLO 的参数设置（例如：“在保持 p99 端到端延迟 < 500 ms 的同时最大化吞吐量”），并返回一个建议配置。
 
-# Epilogue
+## Epilogue
 
 我们从基本的引擎核心（UniprocExecutor）开始，添加了投机解码和前缀缓存等高级功能，扩展到 MultiProcExecutor（TP/PP > 1），最后进行横向扩展，将所有内容包装在异步引擎和分布式服务堆栈中——最后介绍了如何测量系统性能。
 
@@ -777,7 +777,7 @@ vLLM 还包含一些被我们略过的专门处理。例如：
 
 好的一点是，这些大部分都与上述描述的主要流程正交——你几乎可以将它们视为"插件"（当然，在实践中存在一些耦合）。
 
-# References
+## References
 
 1. [vLLM](https://github.com/vllm-project/vllm)
 2. ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762)
