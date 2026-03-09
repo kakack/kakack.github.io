@@ -15,9 +15,11 @@
 
   {% if site.favicon %}
     {% if site.favicon contains '://' %}
-      <link rel="icon" href="{{ site.favicon }}">
+      <link rel="icon" type="image/jpeg" href="{{ site.favicon }}">
+      <link rel="shortcut icon" type="image/jpeg" href="{{ site.favicon }}">
     {% else %}
       <link rel="icon" href="{{ site.url }}{{ site.baseurl }}{{ site.favicon }}">
+      <link rel="shortcut icon" href="{{ site.url }}{{ site.baseurl }}{{ site.favicon }}">
     {% endif %}
   {% endif %}
 
