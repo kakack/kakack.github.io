@@ -119,5 +119,49 @@
         }
       })();
     </script>
+    <script>
+      (function () {
+        var progressFill = document.getElementById("reading-progress-fill");
+        var backToTop = document.getElementById("back-to-top");
+        if (!progressFill && !backToTop) return;
+
+        function onScroll() {
+          var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+
+          if (progressFill && docHeight > 0) {
+            progressFill.style.width = Math.min(100, (scrollTop / docHeight) * 100) + "%";
+          }
+          if (backToTop) {
+            if (scrollTop > 400) {
+              backToTop.classList.add("visible");
+            } else {
+              backToTop.classList.remove("visible");
+            }
+          }
+        }
+
+        function scrollToTop(e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        onScroll();
+        if (backToTop) backToTop.addEventListener("click", scrollToTop);
+      })();
+    </script>
+    <script>
+      (function () {
+        var lastScroll = 0;
+        function onScrollClass() {
+          var top = window.pageYOffset || document.documentElement.scrollTop;
+          if (top > 60) document.body.classList.add("is-scrolled"); else document.body.classList.remove("is-scrolled");
+          lastScroll = top;
+        }
+        window.addEventListener("scroll", onScrollClass, { passive: true });
+        onScrollClass();
+      })();
+    </script>
   </body>
 </html>

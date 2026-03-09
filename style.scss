@@ -843,4 +843,9 @@ pre.highlight {
   }
 }
 
+// Scroll state: subtle sidebar elevation when page is scrolled
+body.is-scrolled .wrapper-sidebar {
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.06);
+}
+
 
