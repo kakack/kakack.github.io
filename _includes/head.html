@@ -31,12 +31,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   {% endif %}
 
-  {% if page.mathjax == true %}
+  {% if page.layout == 'post' or page.math == true or page.mathjax == true %}
     <script type="text/x-mathjax-config">
       MathJax.Hub.Config({
         tex2jax: {
           skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-          inlineMath: [['$','$']]
+          inlineMath: [['$','$'], ['\\(','\\)']],
+          displayMath: [['$$','$$'], ['\\[','\\]']],
+          processEscapes: true
         }
       });
     </script>
