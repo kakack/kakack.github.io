@@ -4,26 +4,38 @@
   {% include meta.html %}
   {% include fonts.html %}
 
-  <!--[if lt IE 9]>
-    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-  <![endif]-->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 
   <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/style.css" />
-  <link rel="alternate" type="application/rss+xml" title="{{ site.name }} - {{ site.description }}" href="{{ site.baseurl }}/feed.xml" />
-  <link rel="shortcut icon" href="{{ site.favicon }}">
-  <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
-  <script src="https://unpkg.com/feather-icons"></script>
-  <script type="text/javascript" async
-  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-  </script>
-  <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-      tex2jax: {
-        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-        inlineMath: [['$','$']]
-      }
-    });
-  </script>
+  <link rel="alternate" type="application/rss+xml" title="{{ site.name }} - {{ site.description }}" href="{{ site.url }}{{ site.baseurl }}/feed.xml" />
+
+  {% if site.favicon %}
+    {% if site.favicon contains '://' %}
+      <link rel="icon" href="{{ site.favicon }}">
+    {% else %}
+      <link rel="icon" href="{{ site.url }}{{ site.baseurl }}{{ site.favicon }}">
+    {% endif %}
+  {% endif %}
+
+  <script src="https://unpkg.com/feather-icons" defer></script>
+
+  {% if site.gitalk.clientID %}
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" defer></script>
+  {% endif %}
+
+  {% if page.layout == 'post' or page.math == true %}
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+          inlineMath: [['$','$']]
+        }
+      });
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  {% endif %}
 
   <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
 

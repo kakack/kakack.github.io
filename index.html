@@ -15,35 +15,33 @@ layout: default
             <span title="pinned"><i data-feather="anchor"></i></span><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
         </h1>
 
-        <div clsss="meta">
-          
-          <span class="author">
-            {{ post.author }}
-          </span>
+        <div class="meta">
+          {% if post.author %}
+            <span class="author">
+              {{ post.author }}
+            </span>
+          {% endif %}
 
           <span class="date">
             {{ post.date | date: "%Y-%m-%d" }}
           </span>
 
-          <ul class="tag">
-            {% for tag in post.tags %}
-            <li>
-              <a href="{{ site.url }}{{ site.baseurl }}/tags#{{ tag }}">
-                {{ tag }}
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-
-          <script>
-            feather.replace()
-          </script>
+          {% if post.tags %}
+            <ul class="tag">
+              {% for tag in post.tags %}
+              <li>
+                <a href="{{ site.baseurl }}/tags#{{ tag | slugify }}">
+                  {{ tag }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
         </div>
 
        <div class="post-excerpt">
           {%   if post.content contains site.excerpt_separator or post.content != post.excerpt %}{{ post.excerpt }}
-          {%   else %}{{ post.content | lstrip | split: "
-" | first }}{% endif %}
+          {%   else %}{{ post.content | lstrip | split: "\n" | first }}{% endif %}
           <p>
             <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">Read More</a>
           </p>
@@ -59,31 +57,33 @@ layout: default
         <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
       </h1>
 
-      <div clsss="meta">
-        
-        <span class="author">
-          {{ post.author }}
-        </span>
+      <div class="meta">
+        {% if post.author %}
+          <span class="author">
+            {{ post.author }}
+          </span>
+        {% endif %}
             
         <span class="date">
           {{ post.date | date: "%Y-%m-%d" }}
         </span>
 
-        <ul class="tag">
-          {% for tag in post.tags %}
-          <li>
-            <a href="{{ site.url }}{{ site.baseurl }}/tags#{{ tag }}">
-              {{ tag }}
-            </a>
-          </li>
-          {% endfor %}
-        </ul>
+        {% if post.tags %}
+          <ul class="tag">
+            {% for tag in post.tags %}
+            <li>
+              <a href="{{ site.baseurl }}/tags#{{ tag | slugify }}">
+                {{ tag }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
       </div>
 
       <div class="post-excerpt">
           {%   if post.content contains site.excerpt_separator or post.content != post.excerpt %}{{ post.excerpt }}
-          {%   else %}{{ post.content | lstrip | split: "
-" | first }}{% endif %}
+          {%   else %}{{ post.content | lstrip | split: "\n" | first }}{% endif %}
           <p>
             <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">Read More</a>
           </p>

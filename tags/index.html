@@ -10,9 +10,11 @@ permalink: /tags/
 
 <div class="tags">
   <ul class="label">
-    {% for tag in site.tags %}
+    {% assign sorted_tags = site.tags | sort %}
+    {% for tag in sorted_tags %}
+    {% assign tag_slug = tag[0] | slugify %}
     <li>
-      <a href="#{{ tag[0] }}">
+      <a href="#{{ tag_slug }}">
         <span>{{ tag[0] }}</span>
         <span class="count">{{ tag[1] | size }}</span>
       </a>
@@ -20,8 +22,9 @@ permalink: /tags/
     {% endfor %}
   </ul>
 
-  {% for tag in site.tags %}
-    <h2 id="{{ tag[0] }}">
+  {% for tag in sorted_tags %}
+    {% assign tag_slug = tag[0] | slugify %}
+    <h2 id="{{ tag_slug }}">
       {{ tag[0] }}
     </h2>
     <ul class="tag">

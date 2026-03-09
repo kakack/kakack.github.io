@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ page.lang | default: site.lang | default: 'zh-CN' }}">
   {% include head.html %}
   <body>
     {% include nav.html %}
@@ -16,19 +16,30 @@
       </div>
     </div>
 
+    <div class="wrapper-footer-mobile">
+      <footer class="footer">
+        {% include footer.html %}
+      </footer>
+    </div>
+
     {% include analytics.html %}
+
+    {% if page.toc==true %}
+    <script>
+      document.getElementById("main").classList.add("withtoc");
+    </script>
+    {% endif %}
+
+    <script>
+      (function () {
+        function replaceFeather() {
+          if (window.feather && typeof window.feather.replace === "function") {
+            window.feather.replace();
+          }
+        }
+        replaceFeather();
+        document.addEventListener("DOMContentLoaded", replaceFeather, { once: true });
+      })();
+    </script>
   </body>
-
-  {% if page.toc==true %}
-  <script>
-    document.getElementById("main").classList.add("withtoc");
-  </script>
-  {% endif %}
-
-  <div class="wrapper-footer-mobile">
-    <footer class="footer">
-      {% include footer.html %}
-    </footer>
-
-
 </html>
