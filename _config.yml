@@ -3,10 +3,10 @@ description: 欲買桂花同載酒，終不似，少年遊。
 url: https://kakack.github.io
 #baseurl: /blog
 lang: zh-CN
-avatar: /_images/logo.jpg
+avatar: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.jpg
 # Favicon for browser tab (use full URL for external image, or path like /_images/icon.jpg for local)
-favicon: https://i.pinimg.com/1200x/c8/b7/fc/c8b7fc34e77cb9fc829e62964daf0c39.jpg
-social_image: /_images/logo.jpg
+favicon: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/icon.jpg
+social_image: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.jpg
 navigation:
   - name: Main
     url: /
