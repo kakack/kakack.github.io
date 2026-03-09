@@ -1,0 +1,177 @@
+// Dark mode: overrides when [data-theme="dark"]
+[data-theme="dark"] {
+  .wrapper-sidebar {
+    background-color: #1a1d21;
+    border-right-color: #2d3238;
+  }
+
+  .site-name,
+  .posts h1,
+  .posts .tag li a,
+  .archive a,
+  .tags > .label > li > a,
+  .tags > .tag a {
+    color: #e9ecef;
+  }
+
+  .site-description,
+  .date,
+  .author,
+  .base-lighten-color {
+    color: #adb5bd;
+  }
+
+  body,
+  .wrapper-content {
+    color: #dee2e6;
+    background-color: #212529;
+  }
+
+  .wrapper-content .container {
+    color: inherit;
+  }
+
+  a {
+    color: #20c997;
+
+    &:hover,
+    &:active {
+      color: #3dd5ac;
+    }
+  }
+
+  nav a {
+    color: #adb5bd;
+
+    &:hover {
+      color: #20c997;
+    }
+  }
+
+  p,
+  .post p,
+  .entry p {
+    color: #dee2e6;
+  }
+
+  h4,
+  h6 {
+    color: #adb5bd;
+  }
+
+  blockquote p {
+    color: #adb5bd;
+  }
+
+  blockquote {
+    border-left-color: #495057;
+  }
+
+  hr {
+    border-top-color: #343a40;
+  }
+
+  .post-excerpt,
+  .entry {
+    color: #dee2e6;
+  }
+
+  .posts > .post {
+    border-bottom-color: #343a40;
+  }
+
+  .tag li > a {
+    color: #e9ecef;
+    background-color: #343a40;
+
+    &:hover {
+      color: #20c997;
+      background-color: rgba(32, 201, 151, 0.15);
+    }
+  }
+
+  .pagination > .prev a,
+  .pagination > .next a {
+    color: #adb5bd;
+    border-color: #495057;
+    background-color: #212529;
+
+    &:hover,
+    &:focus {
+      color: #3dd5ac;
+      border-color: #20c997;
+      background-color: rgba(32, 201, 151, 0.1);
+    }
+  }
+
+  .toc:before {
+    border-bottom-color: #343a40;
+  }
+
+  .wrapper-footer-desktop,
+  .wrapper-footer-mobile {
+    border-top-color: #2d3238;
+    background-color: #1a1d21;
+  }
+
+  footer p,
+  footer .svg-icon svg {
+    color: #868e96;
+    fill: #868e96;
+  }
+
+  footer .svg-icon svg:hover {
+    fill: #20c997;
+  }
+
+  code.highlighter-rouge {
+    color: #74c0fc;
+    background-color: #2d3238;
+  }
+
+  pre.highlight {
+    border-color: #495057;
+    background: #212529;
+  }
+
+  .highlight {
+    background: #212529;
+  }
+
+  .tags > .label > li > a {
+    background-color: #343a40;
+
+    span.count {
+      background-color: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  .copy-code-btn {
+    background: #495057;
+    color: #dee2e6;
+
+    &:hover {
+      background: #868e96;
+      color: #fff;
+    }
+  }
+
+  .reading-progress-bar {
+    background: rgba(32, 201, 151, 0.3);
+  }
+
+  .reading-progress-fill {
+    background: #20c997;
+  }
+
+  .back-to-top {
+    background: #343a40;
+    color: #dee2e6;
+    border: 1px solid #495057;
+
+    &:hover {
+      background: #495057;
+      color: #20c997;
+    }
+  }
+}

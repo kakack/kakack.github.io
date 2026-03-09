@@ -3,8 +3,9 @@ description: 欲買桂花同載酒，終不似，少年遊。
 url: https://kakack.github.io
 #baseurl: /blog
 lang: zh-CN
-avatar: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.jpg
-favicon: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/icon.jpg
+avatar: /_images/logo.jpg
+favicon: /_images/icon.jpg
+social_image: /_images/logo.jpg
 navigation:
   - name: Main
     url: /

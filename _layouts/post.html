@@ -2,6 +2,10 @@
 layout: default
 ---
 
+<div class="reading-progress-bar" role="presentation" aria-hidden="true">
+  <div class="reading-progress-fill" id="reading-progress-fill"></div>
+</div>
+
 <article class="posts">
   <h1>{{ page.title }}</h1>
 
@@ -42,6 +46,8 @@ layout: default
   {% endif %}
 </article>
 
+<button type="button" class="back-to-top" id="back-to-top" aria-label="返回顶部" title="返回顶部">↑</button>
+
 <div class="pagination">
   {% if page.previous.url %}
     <span class="prev" >
@@ -58,3 +64,29 @@ layout: default
     </span>
   {% endif %}
 </div>
+
+<script>
+  (function () {
+    var fill = document.getElementById("reading-progress-fill");
+    var backBtn = document.getElementById("back-to-top");
+    function updateProgress() {
+      var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (fill && docHeight > 0) {
+        fill.style.width = (scrollTop / docHeight * 100) + "%";
+      }
+      if (backBtn) {
+        backBtn.classList.toggle("visible", scrollTop > 400);
+      }
+    }
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    if (fill || backBtn) {
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      window.addEventListener("resize", updateProgress);
+      updateProgress();
+    }
+    if (backBtn) backBtn.addEventListener("click", scrollToTop);
+  })();
+</script>

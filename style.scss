@@ -422,6 +422,23 @@ nav {
       color: $link-color;
     }
   }
+
+  .theme-toggle {
+    margin: 0 10px;
+    padding: 4px 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    background: $tag-index-label-background-color;
+    border: 1px solid $divider-color;
+    border-radius: 4px;
+    vertical-align: middle;
+    transition: background 0.2s, border-color 0.2s;
+
+    &:hover {
+      background: $link-bghv-color;
+      border-color: $link-lighten-color;
+    }
+  }
 }
 
 // content
@@ -752,5 +769,78 @@ footer {
 // ... Otherwise it really bloats up the top of the CSS file and makes it difficult to find the start
 @import "highlights";
 @import "gitalk";
+@import "dark-mode";
+
+// Code block copy button (light theme)
+pre.highlight {
+  position: relative;
+}
+.copy-code-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: $code-font;
+  color: $oc-gray-7;
+  background: $oc-gray-2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: $oc-gray-4;
+    color: $oc-gray-9;
+  }
+}
+
+// Reading progress bar (post page)
+.reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 10;
+  background: $oc-gray-2;
+}
+
+.reading-progress-fill {
+  height: 100%;
+  width: 0;
+  background: $oc-teal-6;
+  transition: width 0.1s ease-out;
+}
+
+// Back to top (post page)
+.back-to-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: $oc-gray-7;
+  background: $oc-gray-1;
+  border: 1px solid $oc-gray-3;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s, background 0.2s;
+
+  &.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &:hover {
+    background: $oc-teal-1;
+    color: $oc-teal-7;
+  }
+}
 
 

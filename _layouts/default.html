@@ -32,6 +32,52 @@
 
     <script>
       (function () {
+        var themeToggle = document.getElementById("theme-toggle");
+        var root = document.documentElement;
+        function getStoredTheme() {
+          try { return localStorage.getItem("theme"); } catch (e) { return null; }
+        }
+        function applyTheme(theme) {
+          if (theme === "dark") {
+            root.setAttribute("data-theme", "dark");
+            if (themeToggle) {
+              themeToggle.textContent = "☀️";
+              themeToggle.setAttribute("aria-label", "切换到浅色模式");
+              themeToggle.setAttribute("title", "切换到浅色模式");
+            }
+          } else {
+            root.removeAttribute("data-theme");
+            if (themeToggle) {
+              themeToggle.textContent = "🌙";
+              themeToggle.setAttribute("aria-label", "切换到深色模式");
+              themeToggle.setAttribute("title", "切换到深色模式");
+            }
+          }
+        }
+        function initTheme() {
+          var stored = getStoredTheme();
+          if (stored === "dark" || stored === "light") {
+            applyTheme(stored);
+            return;
+          }
+          if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            applyTheme("dark");
+          } else {
+            applyTheme("light");
+          }
+        }
+        initTheme();
+        if (themeToggle) {
+          themeToggle.addEventListener("click", function () {
+            var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            applyTheme(next);
+            try { localStorage.setItem("theme", next); } catch (e) {}
+          });
+        }
+      })();
+    </script>
+    <script>
+      (function () {
         function replaceFeather() {
           if (window.feather && typeof window.feather.replace === "function") {
             window.feather.replace();
@@ -39,6 +85,38 @@
         }
         replaceFeather();
         document.addEventListener("DOMContentLoaded", replaceFeather, { once: true });
+      })();
+    </script>
+    <script>
+      (function () {
+        function addCopyButtons() {
+          var blocks = document.querySelectorAll("pre.highlight");
+          blocks.forEach(function (pre) {
+            if (pre.querySelector(".copy-code-btn")) return;
+            var btn = document.createElement("button");
+            btn.className = "copy-code-btn";
+            btn.type = "button";
+            btn.textContent = "复制";
+            btn.setAttribute("aria-label", "复制代码");
+            var code = pre.querySelector("code");
+            btn.addEventListener("click", function () {
+              var text = code ? code.innerText : pre.innerText;
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () {
+                  btn.textContent = "已复制";
+                  setTimeout(function () { btn.textContent = "复制"; }, 2000);
+                });
+              }
+            });
+            pre.style.position = "relative";
+            pre.appendChild(btn);
+          });
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", addCopyButtons);
+        } else {
+          addCopyButtons();
+        }
       })();
     </script>
   </body>
