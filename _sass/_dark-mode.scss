@@ -12,17 +12,11 @@
     color: #e9ecef;
   }
 
-  .archive-timeline .archive {
-    border-left-color: #495057;
-  }
-
-  .archive-timeline .archive-year {
-    color: #e9ecef;
-  }
-
-  .archive-timeline .archive-year::before {
-    background: #20c997;
-    border-color: #212529;
+  .theme-toggle {
+    color: #868e96;
+    &:hover {
+      color: #20c997;
+    }
   }
 
   .tags > .label > li > a,

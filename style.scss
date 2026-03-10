@@ -30,6 +30,35 @@ body {
   width: 100%;
 }
 
+// 主题切换：固定于页面右上角，文字按钮
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  z-index: 20;
+  font-family: $base-font;
+  font-size: $small-font-size;
+  font-weight: 500;
+  color: $base-lighten-color;
+  background: transparent;
+  border: none;
+  padding: 6px 0;
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $link-color;
+  }
+
+  @include mobile {
+    top: 12px;
+    right: 16px;
+  }
+}
+
 h1, h2, h3, h4, h5, h6 {
   line-height: 2em;
   margin: 1em 0 16px;
@@ -444,23 +473,6 @@ nav {
       color: $link-color;
     }
   }
-
-  .theme-toggle {
-    margin: 0 10px;
-    padding: 4px 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    background: $tag-index-label-background-color;
-    border: 1px solid $divider-color;
-    border-radius: 4px;
-    vertical-align: middle;
-    transition: background 0.2s, border-color 0.2s;
-
-    &:hover {
-      background: $link-bghv-color;
-      border-color: $link-lighten-color;
-    }
-  }
 }
 
 // content
@@ -728,54 +740,6 @@ nav {
 }
 
 // Archive
-
-.archive-timeline {
-  position: relative;
-
-  .archive {
-    list-style: none;
-    margin: 0;
-    padding: 0 0 0 1.75em;
-    border-left: 2px solid $divider-color;
-
-    > .archive-year {
-      font-size: 1.05em;
-      font-weight: 600;
-      color: $base-color;
-      margin: 1.25em 0 0.4em;
-      padding: 0;
-      position: relative;
-      left: -1.75em;
-
-      &:first-child {
-        margin-top: 0;
-      }
-
-      &::before {
-        content: "";
-        position: absolute;
-        left: calc(1.75em - 5px);
-        top: 0.45em;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: $link-color;
-        border: 2px solid $background-color;
-        box-sizing: border-box;
-      }
-    }
-
-    > li {
-      margin: 0;
-      padding: 0.15em 0;
-      border: none;
-
-      &::before {
-        content: none;
-      }
-    }
-  }
-}
 
 .archive {
   a {

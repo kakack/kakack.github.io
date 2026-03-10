@@ -2,6 +2,7 @@
 <html lang="{{ page.lang | default: site.lang | default: 'zh-CN' }}">
   {% include head.html %}
   <body>
+    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">Dark mode</button>
     {% include nav.html %}
 
     {% if page.toc==true %}
@@ -98,14 +99,14 @@
           if (theme === "dark") {
             root.setAttribute("data-theme", "dark");
             if (themeToggle) {
-              themeToggle.textContent = "☀️";
+              themeToggle.textContent = "Light mode";
               themeToggle.setAttribute("aria-label", "切换到浅色模式");
               themeToggle.setAttribute("title", "切换到浅色模式");
             }
           } else {
             root.removeAttribute("data-theme");
             if (themeToggle) {
-              themeToggle.textContent = "🌙";
+              themeToggle.textContent = "Dark mode";
               themeToggle.setAttribute("aria-label", "切换到深色模式");
               themeToggle.setAttribute("title", "切换到深色模式");
             }
