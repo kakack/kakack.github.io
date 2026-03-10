@@ -584,20 +584,26 @@ nav {
     }
   }
 
-  // 摘要内列表不显示圆点，避免首页出现大量 dot
+  // 摘要内列表不显示圆点/数字，避免首页出现大量 dot（覆盖全局 ul/ol li:before）
   ul,
   ol {
-    list-style: none;
-    padding-left: 0;
-    margin-left: 0;
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
 
-    > li {
-      margin-left: 0;
-      margin-right: 0;
+    li {
+      margin: 0.4em 0 0 0 !important;
 
       &::before {
-        content: none;
-        display: none;
+        content: none !important;
+        display: none !important;
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
       }
     }
   }

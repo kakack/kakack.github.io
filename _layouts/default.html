@@ -156,6 +156,21 @@
     </script>
     <script>
       (function () {
+        function stripMediaFromExcerpts() {
+          document.querySelectorAll(".post-excerpt-content").forEach(function (block) {
+            block.querySelectorAll("img").forEach(function (el) { el.remove(); });
+            block.querySelectorAll("table").forEach(function (el) { el.remove(); });
+          });
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", stripMediaFromExcerpts);
+        } else {
+          stripMediaFromExcerpts();
+        }
+      })();
+    </script>
+    <script>
+      (function () {
         function replaceFeather() {
           if (window.feather && typeof window.feather.replace === "function") {
             window.feather.replace();
