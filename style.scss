@@ -583,6 +583,24 @@ nav {
       margin-top: 0;
     }
   }
+
+  // 摘要内列表不显示圆点，避免首页出现大量 dot
+  ul,
+  ol {
+    list-style: none;
+    padding-left: 0;
+    margin-left: 0;
+
+    > li {
+      margin-left: 0;
+      margin-right: 0;
+
+      &::before {
+        content: none;
+        display: none;
+      }
+    }
+  }
 }
 
 .post-excerpt.is-expanded .post-excerpt-content {
