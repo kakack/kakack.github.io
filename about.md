@@ -6,7 +6,7 @@ permalink: /about/
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/myprofile.jpg)
 
-A husband, daddy, coder, traveler, video game player, supporter of <img src="https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg" alt="Manchester United" style="display:inline-block; height:1em; width:auto; margin:0 0.15em; border-radius:0; vertical-align:-0.125em;" /> Man Utd and <img src="https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg" alt="Golden State Warriors" style="display:inline-block; height:1em; width:auto; margin:0 0.15em; border-radius:0; vertical-align:-0.125em;" /> GSW
+A husband, daddy, coder, traveler, video game player, supporter of Man Utd <img src="https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg" alt="Manchester United" style="display:inline-block; height:1em; width:auto; margin:0 0.15em; border-radius:0; vertical-align:-0.125em;" /> and GSW <img src="https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg" alt="Golden State Warriors" style="display:inline-block; height:1em; width:auto; margin:0 0.15em; border-radius:0; vertical-align:-0.125em;" /> 
 
 - **Profile:**
 	+ [Google Scholar](https://scholar.google.com/citations?view_op=list_works&hl=zh-CN&authuser=1&user=4Lt1ETcAAAAJ)
@@ -15,9 +15,9 @@ A husband, daddy, coder, traveler, video game player, supporter of <img src="htt
 - **Contact:**
 	+ kyriiiechen@gmail.com
 - **Education:**
-	+ Zhejiang University (B.S., M.S.)
+	+ Zhejiang University <img src="https://www.google.com/s2/favicons?sz=64&domain_url=https://www.zju.edu.cn" alt="Zhejiang University" style="display:inline-block; height:1em; width:1em; margin:0 0.15em; border-radius:0; vertical-align:-0.125em;" /> (B.S., M.S.)
 - **Career:**
-    + Cisco, Huawei, IAAR/MemTensor
+    + Cisco <img src="https://www.google.com/s2/favicons?sz=64&domain_url=https://www.cisco.com" alt="Cisco" style="display:inline-block; height:1em; width:1em; margin:0 0.15em; border-radius:0; vertical-align:-0.125em;" />, Huawei <img src="https://www.google.com/s2/favicons?sz=64&domain_url=https://www.huawei.com" alt="Huawei" style="display:inline-block; height:1em; width:1em; margin:0 0.15em; border-radius:0; vertical-align:-0.125em;" />, IAAR/MemTensor <img src="https://www.google.com/s2/favicons?sz=64&domain_url=https://memtensor.com" alt="MemTensor" style="display:inline-block; height:1em; width:1em; margin:0 0.15em; border-radius:0; vertical-align:-0.125em;" />
 - **Working on:**
 	+ Machine Learning, Deep Learning
 	+ Large Language Model, AI Infra, Natural Language Processing, Computer Vision
