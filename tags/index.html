@@ -8,9 +8,40 @@ permalink: /tags/
   <h2>No post found</h2>
 {% endif %}
 
+{% assign sorted_tags = site.tags | sort %}
+
+{% comment %} 计算最大文章数，用于标签云分级 {% endcomment %}
+{% assign max_count = 0 %}
+{% for tag in sorted_tags %}
+  {% assign count = tag[1] | size %}
+  {% if count > max_count %}
+    {% assign max_count = count %}
+  {% endif %}
+{% endfor %}
+
 <div class="tags">
+  <section class="tag-cloud" aria-label="标签云">
+    {% for tag in sorted_tags %}
+      {% assign tag_slug = tag[0] | slugify %}
+      {% assign count = tag[1] | size %}
+      {% if max_count > 0 %}
+        {% assign level = count | times: 4 | divided_by: max_count | plus: 1 %}
+        {% if level > 5 %}
+          {% assign level = 5 %}
+        {% endif %}
+      {% else %}
+        {% assign level = 1 %}
+      {% endif %}
+      <a href="#{{ tag_slug }}" class="tag-cloud-item tag-cloud-size-{{ level }}">
+        {{ tag[0] }}
+        <span class="tag-cloud-count">{{ count }}</span>
+      </a>
+    {% endfor %}
+  </section>
+
+  <h2 class="tag-list-heading">按标签浏览</h2>
+
   <ul class="label">
-    {% assign sorted_tags = site.tags | sort %}
     {% for tag in sorted_tags %}
     {% assign tag_slug = tag[0] | slugify %}
     <li>

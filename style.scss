@@ -643,6 +643,68 @@ nav {
 }
 
 // Tags
+
+// 标签云：按文章数量分级字体大小与透明度
+.tag-cloud {
+  margin-bottom: 2em;
+  padding: 1.25em 0;
+  line-height: 2;
+  text-align: center;
+
+  .tag-cloud-item {
+    display: inline-block;
+    margin: 0.25em 0.5em;
+    padding: 0.25em 0.6em;
+    color: $base-color;
+    background-color: $tag-index-label-background-color;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: color 0.2s, background 0.2s, transform 0.15s;
+
+    &:hover {
+      color: $link-color;
+      background-color: $link-bghv-color;
+      transform: translateY(-1px);
+    }
+  }
+
+  .tag-cloud-count {
+    margin-left: 0.35em;
+    font-size: 0.85em;
+    opacity: 0.85;
+    font-weight: 400;
+  }
+
+  .tag-cloud-size-1 {
+    font-size: 0.8rem;
+    font-weight: 400;
+  }
+  .tag-cloud-size-2 {
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  .tag-cloud-size-3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+  .tag-cloud-size-4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .tag-cloud-size-5 {
+    font-size: 1.45rem;
+    font-weight: 600;
+  }
+}
+
+.tag-list-heading {
+  font-size: 1.1em;
+  color: $base-lighten-color;
+  margin: 1.5em 0 0.75em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid $divider-color;
+}
+
 .tags > .label {
   > li:before {
     content: "";

@@ -13,7 +13,6 @@
   .tags > .tag a {
     color: #e9ecef;
   }
-
   .site-description,
   .date,
   .author,
@@ -144,6 +143,25 @@
     span.count {
       background-color: rgba(255, 255, 255, 0.06);
     }
+  }
+
+  .tag-cloud .tag-cloud-item {
+    color: #e9ecef;
+    background-color: #343a40;
+
+    &:hover {
+      color: #20c997;
+      background-color: rgba(32, 201, 151, 0.15);
+    }
+  }
+
+  .tag-cloud .tag-cloud-count {
+    opacity: 0.8;
+  }
+
+  .tag-list-heading {
+    color: #adb5bd;
+    border-bottom-color: #343a40;
   }
 
   .copy-code-btn {
