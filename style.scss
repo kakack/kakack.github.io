@@ -15,6 +15,13 @@
 
 html {
   font-size: $base-font-size;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
@@ -302,14 +309,16 @@ img {
   max-width: none;
 }
 
-// Specify the color of the selection
+// Specify the color of the selection（主题色高亮 + 圆角感）
 ::-moz-selection {
-//  color: $selection-color;
-  background: $selection-background-color;
+  color: $oc-gray-9;
+  background: rgba($link-color, 0.25);
+  border-radius: 2px;
 }
 ::selection {
-//  color: $selection-color;
-  background: $selection-background-color;
+  color: $oc-gray-9;
+  background: rgba($link-color, 0.25);
+  border-radius: 2px;
 }
 
 // Nicolas Gallagher's micro clearfix hack
@@ -391,6 +400,7 @@ img {
     display: block;
     max-width: 200px;
     max-height: 200px;
+    animation: site-intro-fade 0.5s ease-out both;
 
     @include mobile {
       max-width: 120px;
@@ -404,6 +414,18 @@ img {
   }
 }
 
+// 首屏侧栏淡入动画
+@keyframes site-intro-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .site-name {
   margin: 0 auto;
   color: $base-color;
@@ -412,12 +434,14 @@ img {
   font-weight: 700;
   font-size: 28px;
   letter-spacing: 1px;
+  animation: site-intro-fade 0.5s ease-out 0.08s both;
 }
 
 .site-description {
   margin: 15px auto;
   color: $base-lighten-color;
   font-size: 16px;
+  animation: site-intro-fade 0.5s ease-out 0.12s both;
 
   @include mobile {
     margin: 10px auto;
@@ -428,6 +452,7 @@ img {
   margin: 8px auto 0;
   font-size: $small-font-size;
   color: $base-lighten-color;
+  animation: site-intro-fade 0.4s ease-out 0.2s both;
 
   a {
     color: $base-lighten-color;
@@ -443,6 +468,18 @@ img {
 
   @include mobile {
     margin: 6px auto 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-name,
+  .site-description,
+  .site-stats {
+    animation: none;
+  }
+
+  .site-info .site-avatar {
+    animation: none;
   }
 }
 

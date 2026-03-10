@@ -5,6 +5,18 @@
     border-right-color: #2d3238;
   }
 
+  ::-moz-selection {
+    color: #fff;
+    background: rgba(32, 201, 151, 0.35);
+    border-radius: 2px;
+  }
+
+  ::selection {
+    color: #fff;
+    background: rgba(32, 201, 151, 0.35);
+    border-radius: 2px;
+  }
+
   .site-name,
   .posts h1,
   .posts .tag li a,
