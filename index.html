@@ -40,10 +40,13 @@ layout: default
         </div>
 
        <div class="post-excerpt">
-          {%   if post.content contains site.excerpt_separator or post.content != post.excerpt %}{{ post.excerpt }}
-          {%   else %}{{ post.content | lstrip | split: "\n" | first }}{% endif %}
-          <p>
-            <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">Read More</a>
+          <div class="post-excerpt-content">
+            {%   if post.content contains site.excerpt_separator or post.content != post.excerpt %}{{ post.excerpt }}
+            {%   else %}{{ post.content | lstrip | split: "\n" | first }}{% endif %}
+          </div>
+          <p class="post-excerpt-actions">
+            <button type="button" class="post-link post-link-expand" aria-expanded="false">Read More</button>
+            <a class="post-link post-link-full" href="{{ post.url | prepend: site.baseurl }}">阅读全文</a>
           </p>
         </div>
     </article>
@@ -82,10 +85,13 @@ layout: default
       </div>
 
       <div class="post-excerpt">
-          {%   if post.content contains site.excerpt_separator or post.content != post.excerpt %}{{ post.excerpt }}
-          {%   else %}{{ post.content | lstrip | split: "\n" | first }}{% endif %}
-          <p>
-            <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">Read More</a>
+          <div class="post-excerpt-content">
+            {%   if post.content contains site.excerpt_separator or post.content != post.excerpt %}{{ post.excerpt }}
+            {%   else %}{{ post.content | lstrip | split: "\n" | first }}{% endif %}
+          </div>
+          <p class="post-excerpt-actions">
+            <button type="button" class="post-link post-link-expand" aria-expanded="false">Read More</button>
+            <a class="post-link post-link-full" href="{{ post.url | prepend: site.baseurl }}">阅读全文</a>
           </p>
         </div>
     </article>  

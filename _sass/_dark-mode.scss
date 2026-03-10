@@ -100,6 +100,20 @@
     color: #dee2e6;
   }
 
+  .post-link-expand {
+    color: #20c997;
+    &:hover {
+      color: #3dd5ac;
+    }
+  }
+
+  .post-link-full {
+    color: #20c997;
+    &:hover {
+      color: #3dd5ac;
+    }
+  }
+
   .posts > .post {
     border-bottom-color: #343a40;
   }

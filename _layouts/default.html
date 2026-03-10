@@ -135,6 +135,26 @@
     </script>
     <script>
       (function () {
+        function initExpandExcerpt() {
+          document.querySelectorAll(".post-link-expand").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var excerpt = this.closest(".post-excerpt");
+              if (excerpt) {
+                excerpt.classList.add("is-expanded");
+                this.setAttribute("aria-expanded", "true");
+              }
+            });
+          });
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", initExpandExcerpt);
+        } else {
+          initExpandExcerpt();
+        }
+      })();
+    </script>
+    <script>
+      (function () {
         function replaceFeather() {
           if (window.feather && typeof window.feather.replace === "function") {
             window.feather.replace();

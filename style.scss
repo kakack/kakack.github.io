@@ -557,6 +557,63 @@ nav {
   }
 }
 
+// 首页摘要：默认 5 行，点击 Read More 展开
+.post-excerpt-content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
+  margin: 0;
+
+  p {
+    margin: 0.5em 0;
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+}
+
+.post-excerpt.is-expanded .post-excerpt-content {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.post-excerpt-actions {
+  margin: 0.5em 0 0;
+}
+
+.post-link-expand {
+  font-family: inherit;
+  font-size: 15px;
+  color: $link-color;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-appearance: none;
+  appearance: none;
+
+  &:hover {
+    color: $link-lighten-color;
+    text-decoration: underline;
+  }
+}
+
+.post-link-full {
+  display: none;
+}
+
+.post-excerpt.is-expanded .post-link-expand {
+  display: none;
+}
+
+.post-excerpt.is-expanded .post-link-full {
+  display: inline;
+  font-size: 15px;
+}
+
 .page {
 //  margin: 40px;
 
