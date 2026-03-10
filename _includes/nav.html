@@ -11,6 +11,11 @@
       {% endif %} 
       <h1 class="site-name"><a href="{{ site.baseurl }}/">{{ site.name }}</a></h1>
       <p class="site-description">{{ site.description }}</p>
+      <p class="site-stats">
+        <a href="{{ site.baseurl }}/archive/">{{ site.posts | size }} 篇文章</a>
+        <span class="site-stats-sep">·</span>
+        <a href="{{ site.baseurl }}/tags/">{{ site.tags | size }} 个标签</a>
+      </p>
     </div>
   </header>
 

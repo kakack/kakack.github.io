@@ -395,6 +395,28 @@ img {
   }
 }
 
+.site-stats {
+  margin: 8px auto 0;
+  font-size: $small-font-size;
+  color: $base-lighten-color;
+
+  a {
+    color: $base-lighten-color;
+    &:hover {
+      color: $link-color;
+    }
+  }
+
+  .site-stats-sep {
+    margin: 0 6px;
+    opacity: 0.7;
+  }
+
+  @include mobile {
+    margin: 6px auto 0;
+  }
+}
+
 .navlist{
   text-align:center;
 }
@@ -568,6 +590,25 @@ nav {
     content:"";
   }
 
+  a {
+    display: block;
+    padding: 2px 0 2px 8px;
+    margin: 2px 0;
+    border-left: 2px solid transparent;
+    color: $base-lighten-color;
+    transition: color 0.15s, border-color 0.15s, font-weight 0.15s;
+
+    &:hover {
+      color: $link-color;
+    }
+
+    &.toc-active {
+      color: $link-color;
+      font-weight: 600;
+      border-left-color: $link-color;
+    }
+  }
+
   @include mobile{
     display:none;
   }
@@ -630,6 +671,55 @@ nav {
 }
 
 // Archive
+
+.archive-timeline {
+  position: relative;
+
+  .archive {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 1.75em;
+    border-left: 2px solid $divider-color;
+
+    > .archive-year {
+      font-size: 1.05em;
+      font-weight: 600;
+      color: $base-color;
+      margin: 1.25em 0 0.4em;
+      padding: 0;
+      position: relative;
+      left: -1.75em;
+
+      &:first-child {
+        margin-top: 0;
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: calc(1.75em - 5px);
+        top: 0.45em;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: $link-color;
+        border: 2px solid $background-color;
+        box-sizing: border-box;
+      }
+    }
+
+    > li {
+      margin: 0;
+      padding: 0.15em 0;
+      border: none;
+
+      &::before {
+        content: none;
+      }
+    }
+  }
+}
+
 .archive {
   a {
     color: $base-color;
@@ -832,6 +922,17 @@ footer {
 @import "highlights";
 @import "gitalk";
 @import "dark-mode";
+
+// Mermaid diagrams (replaced from ```mermaid code blocks)
+.mermaid-wrapper {
+  margin: 1em 0;
+  text-align: center;
+
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
 
 // Code block copy button (light theme)
 pre.highlight {

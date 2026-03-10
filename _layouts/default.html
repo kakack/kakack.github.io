@@ -28,6 +28,63 @@
     <script>
       document.getElementById("main").classList.add("withtoc");
     </script>
+    <script>
+      (function () {
+        var toc = document.querySelector(".toc");
+        if (!toc) return;
+
+        var container = document.querySelector("#main .container");
+        if (!container) return;
+
+        var links = toc.querySelectorAll("a[href^='#']");
+        if (!links.length) return;
+
+        var headings = container.querySelectorAll("h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]");
+        if (!headings.length) return;
+
+        var offsetFromTop = 100;
+
+        function getCurrentId() {
+          var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          var viewportHeight = window.innerHeight;
+          var docHeight = document.documentElement.scrollHeight;
+          var current = null;
+
+          for (var i = 0; i < headings.length; i++) {
+            var rect = headings[i].getBoundingClientRect();
+            if (rect.top <= offsetFromTop) {
+              current = headings[i];
+            }
+          }
+
+          if (current) return current.id;
+          if (scrollTop < 50 && headings[0]) return headings[0].id;
+          if (scrollTop + viewportHeight >= docHeight - 10 && headings.length) return headings[headings.length - 1].id;
+          return headings[0] ? headings[0].id : null;
+        }
+
+        function updateActive() {
+          var id = getCurrentId();
+          links.forEach(function (link) {
+            var href = link.getAttribute("href") || link.href || "";
+            var linkId = href.indexOf("#") >= 0 ? href.replace(/^.*#/, "") : "";
+            try { linkId = decodeURIComponent(linkId); } catch (e) {}
+            if (linkId === id) {
+              link.classList.add("toc-active");
+            } else {
+              link.classList.remove("toc-active");
+            }
+          });
+        }
+
+        window.addEventListener("scroll", updateActive, { passive: true });
+        window.addEventListener("resize", updateActive);
+        document.addEventListener("DOMContentLoaded", function () {
+          updateActive();
+        });
+        updateActive();
+      })();
+    </script>
     {% endif %}
 
     <script>
@@ -161,6 +218,45 @@
         }
         window.addEventListener("scroll", onScrollClass, { passive: true });
         onScrollClass();
+      })();
+    </script>
+    <script>
+      (function () {
+        function initMermaid() {
+          if (typeof window.mermaid === "undefined") return;
+
+          var container = document.querySelector("#main .container");
+          if (!container) return;
+
+          var blocks = container.querySelectorAll("pre code.language-mermaid");
+          if (!blocks.length) return;
+
+          var isDark = document.documentElement.getAttribute("data-theme") === "dark";
+          window.mermaid.initialize({
+            startOnLoad: false,
+            theme: isDark ? "dark" : "default",
+            securityLevel: "loose"
+          });
+
+          blocks.forEach(function (code) {
+            var pre = code.closest("pre");
+            if (!pre) return;
+            var parent = pre.parentNode;
+            var div = document.createElement("div");
+            div.className = "mermaid-wrapper";
+            div.setAttribute("data-mermaid", "true");
+            div.textContent = code.textContent.trim();
+            parent.replaceChild(div, pre);
+          });
+
+          window.mermaid.run({ querySelector: ".mermaid-wrapper", suppressErrors: true });
+        }
+
+        if (document.readyState === "complete") {
+          initMermaid();
+        } else {
+          window.addEventListener("load", initMermaid);
+        }
       })();
     </script>
   </body>

@@ -8,7 +8,23 @@
   .site-name,
   .posts h1,
   .posts .tag li a,
-  .archive a,
+  .archive a {
+    color: #e9ecef;
+  }
+
+  .archive-timeline .archive {
+    border-left-color: #495057;
+  }
+
+  .archive-timeline .archive-year {
+    color: #e9ecef;
+  }
+
+  .archive-timeline .archive-year::before {
+    background: #20c997;
+    border-color: #212529;
+  }
+
   .tags > .label > li > a,
   .tags > .tag a {
     color: #e9ecef;
@@ -18,6 +34,15 @@
   .author,
   .base-lighten-color {
     color: #adb5bd;
+  }
+
+  .site-stats,
+  .site-stats a {
+    color: #868e96;
+  }
+
+  .site-stats a:hover {
+    color: #20c997;
   }
 
   body,
@@ -105,6 +130,19 @@
 
   .toc:before {
     border-bottom-color: #343a40;
+  }
+
+  .toc a {
+    color: #868e96;
+
+    &:hover {
+      color: #20c997;
+    }
+
+    &.toc-active {
+      color: #20c997;
+      border-left-color: #20c997;
+    }
   }
 
   .wrapper-footer-desktop,

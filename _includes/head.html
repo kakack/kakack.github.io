@@ -47,6 +47,10 @@
     <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
   {% endif %}
 
+  {% if page.layout == 'post' or page.mermaid == true %}
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" defer></script>
+  {% endif %}
+
   <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
 
 </head>
