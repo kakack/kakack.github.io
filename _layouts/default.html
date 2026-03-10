@@ -136,55 +136,8 @@
     </script>
     <script>
       (function () {
-        function initExpandExcerpt() {
-          document.querySelectorAll(".post-link-expand").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-              var excerpt = this.closest(".post-excerpt");
-              if (excerpt) {
-                excerpt.classList.add("is-expanded");
-                this.setAttribute("aria-expanded", "true");
-              }
-            });
-          });
-        }
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", initExpandExcerpt);
-        } else {
-          initExpandExcerpt();
-        }
-      })();
-    </script>
-    <script>
-      (function () {
-        function stripMediaFromExcerpts() {
-          document.querySelectorAll(".post-excerpt-content").forEach(function (block) {
-            block.querySelectorAll("img").forEach(function (el) { el.remove(); });
-            block.querySelectorAll("table").forEach(function (el) { el.remove(); });
-          });
-        }
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", stripMediaFromExcerpts);
-        } else {
-          stripMediaFromExcerpts();
-        }
-      })();
-    </script>
-    <script>
-      (function () {
-        function replaceFeather() {
-          if (window.feather && typeof window.feather.replace === "function") {
-            window.feather.replace();
-          }
-        }
-        replaceFeather();
-        document.addEventListener("DOMContentLoaded", replaceFeather, { once: true });
-      })();
-    </script>
-    <script>
-      (function () {
         function addCopyButtons() {
-          var blocks = document.querySelectorAll("pre.highlight");
-          blocks.forEach(function (pre) {
+          document.querySelectorAll("pre.highlight").forEach(function (pre) {
             if (pre.querySelector(".copy-code-btn")) return;
             var btn = document.createElement("button");
             btn.className = "copy-code-btn";
@@ -205,11 +158,62 @@
             pre.appendChild(btn);
           });
         }
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", addCopyButtons);
-        } else {
-          addCopyButtons();
+        var COLLAPSE_LINE_THRESHOLD = 30;
+        function initCollapsibleCode() {
+          document.querySelectorAll("pre.highlight").forEach(function (pre) {
+            var code = pre.querySelector("code");
+            var text = code ? code.textContent : pre.innerText;
+            var lines = text ? text.split("\n").length : 0;
+            if (lines <= COLLAPSE_LINE_THRESHOLD || pre.classList.contains("code-block-collapsible")) return;
+            pre.classList.add("code-block-collapsible", "code-block-collapsed");
+            var wrapper = document.createElement("div");
+            wrapper.className = "code-block-wrapper";
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "code-block-expand-btn";
+            btn.setAttribute("aria-label", "展开代码");
+            btn.textContent = "展开";
+            btn.addEventListener("click", function () {
+              var isCollapsed = pre.classList.toggle("code-block-collapsed");
+              btn.textContent = isCollapsed ? "展开" : "收起";
+              btn.setAttribute("aria-label", isCollapsed ? "展开代码" : "收起代码");
+            });
+            wrapper.appendChild(btn);
+          });
         }
+        function initExpandExcerpt() {
+          document.querySelectorAll(".post-link-expand").forEach(function (b) {
+            b.addEventListener("click", function () {
+              var ex = this.closest(".post-excerpt");
+              if (ex) { ex.classList.add("is-expanded"); this.setAttribute("aria-expanded", "true"); }
+            });
+          });
+        }
+        function stripMediaFromExcerpts() {
+          document.querySelectorAll(".post-excerpt-content").forEach(function (block) {
+            block.querySelectorAll("img").forEach(function (el) { el.remove(); });
+            block.querySelectorAll("table").forEach(function (el) { el.remove(); });
+          });
+        }
+        function onReady() {
+          addCopyButtons();
+          initCollapsibleCode();
+          initExpandExcerpt();
+          stripMediaFromExcerpts();
+        }
+        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", onReady);
+        else onReady();
+      })();
+    </script>
+    <script>
+      (function () {
+        function replaceFeather() {
+          if (window.feather && typeof window.feather.replace === "function") window.feather.replace();
+        }
+        replaceFeather();
+        document.addEventListener("DOMContentLoaded", replaceFeather, { once: true });
       })();
     </script>
     <script>
@@ -246,11 +250,9 @@
     </script>
     <script>
       (function () {
-        var lastScroll = 0;
         function onScrollClass() {
           var top = window.pageYOffset || document.documentElement.scrollTop;
           if (top > 60) document.body.classList.add("is-scrolled"); else document.body.classList.remove("is-scrolled");
-          lastScroll = top;
         }
         window.addEventListener("scroll", onScrollClass, { passive: true });
         onScrollClass();

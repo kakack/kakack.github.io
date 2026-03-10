@@ -31,13 +31,8 @@ footer-links:
 footer-text: Copyright (c) 2026 Let's talk with the world.
 disqus: kakack
 
-# gitalk:
-#   clientID:
-#   clientSecret:
-#   repo:
-#   owner:
-#   proxy:
-google_analytics:
+# 未启用时可留空或注释，启用时填写 ID 即可
+# google_analytics: UA-XXXXXXXXX-X
 utteranc:
   repo: kakack/kakack.github.io
 permalink: /:title/
@@ -53,11 +48,10 @@ kramdown:
 sass:
   style: :compressed
 plugins:
-  - jekyll-sitemap # Create a sitemap using the official Jekyll sitemap gem
-  - jekyll-feed # Create an Atom feed using the official Jekyll feed gem
+  - jekyll-sitemap
+  - jekyll-feed
   - jekyll-paginate
   - jekyll-gist
-  - jekyll-remote-theme
   - jekyll-scholar
   - jekyll-katex
 exclude:

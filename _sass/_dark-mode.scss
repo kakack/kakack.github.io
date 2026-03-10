@@ -1,8 +1,16 @@
 // Dark mode: overrides when [data-theme="dark"]
 [data-theme="dark"] {
   .wrapper-sidebar {
-    background-color: #1a1d21;
+    background-color: rgba(26, 29, 33, 0.85);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
     border-right-color: #2d3238;
+  }
+
+  @supports not (backdrop-filter: blur(12px)) {
+    [data-theme="dark"] .wrapper-sidebar {
+      background-color: #1a1d21;
+    }
   }
 
   ::-moz-selection {
@@ -229,6 +237,17 @@
     &:hover {
       background: #868e96;
       color: #fff;
+    }
+  }
+
+  .code-block-expand-btn {
+    background: #2d3238;
+    color: #adb5bd;
+    border-color: #495057;
+
+    &:hover {
+      background: #495057;
+      color: #dee2e6;
     }
   }
 

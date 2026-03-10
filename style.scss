@@ -357,15 +357,21 @@ img {
 
 .wrapper-sidebar {
   width: 30%;
-	-webkit-background-size: cover;
-	background-size: cover;
-	background-color: $background-color;
-	height: 100%;
-	top: 0;
-	left:0;
-	position: fixed;
-	z-index: 4;
+  -webkit-background-size: cover;
+  background-size: cover;
+  background-color: rgba($background-color, 0.75);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: fixed;
+  z-index: 4;
   border-right: 1px solid $divider-color;
+
+  @supports not (backdrop-filter: blur(12px)) {
+    background-color: $background-color;
+  }
 
   @include mobile {
     width: 100%;
@@ -374,6 +380,9 @@ img {
     position: relative;
     border-bottom: 1px solid $divider-color;
     border-right: 0;
+    background-color: $background-color;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 
@@ -1000,9 +1009,8 @@ footer {
 }
 
 // Settled on moving the import of syntax highlighting to the bottom of the CSS
-// ... Otherwise it really bloats up the top of the CSS file and makes it difficult to find the start
 @import "highlights";
-@import "gitalk";
+// 若启用 Gitalk 评论，取消下一行注释: @import "gitalk";
 @import "dark-mode";
 
 // Mermaid diagrams (replaced from ```mermaid code blocks)
@@ -1020,6 +1028,50 @@ footer {
 pre.highlight {
   position: relative;
 }
+
+.code-block-wrapper {
+  margin: 1em 0;
+}
+
+pre.code-block-collapsible.code-block-collapsed {
+  max-height: 450px;
+  overflow: hidden;
+}
+
+.code-block-expand-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin: 0;
+  font-size: 12px;
+  font-family: $code-font;
+  color: $oc-gray-6;
+  background: $oc-gray-1;
+  border: 1px solid $oc-gray-2;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: $oc-gray-2;
+    color: $oc-gray-8;
+  }
+}
+
+.code-block-wrapper pre.highlight {
+  border-radius: 4px 4px 0 0;
+}
+
+.code-block-wrapper pre.highlight {
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 0;
+}
+
+.code-block-wrapper pre.code-block-collapsible:not(.code-block-collapsed) {
+  border-radius: 4px;
+}
+
 .copy-code-btn {
   position: absolute;
   top: 8px;
