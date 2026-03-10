@@ -4,7 +4,6 @@ url: https://kakack.github.io
 #baseurl: /blog
 lang: zh-CN
 avatar: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.jpg
-# Favicon for browser tab (use full URL for external image, or path like /_images/icon.jpg for local)
 favicon: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/icon.jpg
 social_image: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.jpg
 navigation:
