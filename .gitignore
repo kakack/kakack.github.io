@@ -1,1 +1,53 @@
+# OS
 .DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+
+# Jekyll
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+*.gem
+
+# Ruby / Bundler
+.bundle/
+vendor/bundle/
+
+# Node (if any tooling uses it)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vibe coding / AI IDE (OpenClaw, Cursor, etc.)
+.openclaw_sandbox/
+.openclaw/
+.cursor/
+.codex/
+
+# Other IDEs / editors
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Env and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Logs and temp
+*.log
+*.tmp
+*.temp
+.cache/
+
+# Optional: uncomment if you don't want to commit shared editor config
+# .vscode/
