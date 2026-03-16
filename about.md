@@ -21,3 +21,6 @@ A husband, daddy, coder, traveler, video game player, supporter of Man Utd <img 
 - **Working on:**
 	+ Machine Learning, Deep Learning
 	+ Large Language Model, AI Infra, Natural Language Processing, Computer Vision
+
+- **Acknowledgements:**
+	+ To my wife Chloe, my daughter Sherlyn, and my son Stephen—your love is the quiet light that steadies every step I take. In your laughter I find my deepest joy, and in your presence I find the courage to begin again each day. You are the source of my happiness and the enduring strength behind both my work and my life.
