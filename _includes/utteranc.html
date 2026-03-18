@@ -1,14 +1,8 @@
 {% if site.utteranc %}
-{% assign utteranc_repo = site.utteranc.repo %}
-{% if utteranc_repo contains 'github.com' %}
-  {% assign parts = utteranc_repo | split: '/' %}
-  {% assign utteranc_repo = parts[3] | append: '/' | append: parts[4] %}
-{% endif %}
-{% assign utteranc_repo = utteranc_repo | replace: '.git', '' %}
 <script src="https://utteranc.es/client.js"
-        repo="{{ utteranc_repo }}"
-        issue-term="{{ site.utteranc.issue_term | default: 'pathname' }}"
-        label="{{ site.utteranc.label | default: 'comment' }}"
+        repo="{{ site.utteranc.repo }}"
+        issue-term="{{ site.utteranc.issue_term | default: 'issue-term' }}"
+        label="{{ site.utteranc.label | default: 'utteranc' }}"
         theme="{{ site.utteranc.theme | default: 'github-light' }}"
         crossorigin="{{ site.utteranc.crossorigin | default: 'anonymous' }}"
         async>

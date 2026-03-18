@@ -2,20 +2,10 @@
   <header class="sidebar clearfix">
     <div class="site-info">
       {% if site.avatar %}
-        {% if site.avatar contains '://' %}
-          {% assign avatar_url = site.avatar %}
-        {% else %}
-          {% assign avatar_url = site.baseurl | append: site.avatar %}
-        {% endif %}
-        <a href="{{ site.baseurl }}/" class="site-avatar"><img src="{{ avatar_url }}" alt="{{ site.name | escape }}" decoding="async" /></a>
+        <a href="{{ site.baseurl }}/" class="site-avatar"><img src="{{ site.avatar }}" /></a>
       {% endif %} 
       <h1 class="site-name"><a href="{{ site.baseurl }}/">{{ site.name }}</a></h1>
       <p class="site-description">{{ site.description }}</p>
-      <p class="site-stats">
-        <a href="{{ site.baseurl }}/archive/">{{ site.posts | size }} 篇文章</a>
-        <span class="site-stats-sep">·</span>
-        <a href="{{ site.baseurl }}/tags/">{{ site.tags | size }} 个标签</a>
-      </p>
     </div>
   </header>
 
@@ -23,7 +13,7 @@
     <nav>
       {% for nav in site.navigation %}
       {% if nav.url contains 'http://' or nav.url contains 'https://' %}
-      <a href="{{ nav.url }}" rel="noopener noreferrer">{{ nav.name }}</a>
+      <a href="{{ nav.url }}">{{ nav.name }}</a>
       {% else %}
       <a href="{{ site.baseurl }}{{ nav.url }}">{{ nav.name }}</a>
       {% endif %}
