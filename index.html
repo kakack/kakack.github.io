@@ -2,110 +2,116 @@
 layout: default
 ---
 
+{% assign featured_post = site.posts | where: "pinned", true | first %}
+
 {% if site.posts.size == 0 %}
   <h2>No post found</h2>
 {% endif %}
 
-<div class="posts">
-  
-  {% for post in site.posts %}
-    {% if post.pinned==true %}
-      <article class="post pinned">
-        <h1>
-            <span title="pinned"><i data-feather="anchor"></i></span><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
-        </h1>
+<div class="home-shell">
+  <section class="home-hero">
+    <p class="home-kicker">{{ site.author_name }}</p>
+    <h1 class="home-hero-title">{{ site.hero_title }}</h1>
+    <p class="home-hero-subtitle">{{ site.hero_subtitle }}</p>
+    <p class="home-hero-intro">{{ site.hero_intro }}</p>
 
-        <div clsss="meta">
-          
-          <span class="author">
-            {{ post.author }}
-          </span>
+    <div class="home-hero-actions">
+      <a class="home-button home-button-primary" href="#blogs">Read the blog</a>
+      <a class="home-button" href="{{ site.baseurl }}/about">About me</a>
+    </div>
+  </section>
 
-          <span class="date">
-            {{ post.date | date: "%Y-%m-%d" }}
-          </span>
+  <section class="home-section home-about-preview">
+    <div class="home-section-head">
+      <span>About</span>
+      <h2>A life between models and maps</h2>
+    </div>
 
-          <ul class="tag">
-            {% for tag in post.tags %}
-            <li>
-              <a href="{{ site.url }}{{ site.baseurl }}/tags#{{ tag }}">
-                {{ tag }}
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-
-          <script>
-            feather.replace()
-          </script>
-        </div>
-
-       <div class="post-excerpt">
-          {%   if post.content contains site.excerpt_separator or post.content != post.excerpt %}{{ post.excerpt }}
-          {%   else %}{{ post.content | lstrip | split: "
-" | first }}{% endif %}
-          <p>
-            <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">Read More</a>
-          </p>
-        </div>
-    </article>
-    {% endif %}
-  {% endfor %}
-  
-  {% for post in paginator.posts %}
-    {% unless post.pinned %}
-    <article class="post">
-      <h1>
-        <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
-      </h1>
-
-      <div clsss="meta">
-        
-        <span class="author">
-          {{ post.author }}
-        </span>
-            
-        <span class="date">
-          {{ post.date | date: "%Y-%m-%d" }}
-        </span>
-
-        <ul class="tag">
-          {% for tag in post.tags %}
-          <li>
-            <a href="{{ site.url }}{{ site.baseurl }}/tags#{{ tag }}">
-              {{ tag }}
-            </a>
-          </li>
-          {% endfor %}
+    <div class="home-about-grid">
+      <div class="home-about-copy">
+        <p>{{ site.about_preview }}</p>
+        <p>这里既有大模型、推理系统、训练技巧和工程化实现，也有旅行中的城市、海岸线、街巷和那些被记住的日常。</p>
+        <ul class="home-about-list">
+          <li>Machine Learning / Deep Learning</li>
+          <li>LLM / AI Infra / NLP / CV</li>
+          <li>Travel writing / long-form notes</li>
         </ul>
+        <a class="home-inline-link" href="{{ site.baseurl }}/about">More about me →</a>
       </div>
 
-      <div class="post-excerpt">
-          {%   if post.content contains site.excerpt_separator or post.content != post.excerpt %}{{ post.excerpt }}
-          {%   else %}{{ post.content | lstrip | split: "
-" | first }}{% endif %}
-          <p>
-            <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">Read More</a>
-          </p>
+      <div class="home-about-meta">
+        <div class="home-stat">
+          <span class="label">Posts</span>
+          <strong>{{ site.posts | size }}</strong>
         </div>
-    </article>  
-    {% endunless %}
-  {% endfor %}
-</div>
+        <div class="home-stat">
+          <span class="label">Focus</span>
+          <strong>ML, LLM, Infra</strong>
+        </div>
+        <div class="home-stat">
+          <span class="label">Also Writing</span>
+          <strong>Travel & Life</strong>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<div class="pagination">
-  {% if paginator.previous_page %}
-    <span class="prev">
-      <a href="{{ site.baseurl }}{{ paginator.previous_page_path }}" class="prev">
-        ← prev
-      </a>
-    </span>
-  {% endif %}
-  {% if paginator.next_page %}
-    <span class="next">
-      <a href="{{ site.baseurl}}{{ paginator.next_page_path }}" class="next">
-        next →
-      </a>
-    </span>
-  {% endif %}
+  <section class="home-section" id="blogs">
+    <div class="home-section-head home-section-head-inline">
+      <div>
+        <span>Blogs</span>
+        <h2>Selected writing</h2>
+      </div>
+      <a class="home-inline-link" href="{{ site.baseurl }}/archive">View archive →</a>
+    </div>
+
+    {% if featured_post %}
+    <article class="home-featured-post">
+      <p class="label">Pinned</p>
+      <h3>
+        <a href="{{ site.baseurl }}{{ featured_post.url }}">{{ featured_post.title }}</a>
+      </h3>
+      <div class="home-post-meta">
+        <span>{{ featured_post.author }}</span>
+        <span>{{ featured_post.date | date: "%Y-%m-%d" }}</span>
+      </div>
+      <div class="home-post-excerpt">
+        {% if featured_post.content contains site.excerpt_separator or featured_post.content != featured_post.excerpt %}
+          {{ featured_post.excerpt | strip_html | truncate: 220 }}
+        {% else %}
+          {{ featured_post.content | strip_html | truncate: 220 }}
+        {% endif %}
+      </div>
+      <div class="home-tag-row">
+        {% for tag in featured_post.tags limit: 4 %}
+          <a href="{{ site.url }}{{ site.baseurl }}/tags#{{ tag }}">{{ tag }}</a>
+        {% endfor %}
+      </div>
+    </article>
+    {% endif %}
+
+    <div class="home-post-grid">
+      {% assign shown = 0 %}
+      {% for post in site.posts %}
+        {% unless post.pinned %}
+          {% if shown < 6 %}
+          <article class="home-post-card">
+            <p class="home-post-date">{{ post.date | date: "%Y-%m-%d" }}</p>
+            <h3>
+              <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a>
+            </h3>
+            <div class="home-post-excerpt">
+              {% if post.content contains site.excerpt_separator or post.content != post.excerpt %}
+                {{ post.excerpt | strip_html | truncate: 150 }}
+              {% else %}
+                {{ post.content | strip_html | truncate: 150 }}
+              {% endif %}
+            </div>
+          </article>
+          {% assign shown = shown | plus: 1 %}
+          {% endif %}
+        {% endunless %}
+      {% endfor %}
+    </div>
+  </section>
 </div>
