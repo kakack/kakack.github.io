@@ -33,13 +33,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-// Code font with ligatures support
-code, pre {
-  font-family: $code-font;
-  font-variant-ligatures: normal;
-  font-feature-settings: "liga" 1, "calt" 1;
-}
-
 // Page fade-in animation
 body {
   animation: page-fade-in 0.5s ease-out both;
