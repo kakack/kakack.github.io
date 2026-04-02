@@ -250,12 +250,109 @@
     </script>
     <script>
       (function () {
+        var terminalCopyBtn = document.querySelector(".terminal-copy-btn");
+        if (terminalCopyBtn) {
+          terminalCopyBtn.addEventListener("click", function () {
+            var text = "npx kyriiiechen";
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(text).then(function () {
+                var originalHTML = terminalCopyBtn.innerHTML;
+                terminalCopyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                setTimeout(function () {
+                  terminalCopyBtn.innerHTML = originalHTML;
+                }, 2000);
+              });
+            }
+          });
+        }
+      })();
+    </script>
+    <script>
+      (function () {
         function onScrollClass() {
           var top = window.pageYOffset || document.documentElement.scrollTop;
           if (top > 60) document.body.classList.add("is-scrolled"); else document.body.classList.remove("is-scrolled");
         }
         window.addEventListener("scroll", onScrollClass, { passive: true });
         onScrollClass();
+      })();
+    </script>
+    <script>
+      (function () {
+        var githubStatus = document.getElementById("github-status");
+        if (!githubStatus) return;
+
+        var username = "kakack";
+        var statusStrong = githubStatus.querySelector("strong");
+
+        function fetchGitHubActivity() {
+          fetch("https://api.github.com/users/" + username + "/events/public?per_page=1")
+            .then(function (response) {
+              if (!response.ok) throw new Error("Failed to fetch");
+              return response.json();
+            })
+            .then(function (events) {
+              if (events && events.length > 0) {
+                var event = events[0];
+                var date = new Date(event.created_at);
+                var now = new Date();
+                var diffMs = now - date;
+                var diffMins = Math.floor(diffMs / 60000);
+                var diffHours = Math.floor(diffMs / 3600000);
+                var diffDays = Math.floor(diffMs / 86400000);
+
+                var timeStr;
+                if (diffMins < 60) {
+                  timeStr = diffMins + "m ago";
+                } else if (diffHours < 24) {
+                  timeStr = diffHours + "h ago";
+                } else {
+                  timeStr = diffDays + "d ago";
+                }
+
+                statusStrong.textContent = timeStr;
+                statusStrong.classList.remove("status-loading");
+              } else {
+                statusStrong.textContent = "No recent activity";
+                statusStrong.classList.remove("status-loading");
+              }
+            })
+            .catch(function () {
+              statusStrong.textContent = "Offline";
+              statusStrong.classList.remove("status-loading");
+            });
+        }
+
+        if (document.readyState === "complete") {
+          fetchGitHubActivity();
+        } else {
+          window.addEventListener("load", fetchGitHubActivity);
+        }
+      })();
+    </script>
+    <script>
+      (function () {
+        var filterBtns = document.querySelectorAll(".skill-filter-btn");
+        var skillTags = document.querySelectorAll(".skill-tag");
+
+        if (!filterBtns.length || !skillTags.length) return;
+
+        filterBtns.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var category = this.getAttribute("data-category");
+
+            filterBtns.forEach(function (b) { b.classList.remove("active"); });
+            this.classList.add("active");
+
+            skillTags.forEach(function (tag) {
+              if (category === "all" || tag.getAttribute("data-category") === category) {
+                tag.classList.remove("hidden");
+              } else {
+                tag.classList.add("hidden");
+              }
+            });
+          });
+        });
       })();
     </script>
     <script>

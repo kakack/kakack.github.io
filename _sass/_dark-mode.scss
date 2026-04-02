@@ -1,27 +1,34 @@
 // Dark mode: overrides when [data-theme="dark"]
 [data-theme="dark"] {
+  // Background with subtle gradient
+  body,
+  .wrapper-content {
+    color: #e9ecef;
+    background: linear-gradient(180deg, #1a1d21 0%, #212529 100%);
+  }
+
   .wrapper-sidebar {
-    background-color: rgba(26, 29, 33, 0.85);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    background-color: rgba(26, 29, 33, 0.92);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(180%);
     border-right-color: #2d3238;
   }
 
-  @supports not (backdrop-filter: blur(12px)) {
+  @supports not (backdrop-filter: blur(16px)) {
     [data-theme="dark"] .wrapper-sidebar {
       background-color: #1a1d21;
     }
   }
 
   ::-moz-selection {
-    color: #fff;
-    background: rgba(32, 201, 151, 0.35);
+    color: #f8f9fa;
+    background: rgba(32, 201, 151, 0.4);
     border-radius: 2px;
   }
 
   ::selection {
-    color: #fff;
-    background: rgba(32, 201, 151, 0.35);
+    color: #f8f9fa;
+    background: rgba(32, 201, 151, 0.4);
     border-radius: 2px;
   }
 
@@ -29,11 +36,11 @@
   .posts h1,
   .posts .tag li a,
   .archive a {
-    color: #e9ecef;
+    color: #f1f3f5;
   }
 
   .theme-toggle {
-    color: #868e96;
+    color: #adb5bd;
     &:hover {
       color: #20c997;
     }
@@ -41,18 +48,18 @@
 
   .tags > .label > li > a,
   .tags > .tag a {
-    color: #e9ecef;
+    color: #f1f3f5;
   }
   .site-description,
   .date,
   .author,
   .base-lighten-color {
-    color: #adb5bd;
+    color: #ced4da;
   }
 
   .site-stats,
   .site-stats a {
-    color: #868e96;
+    color: #adb5bd;
   }
 
   .site-stats a:hover {
@@ -63,6 +70,22 @@
   .wrapper-content {
     color: #dee2e6;
     background-color: #212529;
+  }
+
+  // Enhanced card styling
+  .home-about-copy,
+  .home-about-meta,
+  .home-featured-post,
+  .home-post-card {
+    background: linear-gradient(135deg, #2d3238 0%, #252a2e 100%);
+    border-color: #3a4046;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      border-color: rgba(32, 201, 151, 0.5);
+      box-shadow: 0 8px 32px rgba(32, 201, 151, 0.15), 0 2px 8px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(135deg, #343a40 0%, #2d3238 100%);
+    }
   }
 
   .wrapper-content .container {
@@ -89,12 +112,35 @@
   p,
   .post p,
   .entry p {
-    color: #dee2e6;
+    color: #e9ecef;
+  }
+
+  h1, h2, h3 {
+    color: #f8f9fa;
   }
 
   h4,
   h6 {
-    color: #adb5bd;
+    color: #ced4da;
+  }
+
+  .home-hero-title {
+    color: #f8f9fa;
+  }
+
+  .home-hero-subtitle {
+    color: #f1f3f5;
+  }
+
+  .home-section-head h2 {
+    color: #f8f9fa;
+  }
+
+  .home-kicker,
+  .home-section-head span,
+  .home-featured-post .label,
+  .home-stat .label {
+    color: #20c997;
   }
 
   blockquote p {
@@ -190,17 +236,21 @@
   }
 
   code.highlighter-rouge {
-    color: #74c0fc;
-    background-color: #2d3238;
+    color: #a5d8ff;
+    background-color: rgba(32, 201, 151, 0.08);
+    border: 1px solid rgba(32, 201, 151, 0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
   }
 
   pre.highlight {
-    border-color: #495057;
-    background: #212529;
+    border-color: #3a4046;
+    background: #1e2125;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .highlight {
-    background: #212529;
+    background: #1e2125;
   }
 
   .tags > .label > li > a {
@@ -231,46 +281,259 @@
   }
 
   .copy-code-btn {
-    background: #495057;
-    color: #dee2e6;
-
-    &:hover {
-      background: #868e96;
-      color: #fff;
-    }
-  }
-
-  .code-block-expand-btn {
-    background: #2d3238;
-    color: #adb5bd;
-    border-color: #495057;
-
-    &:hover {
-      background: #495057;
-      color: #dee2e6;
-    }
-  }
-
-  .reading-progress-bar {
-    background: rgba(32, 201, 151, 0.3);
-  }
-
-  .reading-progress-fill {
-    background: #20c997;
-  }
-
-  .back-to-top {
     background: #343a40;
-    color: #dee2e6;
+    color: #f1f3f5;
     border: 1px solid #495057;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 
     &:hover {
       background: #495057;
       color: #20c997;
+      border-color: rgba(32, 201, 151, 0.3);
+      box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
+    }
+  }
+
+  .code-block-expand-btn {
+    background: #1e2125;
+    color: #ced4da;
+    border-color: #3a4046;
+
+    &:hover {
+      background: #343a40;
+      color: #f1f3f5;
+      border-color: #495057;
+    }
+  }
+
+  .reading-progress-bar {
+    background: rgba(32, 201, 151, 0.15);
+  }
+
+  .reading-progress-fill {
+    background: linear-gradient(90deg, #20c997 0%, #3dd5ac 100%);
+    box-shadow: 0 0 10px rgba(32, 201, 151, 0.5);
+  }
+
+  .back-to-top {
+    background: #2d3238;
+    color: #f1f3f5;
+    border: 1px solid #3a4046;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      background: #343a40;
+      color: #20c997;
+      border-color: rgba(32, 201, 151, 0.4);
+      box-shadow: 0 6px 20px rgba(32, 201, 151, 0.25);
     }
   }
 
   body.is-scrolled .wrapper-sidebar {
-    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.25);
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.4);
+  }
+
+  // Enhanced glow effects for interactive elements
+  .home-button:hover,
+  .home-button-primary:hover {
+    box-shadow: 0 6px 20px rgba(32, 201, 151, 0.3), 0 0 40px rgba(32, 201, 151, 0.1);
+  }
+
+  .terminal-command:hover {
+    box-shadow: 0 4px 24px rgba(32, 201, 151, 0.3), 0 0 60px rgba(32, 201, 151, 0.08);
+  }
+
+  // Footer dark mode
+  .wrapper-footer-desktop,
+  .wrapper-footer-mobile {
+    border-top-color: #2d3238;
+    background: linear-gradient(180deg, #1a1d21 0%, #16191d 100%);
+  }
+
+  // Terminal command dark mode
+  .terminal-command {
+    background: #e9ecef;
+    border-color: rgba(32, 201, 151, 0.3);
+
+    &:hover {
+      border-color: #20c997;
+      box-shadow: 0 4px 20px rgba(32, 201, 151, 0.25);
+    }
+  }
+
+  .terminal-command-inner {
+    color: #212529;
+  }
+
+  .terminal-prompt {
+    color: #20c997;
+  }
+
+  .terminal-code {
+    color: #212529;
+  }
+
+  .terminal-copy-btn {
+    background: rgba(33, 37, 41, 0.12);
+    border-color: rgba(33, 37, 41, 0.25);
+    color: #212529;
+
+    &:hover {
+      background: rgba(33, 37, 41, 0.2);
+      border-color: rgba(33, 37, 41, 0.4);
+    }
+  }
+
+  // Status indicator dark mode
+  .status-indicator {
+    background: #20c997;
+  }
+
+  .status-loading {
+    color: #adb5bd !important;
+  }
+
+  // Home cards dark mode hover effects
+  .home-about-copy:hover,
+  .home-about-meta:hover,
+  .home-featured-post:hover,
+  .home-post-card:hover {
+    border-color: rgba(32, 201, 151, 0.4);
+    box-shadow: 0 4px 20px rgba(32, 201, 151, 0.15);
+  }
+
+  // Buttons dark mode
+  .home-button {
+    background: #2d3238;
+    border-color: #3a4046;
+    color: #f1f3f5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(32, 201, 151, 0.15) 0%, rgba(32, 201, 151, 0.08) 100%);
+      border-color: #20c997;
+      color: #20c997;
+      box-shadow: 0 4px 16px rgba(32, 201, 151, 0.25);
+    }
+  }
+
+  .home-button-primary {
+    background: linear-gradient(135deg, #20c997 0%, #1fb386 100%);
+    border-color: #20c997;
+    color: #0d1117;
+    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+
+    &:hover {
+      background: linear-gradient(135deg, #3dd5ac 0%, #20c997 100%);
+      border-color: #3dd5ac;
+      color: #0d1117;
+      box-shadow: 0 8px 24px rgba(32, 201, 151, 0.45);
+    }
+  }
+
+  // Inline link underline effect dark mode
+  .home-inline-link:after {
+    background: #20c997;
+  }
+
+  // Tag hover effects dark mode
+  .home-tag-row a:hover {
+    box-shadow: 0 2px 6px rgba(32, 201, 151, 0.25);
+  }
+
+  // Skills section dark mode
+  .skill-filter-btn {
+    color: #adb5bd;
+    border-color: #495057;
+    background: transparent;
+
+    &:hover {
+      color: #20c997;
+      border-color: #20c997;
+      background: rgba(32, 201, 151, 0.08);
+    }
+
+    &.active {
+      color: #212529;
+      background: #20c997;
+      border-color: #20c997;
+    }
+  }
+
+  .skill-tag {
+    color: #dee2e6;
+    background: #2d3238;
+    border-color: #495057;
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(32, 201, 151, 0.3);
+    }
+
+    &[data-level="expert"] {
+      color: #20c997;
+      border-color: #20c997;
+      background: rgba(32, 201, 151, 0.08);
+
+      &:hover {
+        background: rgba(32, 201, 151, 0.15);
+        box-shadow: 0 6px 20px rgba(32, 201, 151, 0.4);
+      }
+    }
+
+    &[data-level="advanced"] {
+      border-color: rgba(32, 201, 151, 0.5);
+
+      &:hover {
+        border-color: #20c997;
+        background: rgba(32, 201, 151, 0.1);
+      }
+    }
+
+    &[data-level="intermediate"] {
+      &:hover {
+        border-color: rgba(32, 201, 151, 0.6);
+      }
+    }
+  }
+
+  // Projects section dark mode
+  .project-card {
+    background: linear-gradient(135deg, #2d3238 0%, #252a2e 100%);
+    border-color: #3a4046;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      border-color: rgba(32, 201, 151, 0.6);
+      box-shadow: 0 12px 36px rgba(32, 201, 151, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(135deg, #343a40 0%, #2d3238 100%);
+    }
+  }
+
+  .project-header h3 {
+    color: #f1f3f5;
+  }
+
+  .project-link {
+    color: #adb5bd;
+
+    &:hover {
+      color: #20c997;
+    }
+  }
+
+  .project-description {
+    color: #e9ecef;
+  }
+
+  .project-tag {
+    color: #20c997;
+    background: rgba(32, 201, 151, 0.12);
+    border: 1px solid rgba(32, 201, 151, 0.2);
+
+    &:hover {
+      background: rgba(32, 201, 151, 0.22);
+      border-color: rgba(32, 201, 151, 0.35);
+      box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+    }
   }
 }
