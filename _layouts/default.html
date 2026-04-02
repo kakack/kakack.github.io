@@ -250,25 +250,6 @@
     </script>
     <script>
       (function () {
-        var terminalCopyBtn = document.querySelector(".terminal-copy-btn");
-        if (terminalCopyBtn) {
-          terminalCopyBtn.addEventListener("click", function () {
-            var text = "npx kyriiiechen";
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(text).then(function () {
-                var originalHTML = terminalCopyBtn.innerHTML;
-                terminalCopyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                setTimeout(function () {
-                  terminalCopyBtn.innerHTML = originalHTML;
-                }, 2000);
-              });
-            }
-          });
-        }
-      })();
-    </script>
-    <script>
-      (function () {
         function onScrollClass() {
           var top = window.pageYOffset || document.documentElement.scrollTop;
           if (top > 60) document.body.classList.add("is-scrolled"); else document.body.classList.remove("is-scrolled");
