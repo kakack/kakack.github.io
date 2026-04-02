@@ -3,11 +3,11 @@ description: 欲買桂花同載酒，終不似，少年遊。
 url: https://kakack.github.io
 #baseurl: /blog
 lang: zh-CN
-author_name: Kai Chen
-hero_title: Hi, I'm Kai
+author_name: Kyrie Chen
+hero_title: Hi, that's Kyrie
 hero_subtitle: I write about machine learning, LLM systems, AI infrastructure, and the cities and journeys that stay with me after the trip is over.
 hero_intro: Engineer, researcher, traveler, husband, and father. This site is where technical notes and personal essays live together.
-about_preview: 我的写作主要分成两条线。一条是技术，记录模型、系统和工程化中的理解；另一条是旅行与生活，记录那些值得被时间反复回望的地方与片刻。
+about_preview: 我的技术分享和心得记录了我求学和工作过程中的每一步；而对旅行与生活的分享，记录那些值得被时间反复回望的地方与片刻。
 avatar: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.png
 favicon: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/icon.png
 social_image: https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.png
