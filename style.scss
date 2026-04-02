@@ -1008,6 +1008,135 @@ footer {
   }
 }
 
+// Post page: collapsed sidebar — narrow strip with hover expand
+$sidebar-collapsed-w: 64px;
+
+body.post-page {
+  .wrapper-sidebar {
+    width: $sidebar-collapsed-w;
+    overflow: hidden;
+    z-index: 10;
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.28s ease;
+
+    .sidebar { padding: 16px 0; }
+
+    .site-info {
+      margin: 20px auto 0;
+      .site-avatar {
+        max-width: 40px;
+        max-height: 40px;
+        transition: max-width 0.28s, max-height 0.28s;
+      }
+      .site-name,
+      .site-description,
+      .site-stats {
+        opacity: 0;
+        height: 0;
+        overflow: hidden;
+        margin: 0;
+        transition: opacity 0.2s 0s;
+      }
+    }
+
+    .navlist nav {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 16px;
+      a {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        margin: 8px 0;
+        padding: 6px 0;
+        font-size: 13px;
+        letter-spacing: 2px;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+    }
+
+    .wrapper-footer-desktop {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    // Hover expand — sidebar opens as overlay, content stays in place
+    &:hover {
+      width: 30%;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+
+      .site-info {
+        .site-avatar { max-width: 200px; max-height: 200px; }
+        .site-name,
+        .site-description,
+        .site-stats {
+          opacity: 1;
+          height: auto;
+          overflow: visible;
+          transition: opacity 0.2s 0.1s;
+        }
+      }
+
+      .navlist nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        a {
+          writing-mode: horizontal-tb;
+          text-orientation: initial;
+          margin: 0 10px;
+          padding: 0;
+          font-size: 18px;
+          letter-spacing: 1px;
+        }
+      }
+
+      .wrapper-footer-desktop {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    @include mobile {
+      width: 100%;
+      overflow: visible;
+
+      .site-info {
+        .site-avatar { max-width: 120px; max-height: 120px; }
+        .site-name,
+        .site-description,
+        .site-stats {
+          opacity: 1; height: auto; overflow: visible;
+        }
+      }
+      .navlist nav {
+        flex-direction: row; flex-wrap: wrap; justify-content: center;
+        a {
+          writing-mode: horizontal-tb; text-orientation: initial;
+          margin: 0 10px; font-size: 16px; letter-spacing: 1px;
+        }
+      }
+      .wrapper-footer-desktop { opacity: 1; pointer-events: auto; }
+    }
+  }
+
+  // Content takes remaining space — fixed offset, never moves on hover
+  .wrapper-content {
+    width: calc(100% - #{$sidebar-collapsed-w});
+    @include mobile { width: 100%; }
+  }
+
+  // TOC aligns to collapsed sidebar edge
+  .toc {
+    left: $sidebar-collapsed-w;
+    @include mobile { display: none; }
+  }
+
+  // withtoc padding stays the same
+}
+
 // Settled on moving the import of syntax highlighting to the bottom of the CSS
 @import "highlights";
 // 若启用 Gitalk 评论，取消下一行注释: @import "gitalk";

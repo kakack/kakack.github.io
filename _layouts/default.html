@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ page.lang | default: site.lang | default: 'zh-CN' }}">
   {% include head.html %}
-  <body>
+  <body{% if page.layout == 'post' %} class="post-page"{% endif %}>
     <button type="button" id="theme-toggle" class="theme-toggle" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">Dark mode</button>
     {% include nav.html %}
 
