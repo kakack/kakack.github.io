@@ -72,45 +72,44 @@ layout: default
     <div class="skills-filter">
       <button class="skill-filter-btn active" data-category="all">All</button>
       <button class="skill-filter-btn" data-category="language">Languages</button>
-      <button class="skill-filter-btn" data-category="framework">Frameworks</button>
-      <button class="skill-filter-btn" data-category="tool">Tools</button>
-      <button class="skill-filter-btn" data-category="ai">AI/ML</button>
+      <button class="skill-filter-btn" data-category="training">LLM Training</button>
+      <button class="skill-filter-btn" data-category="infra">AI Infra</button>
+      <button class="skill-filter-btn" data-category="agent">Agent Systems</button>
     </div>
 
     <div class="skills-cloud">
       <span class="skill-tag" data-category="language" data-level="expert">Python</span>
       <span class="skill-tag" data-category="language" data-level="advanced">C++</span>
+      <span class="skill-tag" data-category="language" data-level="advanced">C</span>
       <span class="skill-tag" data-category="language" data-level="advanced">Java</span>
-      <span class="skill-tag" data-category="language" data-level="intermediate">JavaScript</span>
-      <span class="skill-tag" data-category="language" data-level="intermediate">Go</span>
-      <span class="skill-tag" data-category="language" data-level="intermediate">SQL</span>
 
-      <span class="skill-tag" data-category="ai" data-level="expert">PyTorch</span>
-      <span class="skill-tag" data-category="ai" data-level="expert">TensorFlow</span>
-      <span class="skill-tag" data-category="ai" data-level="advanced">Transformers</span>
-      <span class="skill-tag" data-category="ai" data-level="advanced">LangChain</span>
-      <span class="skill-tag" data-category="ai" data-level="advanced">RAG</span>
-      <span class="skill-tag" data-category="ai" data-level="intermediate">CUDA</span>
+      <span class="skill-tag" data-category="training" data-level="expert">PyTorch</span>
+      <span class="skill-tag" data-category="training" data-level="expert">Transformers</span>
+      <span class="skill-tag" data-category="training" data-level="advanced">DeepSpeed</span>
+      <span class="skill-tag" data-category="training" data-level="advanced">Megatron-LM</span>
+      <span class="skill-tag" data-category="training" data-level="advanced">CUDA</span>
+      <span class="skill-tag" data-category="training" data-level="intermediate">MoE</span>
 
-      <span class="skill-tag" data-category="framework" data-level="advanced">FastAPI</span>
-      <span class="skill-tag" data-category="framework" data-level="advanced">Flask</span>
-      <span class="skill-tag" data-category="framework" data-level="intermediate">Spring</span>
-      <span class="skill-tag" data-category="framework" data-level="intermediate">React</span>
+      <span class="skill-tag" data-category="infra" data-level="expert">vLLM</span>
+      <span class="skill-tag" data-category="infra" data-level="expert">KV Cache</span>
+      <span class="skill-tag" data-category="infra" data-level="advanced">TensorRT</span>
+      <span class="skill-tag" data-category="infra" data-level="advanced">Triton</span>
+      <span class="skill-tag" data-category="infra" data-level="advanced">Docker</span>
+      <span class="skill-tag" data-category="infra" data-level="advanced">Kubernetes</span>
 
-      <span class="skill-tag" data-category="tool" data-level="expert">Git</span>
-      <span class="skill-tag" data-category="tool" data-level="advanced">Docker</span>
-      <span class="skill-tag" data-category="tool" data-level="advanced">Kubernetes</span>
-      <span class="skill-tag" data-category="tool" data-level="intermediate">AWS</span>
-      <span class="skill-tag" data-category="tool" data-level="intermediate">Redis</span>
-      <span class="skill-tag" data-category="tool" data-level="intermediate">PostgreSQL</span>
+      <span class="skill-tag" data-category="agent" data-level="advanced">LangChain</span>
+      <span class="skill-tag" data-category="agent" data-level="advanced">RAG</span>
+      <span class="skill-tag" data-category="agent" data-level="advanced">MCP</span>
+      <span class="skill-tag" data-category="agent" data-level="expert">Memory System</span>
+      <span class="skill-tag" data-category="agent" data-level="advanced">Prompt Engineering</span>
     </div>
   </section>
 
   <section class="home-section home-projects">
     <div class="home-section-head home-section-head-inline">
       <div>
-        <span>Projects</span>
-        <h2>Featured Work</h2>
+        <span>What I Work On</span>
+        <h2>Focus Areas</h2>
       </div>
       <a class="home-inline-link" href="https://github.com/kakack" target="_blank">View all on GitHub →</a>
     </div>
@@ -118,50 +117,53 @@ layout: default
     <div class="projects-grid">
       <article class="project-card">
         <div class="project-header">
-          <h3>LLM Inference Engine</h3>
+          <h3>LLM Inference Optimization</h3>
         </div>
-        <p class="project-description">High-performance LLM serving system with dynamic batching, quantization support, and distributed inference capabilities.</p>
+        <p class="project-description">High-performance LLM serving built on vLLM, covering KV Cache management, Speculative Decoding, Continuous Batching, and quantized deployment for low-latency online inference at scale.</p>
         <div class="project-tags">
-          <span class="project-tag">Python</span>
-          <span class="project-tag">PyTorch</span>
+          <span class="project-tag">vLLM</span>
+          <span class="project-tag">KV Cache</span>
+          <span class="project-tag">TensorRT</span>
           <span class="project-tag">CUDA</span>
-          <span class="project-tag">FastAPI</span>
         </div>
       </article>
 
       <article class="project-card">
         <div class="project-header">
-          <h3>RAG Pipeline</h3>
+          <h3>Distributed Training & Model Architecture</h3>
         </div>
-        <p class="project-description">Production-ready retrieval-augmented generation system with vector database, embedding optimization, and context management.</p>
+        <p class="project-description">Large-scale distributed training infrastructure and model architecture research, including 5D Parallelism (DP/TP/PP/SP/EP), MoE sparse architectures, Scaling Law validation, and training stability tuning.</p>
+        <div class="project-tags">
+          <span class="project-tag">DeepSpeed</span>
+          <span class="project-tag">Megatron-LM</span>
+          <span class="project-tag">PyTorch</span>
+          <span class="project-tag">MoE</span>
+        </div>
+      </article>
+
+      <article class="project-card">
+        <div class="project-header">
+          <h3>Agent & Memory System</h3>
+        </div>
+        <p class="project-description">Design and implementation of LLM Agent systems, including hierarchical Memory management for multi-turn conversations, Tool-use orchestration, MCP protocol integration, and RAG pipelines.</p>
         <div class="project-tags">
           <span class="project-tag">LangChain</span>
-          <span class="project-tag">Transformers</span>
-          <span class="project-tag">Redis</span>
+          <span class="project-tag">RAG</span>
+          <span class="project-tag">MCP</span>
+          <span class="project-tag">Memory System</span>
         </div>
       </article>
 
       <article class="project-card">
         <div class="project-header">
-          <h3>ML Training Platform</h3>
+          <h3>LLM Serving Infrastructure</h3>
         </div>
-        <p class="project-description">Distributed training infrastructure with experiment tracking, hyperparameter tuning, and model versioning.</p>
+        <p class="project-description">Production-grade LLM serving platform covering model deployment orchestration, GPU cluster scheduling, Triton inference gateway, and end-to-end observability.</p>
         <div class="project-tags">
-          <span class="project-tag">TensorFlow</span>
           <span class="project-tag">Kubernetes</span>
           <span class="project-tag">Docker</span>
-        </div>
-      </article>
-
-      <article class="project-card">
-        <div class="project-header">
-          <h3>NLP Toolkit</h3>
-        </div>
-        <p class="project-description">Collection of NLP utilities for text processing, sentiment analysis, and entity recognition with multilingual support.</p>
-        <div class="project-tags">
+          <span class="project-tag">Triton</span>
           <span class="project-tag">Python</span>
-          <span class="project-tag">spaCy</span>
-          <span class="project-tag">BERT</span>
         </div>
       </article>
     </div>
