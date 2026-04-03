@@ -25,7 +25,7 @@ pinned: false
 
 而 SORT 算法中只通过前后两帧 IoU 来构建相似度矩阵，所以运行速度很快，但在遮挡、近邻目标等复杂场景下容易出现 ID Switch。
 
-![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20200928-1.JPG)
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20200928-1.jpg)
 
 - [Paper](http://arxiv.org/pdf/1602.00763.pdf)
 - [Open Source Code](https://github.com/abewley/sort)
