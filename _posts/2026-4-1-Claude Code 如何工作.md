@@ -21,6 +21,8 @@ pinned: false
 
 从源码中可以看出，整个系统被清晰地划分为五层：
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-1.png)
+
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-8.png)
 *Claude Code 的系统架构｜reddit*
 
