@@ -338,13 +338,18 @@
     </script>
     <script>
       (function () {
-        function initMermaid() {
+        var mermaidId = 0;
+
+        function renderMermaid() {
           if (typeof window.mermaid === "undefined") return;
 
           var container = document.querySelector("#main .container");
           if (!container) return;
 
-          var blocks = container.querySelectorAll("pre code.language-mermaid");
+          // Match both plain code blocks and Rouge-highlighted blocks
+          var blocks = container.querySelectorAll(
+            'pre > code.language-mermaid, .highlight pre code.language-mermaid'
+          );
           if (!blocks.length) return;
 
           var isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -354,24 +359,76 @@
             securityLevel: "loose"
           });
 
+          var wrappers = [];
           blocks.forEach(function (code) {
-            var pre = code.closest("pre");
-            if (!pre) return;
-            var parent = pre.parentNode;
+            // Walk up to the outermost wrapper (.highlight div or bare <pre>)
+            var wrapper = code.closest(".highlight") || code.closest("pre");
+            if (!wrapper) return;
+            var parent = wrapper.parentNode;
             var div = document.createElement("div");
             div.className = "mermaid-wrapper";
-            div.setAttribute("data-mermaid", "true");
-            div.textContent = code.textContent.trim();
-            parent.replaceChild(div, pre);
+            div.id = "mermaid-" + (++mermaidId);
+            // textContent automatically decodes HTML entities like &gt;
+            var source = code.textContent.trim();
+            div.setAttribute("data-mermaid-source", source);
+            div.textContent = source;
+            parent.replaceChild(div, wrapper);
+            wrappers.push(div);
           });
 
-          window.mermaid.run({ querySelector: ".mermaid-wrapper", suppressErrors: true });
+          if (wrappers.length) {
+            window.mermaid.run({ nodes: wrappers, suppressErrors: true });
+          }
         }
 
+        // Re-render on dark mode toggle so diagrams pick up the new theme
+        function reRenderMermaid() {
+          if (typeof window.mermaid === "undefined") return;
+          var existing = document.querySelectorAll(".mermaid-wrapper[data-processed]");
+          if (!existing.length) {
+            existing = document.querySelectorAll(".mermaid-wrapper");
+          }
+          if (!existing.length) return;
+
+          var isDark = document.documentElement.getAttribute("data-theme") === "dark";
+          window.mermaid.initialize({
+            startOnLoad: false,
+            theme: isDark ? "dark" : "default",
+            securityLevel: "loose"
+          });
+
+          // Store original source and reset each wrapper
+          existing.forEach(function (el) {
+            if (!el.getAttribute("data-mermaid-source")) {
+              el.setAttribute("data-mermaid-source", el.textContent.trim());
+            }
+            var source = el.getAttribute("data-mermaid-source");
+            el.removeAttribute("data-processed");
+            el.innerHTML = "";
+            el.textContent = source;
+            el.id = "mermaid-" + (++mermaidId);
+          });
+
+          window.mermaid.run({
+            nodes: Array.prototype.slice.call(existing),
+            suppressErrors: true
+          });
+        }
+
+        // Observe theme changes for live re-render
+        var observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (m) {
+            if (m.attributeName === "data-theme") {
+              reRenderMermaid();
+            }
+          });
+        });
+        observer.observe(document.documentElement, { attributes: true });
+
         if (document.readyState === "complete") {
-          initMermaid();
+          renderMermaid();
         } else {
-          window.addEventListener("load", initMermaid);
+          window.addEventListener("load", renderMermaid);
         }
       })();
     </script>
