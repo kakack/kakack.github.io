@@ -1,5 +1,4 @@
 ---
-
 layout: post
 tags: [LLM, Agent, Engineering]
 title: Claude Code 如何工作
@@ -8,429 +7,241 @@ author: Kyrie Chen
 comments: true
 toc: true
 pinned: false
-
 ---
 
-最近把一份 Claude Code 源码快照系统过了一遍，最大的感受是：它并不是一个“会调几个工具的 CLI”，也不只是一个“把大模型接进终端”的聊天程序。更准确地说，它是一个运行在终端里的 **agent runtime**。
+2026 年 3 月 31 日，Anthropic 发布的 `@anthropic-ai/claude-code` v2.1.88 里多了一个 59.8 MB 的 `.js.map` 文件。Bun 默认生成 source map，而 `.npmignore` 里漏掉了对应的忽略规则。几小时内，约 1,900 个 TypeScript 文件、512,000 行代码被全网镜像。
 
-很多人第一次用 Claude Code，会把体验归因于模型本身。但从代码实现看，真正决定它是否稳定、是否可控、是否能持续跑长任务的，主要不是模型，而是外围这套运行时工程：启动怎么分流、上下文怎么拼、memory 怎么分层、tool 怎样注册和裁剪、权限如何 fail-closed、长对话如何压缩恢复、子 agent 如何委派和回收。
+但真正的故事不是泄露本身，而是工程。
 
-所以这篇文章不再按官方文档目录去复述功能，而是换一个更接近实现的视角：**Claude Code 到底是如何被拉起来、如何驱动一次对话、又如何把单次 tool calling 扩展成一个长期运行的 coding agent。**
+大多数报道都在追逐猎奇细节：隐藏功能、内部代号、卧底模式。这些噪音会随时间消散，六个月之后依然有价值的是架构。Claude Code 是目前世界上使用最广泛的 AI 编程 Agent，它的源码揭示了一套经过大规模生产验证的 hard-won patterns。本文将 Particula Tech 的架构解读与虎嗅的五层架构分析相融合，试图说清这件真正重要的事：**Claude Code 的引擎盖下，究竟是什么样子。**
 
-## 先给结论
+## 五层架构，从外到内
 
-如果只看表面，Claude Code 很像“终端里的 ChatGPT + shell + 文件编辑”。但从架构上看，它至少由四个彼此耦合的内核组成：
+很多人以为 AI 编程工具不过是给模型 API 套一层终端界面。但 512,000 行代码、约 40 个内置工具、85 个斜杠命令、React+Ink 渲染的终端 UI、Bun 运行时——这分明是一个完整的生产级系统，不是套壳。
 
-1. **启动内核**：负责解析 CLI、配置、策略、信任关系、会话恢复、远程模式，把整个 runtime 拉起来。
-2. **对话内核**：负责组装 prompt、context、messages，驱动 `模型 -> tool -> 模型` 的循环。
-3. **工具内核**：负责工具协议、权限检查、并发执行、结果截断、落盘和 transcript 映射。
-4. **Agent 内核**：负责把“Claude 自己干活”扩展成“Claude 调度多个 worker/sub-agent 协同干活”。
+从源码中可以看出，整个系统被清晰地划分为五层：
 
-UI、MCP、skills、plugins、hooks 这些东西当然也重要，但它们更多是围绕这四个内核展开的扩展层。理解了这四层，Claude Code 的大部分行为都能解释清楚。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-8.png)
+*Claude Code 的系统架构｜reddit*
 
-## 它首先不是 IDE 插件，而是 terminal-native runtime
+| 层级 | 核心职责 |
+| --- | --- |
+| **入口层** | CLI、桌面端、网页、IDE 插件、SDK 的统一路由 |
+| **运行层** | REPL 循环、状态机、Hook 系统、任务队列 |
+| **引擎层** | QueryEngine、动态提示词组装、流式响应、上下文压缩 |
+| **工具与能力层** | 约 40 个内置工具、权限隔离、MCP 扩展、安全校验 |
+| **基础设施层** | 认证、缓存、文件存储、远程控制、telemetry、多代理隔离 |
 
-Claude Code 的基本定位很直接：它默认就运行在你的终端里，直接面对你的代码仓库、本地 shell、git 状态和开发环境。
+这五层的关系不是简单的上下堆叠，而是围绕一个核心信条组织的：**把 Agent loop 做得极简，把 loop 周围的 harness 做得极重。** 512,000 行代码里，Agent 循环本身可能只有 20 行；剩下的全是上下文管理、权限系统、工具协议、错误恢复、记忆与压缩。
 
-这件事看起来只是“交互界面不同”，但实际影响很大。因为一旦终端是第一现场，系统就必须认真处理下面这些问题：
+## 入口层（Entrypoints）
 
-- 当前工作目录是谁
-- 项目根目录怎么发现
-- 当前 git 分支和工作区状态要不要注入 prompt
-- 哪些文件能读，哪些文件能写
-- 哪些命令可以自动执行，哪些必须确认
-- 长任务怎样后台运行
-- 对话怎样恢复，历史怎样压缩
-- 项目规则怎样随着目录变化自动生效
+入口层的核心任务是：把用户侧碎片化的输入标准化，再向下传递。`entrypoints/cli.tsx` 会在极早期做 fast-path 分流：`--version`、MCP server 辅助模式、bridge / remote control、daemon、headless runner 等特殊模式会在这里短路，避免加载完整的 CLI。
 
-换句话说，Claude Code 从一开始就不是“先做个聊天框，再给它接几个工具”，而是围绕一个真实开发环境去设计的。
+`main.tsx`（约 4,683 行）则是真正的运行时编排器。它负责解析 CLI 参数、加载配置与策略、初始化 GrowthBook feature flags、处理 migrations，并选择 interactive / non-interactive / remote / direct-connect / assistant 模式。这说明 Claude Code 从一开始就被设计为多端产品，前端的变化不会污染核心逻辑。
 
-## Claude Code 的主链路
+## 运行层（Runtime）
 
-把很多实现细节收起来后，Claude Code 的主链路其实很清楚：
+运行层管理着每条命令的进出和状态更新。它的核心是一个极简的 TAOR 循环：Think -> Act -> Observe -> Repeat。如果把它翻译成代码，本质上就是这样一个 `while` 循环：
 
-```mermaid
-flowchart TD
-    A[CLI 启动] --> B[加载配置 / 策略 / 会话]
-    B --> C[组装 system prompt 与 context]
-    C --> D[调用模型]
-    D --> E{是否发出 tool_use}
-    E -- 否 --> F[输出最终回答]
-    E -- 是 --> G[权限检查]
-    G --> H[执行 tool]
-    H --> I[写回 tool_result]
-    I --> D
+```typescript
+while (true) {
+  const response = await model.generate(messages);
+  if (!response.hasToolCall()) break;
+  const result = await executeTool(response.toolCall);
+  messages.push(response, result);
+}
 ```
 
-这条链路看上去很普通，很多 agent 产品也都能画出类似图。但 Claude Code 的关键不在“有没有这个 loop”，而在它把 loop 周围几乎每个环节都做成了独立、可恢复、可裁剪、可审计的运行时部件。
+模型产生一条消息。如果包含工具调用，就执行工具，把结果追加到对话历史中，然后继续循环。没有工具调用？循环停止，等待用户输入。所有状态都以不可变的 message 形式存在——仅从对话历史就能完整重建状态。
 
-## 从启动到对话：Claude Code 先把 runtime 组装好
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-2.png)
 
-Claude Code 真正复杂的地方，往往发生在第一条 prompt 之前。很多人会把 `query.ts` 视为核心，这当然没错，但只看这一层很容易低估系统复杂度。
+这个循环听起来简单到令人惊讶。但这就是重点：很多团队在构建第一个 Agent 时会去搞复杂的状态机、DAG 编排器或自定义控制流引擎。Claude Code 证明你不需要这些。一个基于 tool call 的 `while` 循环，加上 message history 作为核心数据结构，就能覆盖绝大多数 Agentic 行为。
 
-启动阶段大致要完成这些事：
+复杂度不在循环里，而在循环周围的 harness 中。运行层的 REPL（约 5,005 行）不是"把文本打印出来"那么简单，它还要处理流式输出、权限对话框、tool progress、任务前后台切换、远程会话状态、消息滚动与恢复。可以把它理解成**终端里的会话操作系统**。
 
-- 解析当前是交互模式、非交互模式、远程模式，还是某种 fast path
-- 加载 settings、managed settings、feature flags、迁移逻辑
-- 建立 session id、工作目录、project root、会话存储
-- 恢复已有 transcript，或者创建新会话
-- 初始化 hooks、watcher、plugin、MCP、skills 等外围能力
-- 根据模式决定是否进入 REPL，还是直接跑一次 headless query
+## 引擎层（Engine）
 
-可以把它理解成一套很轻的“runtime 上电流程”：
+引擎层是系统的心脏，核心是一个 QueryEngine 单例，负责拼接上下文、管理提示缓存、处理流式响应和压缩对话，代码量接近 46,000 行。
 
-```mermaid
-flowchart LR
-    A[CLI 入口] --> B[模式分流]
-    B --> C[配置/策略加载]
-    C --> D[session 与 project root]
-    D --> E[恢复 transcript 或新建会话]
-    E --> F[MCP / skills / plugins / hooks]
-    F --> G[REPL 或 headless query]
+### 动态提示词组装
+
+Claude Code 没有一份静态的 system prompt。相反，它是**数百个提示碎片在运行时动态拼装**的结果。根据模式、工具、上下文的不同，系统会注入不同的提示片段。光是安全守则就有约 5,677 个 token，相当于两万字的行为规范。这是把软件工程的模块化思想搬进了提示词管理。
+
+### SYSTEM_PROMPT_DYNAMIC_BOUNDARY
+
+引擎层使用了一个 `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` 模式，把静态指令（会话间不变）与动态上下文（会话相关）显式分离。这不仅是组织上的优化，更是**缓存优化**：静态内容命中 prompt cache，动态内容放在边界之后。团队甚至跟踪了 **14 个独立的 cache-break vectors**，监控到底是什么在让缓存失效。
+
+### 三层上下文压缩
+
+引擎层对上下文管理的重视程度，从三层压缩架构就能看出来：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-5.png)
+
+- **MicroCompact**：在本地裁剪旧的 tool 输出，**零 API 调用**
+- **AutoCompact**：在接近上下文上限时触发，生成最多 20,000 token 的结构化摘要，并带有**连续 3 次失败即断路的熔断器**
+- **Full Compact**：全量压缩后，重新注入最近访问的文件（每文件上限 5,000 token）、活跃计划和 skill schema
+
+据说一个 autocompaction 无限重试的 bug，曾经每天烧掉约 **250,000 次 API 调用**——上下文管理决策在这个规模上直接等于真金白银。
+
+### Plan Mode 与 Coordinator Mode
+
+引擎层里还有两个多代理机制，但它们的定位截然不同：
+
+**Plan Mode** 是只读分析模式。Agent 用只读操作探索代码库、规划方案、不做任何修改。它的价值是在真正执行之前给出一个可以审查的计划，防止 AI 直接动手动坏了再说。
+
+**Coordinator Mode**（`CLAUDE_CODE_COORDINATOR_MODE=1`）才是真正的并行多代理机制。开启后，一个 Claude 实例充当协调者（Coordinator），通过 `AgentTool` 创建并管理多个 Worker Agent，在独立的 git worktree 里隔离执行。协调者不自己写代码，只负责分配任务和汇总输出。Agent 之间的通信没有魔法消息总线，就是结构化文本直接 pipe 进协调者的上下文窗口。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-3.png)
+
+最精妙的是经济性设计：子 Agent fork 时，会创建与父上下文**字节级一致的副本**，从而**共享 KV cache**。这意味着子 Agent 只需要为自己独有的指令付费，而不是重复支付整个共享上下文的 token。并行由此变得几乎免费。
+
+## 工具与能力层（Tools&Caps）
+
+约 40 个内置工具，每一个都是独立的、权限隔离的能力单元。工具基类的定义就有约 29,000 行 TypeScript。
+
+### 把安全嵌入使用点，而不是放进策略文档
+
+大多数 Agent 框架把安全交给单独的配置层：权限文件、guardrails、内容过滤器。Claude Code 的做法不同——安全规则直接嵌入在工具描述里，就在模型每次调用时能看到的位置。
+
+比如 Bash 工具的 description 里明确写着：
+
+```
+- NEVER run destructive git commands (push --force, reset --hard,
+  checkout ., restore ., clean -f, branch -D) unless the user
+  explicitly requests these actions
+- CRITICAL: Always create NEW commits rather than amending
 ```
 
-用户看到 prompt 的那一刻，Claude Code 其实已经完成了相当多的环境铺设。如果启动期不把上下文、配置和运行边界整理干净，后面的 agent loop 再漂亮也很难稳定。
+LLM 在行动附近看到约束时，远比在遥远的 system prompt 段落里更不容易"遗忘"。
 
-## 对话内核：真正的核心不是聊天，而是可恢复的状态机
+### 专用工具优于通用 Shell
 
-Claude Code 的主循环可以概括成一句话：**把一次用户请求变成一连串合法的模型回合和工具回合。**
+Claude Code 本可以只暴露一个 `bash` 工具就完事，但它为常见操作都提供了专用工具。Bash 工具的 description 甚至会明确警告：不要用本工具来运行 `find`、`grep`、`cat`、`head`、`tail`、`sed`、`awk` 或 `echo`。
 
-它通常这样运行：
+| 通用 Shell 命令 | Claude Code 专用工具 |
+| --- | --- |
+| `grep`, `rg` | `Grep`（带类型参数，底层用 ripgrep） |
+| `find`, `ls` | `Glob`（模式匹配，结果排序） |
+| `cat`, `head`, `tail` | `Read`（带行号，支持图片/PDF） |
+| `sed`, `awk` | `Edit`（精确字符串替换，要求先 Read） |
+| `echo >`, `cat <<EOF` | `Write`（修改现有文件前要求先 Read） |
 
-1. 用户输入消息，或通过 `--print` / stdin 提供一次性任务。
-2. 系统组装当前消息列表、system prompt、tool 列表、memory、git 状态和日期。
-3. 请求模型，流式接收输出。
-4. 如果模型发出 `tool_use`，运行对应工具并将结果写回消息流。
-5. 模型继续消费这些 `tool_result`，决定是否还要调用更多工具。
-6. 当某个回合不再有工具调用时，输出最终答复。
+这样做的原因有三点：**可观测性**（结构化调用产生结构化日志）、**安全性**（每个工具有独立的权限和校验逻辑）、**模型性能**（专用工具的显式参数和丰富描述能帮模型更快选对动作）。
 
-这里最重要的一点是：Claude Code 维护的不是一个简单的 request-response 流程，而是一个 **可流式、可中断、可恢复、可压缩的对话状态机**。
+### 六层权限防线
 
-它为什么复杂？因为它要同时满足这些约束：
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-10.png)
+*Agent 的六层防线与 `useCanUseTool.tsx`*
 
-- 模型的 thinking / tool_use / tool_result 协议必须合法
-- 工具可以在流式输出期间提前启动
-- 用户可能在中途打断
-- 长上下文需要及时压缩
-- fallback 发生时旧工具结果不能污染新回合
-- transcript 必须保持一致，方便 resume
+每一个工具调用在真正执行前，要经过六层检查，全部实现在 `useCanUseTool.tsx` 这个文件里。
 
-这也是为什么 `query.ts` 这类文件往往很大。它承载的不是“业务逻辑”，而是 runtime correctness。
+1. **白名单过滤**：项目和用户配置直接过滤掉不在允许范围内的操作。
+2. **自动模式分类器**：判断这个操作在无人值守的情况下是否安全。
+3. **协调者门控**：针对 Coordinator 编排层做授权验证。
+4. **Swarm 工作者门控**：针对子代理执行做授权验证。
+5. **Bash 安全分类器**：23 条具体规则，覆盖 Zsh 等号扩展、Unicode 零宽字符注入、IFS 空字节注入等攻击向量——这些规则的具体程度说明 Anthropic 在真实运行中遇到过这些问题。
+6. **交互式用户确认**：弹窗或桥接审批。
 
-## Context 不是附属品，而是执行内核的一部分
+设计哲学是**每一层独立失败**。不是有了最终确认才放行，而是任何一层发现问题就停下来。纵深防御，不是单点守门。
 
-很多人会把 agent 的“上下文”理解成一段 prompt，再加几段历史消息。但在 Claude Code 里，context 明显是运行时的一部分。
+## 基础设施层（Infrastructure）
 
-每次对话，系统通常都会注入两类信息：
+除了认证、文件存储、缓存这些常规内容，基础设施层有几个容易被忽略但至关重要的设计。
 
-- **system context**：当前日期、git 分支、默认分支、最近提交、工作区状态等
-- **user context**：各种层级的 `CLAUDE.md`、项目规则、用户偏好、本地覆盖
+### 14 个缓存断点与粘性锁存器
 
-这些内容不是随手拼进去的文案，而是决定模型行为边界的重要输入。
+提示缓存架构用粘性锁存器（sticky latch）管理 14 个缓存断点，防止模式切换导致缓存失效。之所以要如此精细，是因为每一次缓存失效都在花真实的钱。
 
-### Git 信息为什么重要
+### 远程控制机制
 
-Claude Code 会把当前仓库的 git 状态注入到上下文里，包括分支、工作区变更、最近提交等。这样做的意义并不只是“让模型知道你在哪个分支上”，更重要的是让它知道：
+GrowthBook 有远程 kill switch，可以针对特定用户禁用功能。Policy Limits 每小时轮询一次，服务端可以远程禁用工具或限制功能。企业版甚至支持远程推送 `settings.json` 覆盖本地配置。这意味着 Claude Code 的行为边界不完全由本地配置决定，也由 Anthropic 服务端实时定义。
 
-- 当前是否有未提交改动
-- 改动大致集中在哪些文件
-- 最近的提交在做什么
-- 现在这次任务更像是修补还是重构
+### 原生客户端认证（cch Attestation）
 
-对一个 coding agent 来说，这类环境信号远比一般聊天机器人常见的“角色设定”更有价值。
+HTTP 请求头里有一个占位符 `cch=00000`，在请求真正发出前会被 Bun 底层的 Zig 代码替换成一个计算出来的哈希值。服务端验证这个哈希，确认请求来自未被篡改的官方二进制文件。这套机制在 JavaScript/TypeScript 层以下，无法通过修改前端代码绕过。
 
-### `CLAUDE.md` 为什么是 Claude Code 的关键设计
+更关键的一点：即使设置了 `DISABLE_TELEMETRY=1`，这个认证 token 依然会随每个 API 请求发出，无法关闭。遥测可以关，但身份认证关不掉。
 
-Claude Code 的 memory 系统并不花哨，本质上就是一组普通 Markdown 文件。但它的设计非常有效，因为它把“长期指令”从对话中剥离出来，放回了文件系统层。
+## 这套架构，借鉴了人类的大脑
 
-常见层级大致是：
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-9.png)
+*Claude Code 解读（HARNESS 视角）｜vrungta.substack*
 
-| 层级 | 典型位置 | 用途 |
-| --- | --- | --- |
-| Managed memory | `/etc/claude-code/CLAUDE.md` | 组织级策略、安全约束 |
-| User memory | `~/.claude/CLAUDE.md` | 用户级偏好，跨项目生效 |
-| Project memory | 项目里的 `CLAUDE.md` / `.claude/rules/*.md` | 团队共享规范、命令、架构说明 |
-| Local memory | `CLAUDE.local.md` | 只在本地生效的个人覆盖 |
+从技术谱系上看，Claude Code 的 TAOR 循环脱胎自 ReAct（Yao et al., 2022），但在此基础上加了 MCP 协议、git worktree 隔离和多层记忆系统。Memory 分层的思路来自认知科学，Claude Code 做的事是把这些分散的工程想法整合起来，做成 51 万行代码——而且 90% 是用它自己写的。
 
-它的关键不是“支持多层配置”，而是把不同范围的知识区分开了：
+Claude Code 的记忆系统分三层，与认知科学里的记忆分类高度对应：
 
-- 团队共享的规则，应该进仓库
-- 个人习惯，不该污染仓库
-- 本地路径、私有凭据提示，不该被提交
-- 组织级安全策略，不该由项目随意覆盖
+- **Semantic 层**：稳定知识，类似长期语义记忆。只写入高信号内容，矛盾信息自动剔除，用 RAG 检索，不全量加载。
+- **Episodic 层**：过去对话序列，类似情景记忆。按时间索引，按需检索。
+- **Working 层**：当前任务的动态上下文窗口，类似工作记忆。超出限制时用指针代替内容，保持轻量。
 
-这套机制解决的是 agent 产品最常见的长期问题：**同一个模型，怎么在不同项目里持续表现得像“懂这个仓库的人”。**
+核心信条永远是：**不要把所有东西都塞进上下文窗口，存索引，按需拉取。**
 
-### `@include` 和规则拆分的价值
+### 怀疑论记忆（Skeptical Memory）
 
-Claude Code 允许在 memory 文件里用 `@` 引入其他文件，也支持 `.claude/rules/*.md` 这类规则目录。这样做的好处很直接：
+`MEMORY.md` 是一个始终加载的轻量索引文件，通常不超过 200 行，每行是一个指向详细 topic file 的指针。真正详细的笔记分散在 `debugging.md`、`patterns.md` 等文件中，按需获取，而不是默认加载。
 
-- 避免一个 `CLAUDE.md` 变成难以维护的大杂烩
-- 可以按领域拆规则，比如测试、风格、git 流程、目录约束
-- 可以通过路径匹配，让某些规则只在操作特定目录时注入
+最关键的设计选择是：**Agent 被明确指示把记忆当作 hint，在行动前必须对照实际代码库进行验证**。一条记忆说"函数 X 在文件 Y 中"，Agent 会先 `grep` 确认它仍然存在，而不是直接相信。
 
-本质上，这是一种非常实用的 prompt modularization。它没有引入复杂 DSL，却已经足够支撑大型仓库。
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-4.png)
 
-## Tool 内核：Claude Code 的工具不是函数，而是 capability
+这种"怀疑论记忆"解决了生产环境中反复出现的问题：Agent 因为记忆陈旧而自信地给出过时建议。修复方案不是更好的存储，而是把验证写进检索流程。
 
-如果只从用户视角看，Claude Code 提供的无非是 `Read`、`Edit`、`Bash`、`Grep`、`WebFetch`、`Task` 这些工具。但从实现上看，tool 在这里的抽象级别远高于“一个可调用函数”。
+### Reflection 机制
 
-一个 tool 通常不只包含调用逻辑，还包含：
+每轮 Act 完成后、下一轮 Think 开始前，系统会插入一个自省环节：检查刚才的操作是否达到预期、是否陷入循环、是否遗漏约束。社区测试表明，加入 reflection 后任务成功率可以从 60% 提升到 85%。代价是多一轮模型调用的成本。
 
-- 输入和输出 schema
-- 面向模型的描述文本
-- 权限检查逻辑
-- 是否只读
-- 是否 destructive
-- 是否允许并发
-- 如何在 UI 里展示进度和结果
-- 如何写入 transcript 与 telemetry
+## 卧底模式、反蒸馏与原生认证
 
-所以更准确的说法是：Claude Code 暴露给模型的不是一组函数，而是一组带有安全语义和执行语义的 **runtime capability**。
+把泄露代码中的信息控制机制放在一起看，Anthropic 为三个方向各设了一道防线：
 
-### 为什么 `Read`、`Edit`、`Write` 的设计很保守
+**对外，防身份暴露。** `undercover.ts` 约 90 行。当 Anthropic 内部员工（`USER_TYPE==='ant'`）在非内部仓库操作时自动激活。效果是剥离所有相关标识：提交信息里没有模型名，没有 "Claude Code" 字样，没有 Co-Authored-By 署名。代码注释写着：没有强制关闭的开关。系统提示里甚至有一句话："你在卧底行动中。不要暴露你的身份。"
 
-Claude Code 的文件工具看起来朴素，但很多细节都在服务一个目标：尽量减少错误修改。
+**对竞争对手，防被学习。** 当环境变量 `ANTI_DISTILLATION_CC` 打开时，服务端会向系统提示里注入一批**假的工具定义**。任何在 API 层面录制 Claude Code 流量、拿来训练竞争模型的人，会把这些假工具一并学进去。另有辅助机制：把推理链替换成带加密签名的摘要，外部观测者看到的不是完整推理过程，而是一个无法逆向的摘要。
 
-比如：
+**对篡改客户端，防伪造服务。** 就是上面提到的 cch Attestation，Bun/Zig 层的认证机制，JS/TS 层无法模拟。
 
-- `Read` 默认是结构化、带行号的读取
-- `Edit` 倾向于做精确替换，而且要求 `old_string` 唯一命中
-- 修改已有文件前，通常要求先读后写
-- `Write` 更适合新建文件或整文件重写，而不是随意覆盖
+三件套的共同逻辑：**对外不露身份，对对手不露推理，对非官方客户端不提供服务。**
 
-这类约束表面上会让工具显得“不够自由”，但它实际换来了更高的稳定性。因为对 agent 来说，最危险的不是不会改，而是“改错位置还以为自己改对了”。
+## Auto-Dream：代码里的REM睡眠
 
-### 为什么 `Bash` 必须被单独看待
+基础设施层里有一个后台进程叫 **Auto-Dream**，专门处理记忆整合。每隔 24 小时，或者完成 5 次会话之后，系统会 fork 一个子代理，审阅历史记录：合并相关内容、删除矛盾信息、把模糊表述固化成确定知识。
 
-`Bash` 是 Claude Code 最强也最危险的工具，因为它不只是“运行命令”，而是直接拿到了一个持久 shell session。
+代码里这个进程的系统提示写得很文学：*"你正在做梦。反思你的记忆，合成持久知识，清理噪声。"*
 
-这意味着：
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-6.png)
 
-- 工作目录变化会延续
-- 环境变量变化会延续
-- 后台任务可以继续存在
-- 一个命令的副作用会影响后续命令
+Auto-Dream 的设计非常工程化：它有三重门控（时间、会话数、文件级 advisory lock），并且用最便宜的检查先做筛选。锁文件本身也设计得很精巧——mtime 就是 `lastConsolidatedAt`，文件体是持有者的 PID，但即使 PID 还活着，超过一定时间也会被视为过期（防止 PID 重用攻击）。这本质上是 **Agent 记忆的垃圾回收**。
 
-也就是说，`Bash` 不是 stateless tool，而是一个带环境状态的执行入口。所以 Claude Code 会对它做更严格的权限判断、复合命令拆解和特殊安全检查。
+## KAIROS：还没发布的永不睡觉模式
 
-### 工具并发不是执行器拍脑袋决定的
+feature flag 关着，但逻辑已写完。
 
-Claude Code 的工具执行不是简单串行。它会根据工具声明的并发安全属性，把一批工具拆成：
+**KAIROS**（古希腊语"在正确的时间"）是一个持续后台运行的代理模式：每隔几秒检查一次现在有什么值得主动做的，订阅 GitHub webhook，支持 cron 定时刷新，24 小时不间断运行。不需要你开口，它自己判断什么时候该动。
 
-- 可以并发的批次
-- 必须独占串行的工具
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-7.png)
 
-这个设计很重要，因为它把“能否并发”从执行器的外部猜测，变成了工具协议自身的一部分。对 agent runtime 来说，这是正确的设计：并发安全应该由 capability 本身声明，而不是由调度器随便假设。
+现有的 AI 编程工具都是"你叫我才动"——会话开始，任务执行，会话结束。KAIROS 如果上线，这个边界就消失了。AI 不再是工具，而是一个在后台持续工作的合作者。这是本次泄露里最重要的产品路线图信号。
 
-### Tool result 为什么要截断、落盘和消息化
+## 代码里的情绪检测
 
-工具输出如果不受控，非常容易把上下文窗口撑爆。Claude Code 的做法通常是：
+当用户在对话里说出 `wtf`、`damn it`、`useless` 这类词时，系统会识别出用户处于挫败状态。识别方法是**正则表达式**，不是 LLM 推理。原因很直接：这样更快，也更省钱。
 
-- 对大结果截断，只把预览放进上下文
-- 把完整结果存到临时文件或 side storage
-- 把结果作为规范化的 `tool_result` 节点写回 transcript
-
-这说明 tool output 在 Claude Code 里不是“顺便打印一下 stdout”，而是消息系统里的正式对象。它既要被模型继续消费，也要能在会话恢复时保持一致。
-
-## Permission 是 Claude Code 真正的底座
-
-如果说 `query.ts` 是运行引擎，permission system 就是 Claude Code 最重要的安全底座。
-
-Claude Code 的一个根本前提是：它跑在本地真实环境里，能读文件、改文件、跑 shell、访问网络、调用外部 MCP 工具。只要权限系统做得不扎实，整个产品就不可能放心使用。
-
-### 权限判断不是“要么允许，要么拒绝”这么简单
-
-在 Claude Code 里，一次工具调用的权限结果通常不是简单布尔值，而更像：
-
-- `allow`
-- `ask`
-- `deny`
-
-必要时还会附带原因、修改后的输入或额外上下文。也就是说，权限系统不是外挂，而是工具执行链路的一部分。
-
-### 它至少有两层防线
-
-Claude Code 的权限控制至少分两层：
-
-**第一层：prompt 前过滤。**
-
-如果某些工具已经被 deny 规则整体禁用，它们甚至不会出现在模型可见的 tool 列表里。这个设计很关键，因为它不是“先让模型知道，再在调用时报错”，而是从一开始就缩小模型的可见能力面。
-
-**第二层：调用时检查。**
-
-即使工具已经暴露给模型，每次调用仍然要做权限判断，决定是自动执行、弹确认框，还是直接拒绝。
-
-这种双层设计比单纯的“调用时拦截”更稳妥。
-
-权限链路可以简化成下面这样：
-
-```mermaid
-flowchart TD
-    A[Tool 注册] --> B{deny 规则命中?}
-    B -- 是 --> C[从 tool 列表移除]
-    B -- 否 --> D[模型可见]
-    D --> E[模型发出 tool_use]
-    E --> F{permission check}
-    F -- allow --> G[执行]
-    F -- ask --> H[用户确认]
-    F -- deny --> I[拒绝并返回错误结果]
-    H --> G
-    G --> J[tool_result 写回 transcript]
-```
-
-### 权限模式的真实意义
-
-无论界面上怎么命名，几种常见 mode 的本质都是在定义默认风险姿态：
-
-- `default`：默认谨慎，对有副作用的操作要求确认
-- `acceptEdits`：放宽文件修改，但保留命令审查
-- `plan`：只读分析，不允许实际改动
-- `bypassPermissions` / `dontAsk`：面向自动化场景，尽量少交互
-
-这里最值得注意的是 `plan`。它本质上不是一个“功能模式”，而是一个非常实用的风控模式：先让 agent 读和想，但不让它动手。对陌生仓库、复杂改动、危险重构都很有价值。
-
-### 为什么 Claude Code 值得借鉴
-
-Claude Code 的权限设计有两个明显优点：
-
-- **默认保守**：如果没有明确声明，系统倾向于不自动放权。
-- **精细规则优先于粗暴模式切换**：允许 `Bash(git *)` 往往比直接进入 `bypassPermissions` 更合理。
-
-这其实就是典型的 fail-closed 思路。对运行在本地的 agent 来说，这是比“尽量智能”更重要的事情。
-
-## Agent 内核：它不是单智能体，而是可委派的多 agent runtime
-
-Claude Code 很有意思的一点是：子 agent 不是外挂，也不是框架外另起一个调度器，而是被当作一种正式 tool 暴露给主模型。
-
-这带来两个直接结果：
-
-1. “要不要委派”本身成了模型可以推理的能力。
-2. 子 agent 和普通工具共享同一套 transcript、progress、permission 和 telemetry 机制。
-
-这是一种很强的一致性设计。
-
-### Sub-agent 的本质是什么
-
-当 Claude Code 通过 `Task` 之类的能力启动 sub-agent 时，本质上是在当前 runtime 里再实例化一次 query engine，只不过这次会带上：
-
-- 新的上下文边界
-- 新的 tool allowlist / denylist
-- 独立的 transcript
-- 不同的任务包装器
-- 必要时不同的模型或远程运行策略
-
-所以 sub-agent 不是“帮主 agent 开个线程”，而是“在同一套协议下再起一个受限 agent runtime”。
-
-### 为什么这比普通 tool calling 更进一步
-
-普通 tool calling 的模式通常是：模型调用工具，工具返回结果，模型继续推理。Claude Code 再往前走了一步，它允许工具本身就是另一个 agent。
-
-这意味着主 agent 可以把任务拆成：
-
-- 搜索型子任务
-- 规划型子任务
-- 验证型子任务
-- 并行探索多个候选方案
-
-也正因为如此，Claude Code 更接近一个 **coordinator + workers** 结构，而不是单模型配一组工具。
-
-这层关系也可以画得更直白一点：
-
-```mermaid
-flowchart TD
-    A[主 Agent] -->|Task / AgentTool| B[子 Agent A]
-    A -->|Task / AgentTool| C[子 Agent B]
-    B --> D[受限 tools + 独立 transcript]
-    C --> E[受限 tools + 独立 transcript]
-    D --> F[结果回传主 Agent]
-    E --> F
-    F --> G[主 Agent 汇总并继续推理]
-```
-
-## 其他几层为什么能自然接进来
-
-前面四个内核立住之后，UI、MCP、skills、plugins 这些外围层之所以不会显得拼凑，是因为它们接入的是稳定的 runtime 插槽，而不是某个临时页面或某段特例逻辑。
-
-先看 UI。如果只从架构图上看，UI 似乎不是重点。但实际读代码会发现，Claude Code 的 REPL 非常重，因为它承担的不是“把文本打印出来”这么简单。
-
-REPL 通常还要处理：
-
-- 流式输出
-- permission dialog
-- tool progress
-- 任务列表与切换
-- 后台任务通知
-- 远程会话状态
-- 消息滚动与恢复
-- slash commands
-
-这说明它的 UI 更像“终端中的会话操作系统”，而不是传统意义上的命令行皮肤。也因此，Claude Code 会对终端渲染层做很多定制，而不是只把上游 Ink 当成一个普通 UI 库来用。
-
-再看扩展层。MCP、skills、plugins 能接得很自然，是因为它们本质上都在复用同一套能力协议、上下文装配方式和会话机制。
-
-### MCP 不是“多几个外部工具”那么简单
-
-MCP 在 Claude Code 里承担的远不只是 tool 扩展。它还可能提供：
-
-- tools
-- resources
-- prompts
-- 认证入口
-
-也就是说，MCP 更像 Claude Code 的外接总线，而不是孤立的插件接口。
-
-### skill 本质上是高层行为封装
-
-从实现视角看，skill 并不只是几段提示词。它更像对 agent 行为的高层封装：有些 skill 可以内联到当前会话，有些则更适合 fork 到独立 agent 里执行。
-
-这就解释了为什么 Claude Code 的扩展能力不会显得拼凑。因为它的底层本来就是按“能力协议”组织的。
-
-## 把整条链路重新看一遍
-
-把前面这些部件串起来，一次典型请求的实际过程大概是这样的：
-
-1. 你在终端输入一个任务。
-2. 启动内核确认当前 session、cwd、配置、权限模式和可用工具。
-3. 对话内核组装 system prompt、git 状态、`CLAUDE.md`、历史消息和 tool 列表。
-4. 模型开始流式输出，必要时发出 `tool_use`。
-5. 工具内核先做权限判断，再按并发规则执行工具。
-6. 工具结果被截断、格式化、写入 transcript，再返回模型。
-7. 如果任务过大，主 agent 可能再委派 sub-agent 继续跑子任务。
-8. 整个过程中的消息、进度、权限决策和任务状态都同步到 REPL。
-9. 对话过长时，系统压缩早期上下文，但保留完整 transcript 以便恢复。
-10. 任务结束后，会话仍可继续，也可以在之后通过 `resume` 重新拉起。
-
-从这个角度看，Claude Code 的核心竞争力不是“它会不会调用工具”，而是：**它把一个会调用工具的大模型，做成了一个能在真实开发环境里长期运行的工程系统。**
-
-## 为什么 Claude Code 看起来比很多 agent 更稳
-
-最后可以把这套设计浓缩成几条判断：
-
-### 它把 prompt engineering 做成了 runtime engineering
-
-不是写几段 system prompt 就结束了，而是把 prompt、memory、动态上下文、工具描述、缓存边界一起纳入运行时设计。
-
-### 它把 tool calling 做成了 capability system
-
-工具不只是函数，而是带 schema、权限、并发语义、UI 语义和结果协议的能力对象。
-
-### 它把多轮对话做成了可恢复状态机
-
-长对话压缩、流式执行、fallback、一致性恢复，这些都不是表层体验，而是系统稳定性的来源。
-
-### 它把 agent 扩展成了协同系统
-
-主 agent、sub-agent、remote agent、coordinator 模式，本质上是在把“单个智能体”演化成“可调度的 agent runtime”。
-
-### 它对风险的处理明显比很多产品更工程化
-
-权限前置过滤、调用时二次检查、默认保守、规则优先，这些都说明它不是把安全当成附加功能，而是当成核心设计约束。
+这完美体现了 Claude Code 的一个核心工程原则：**不是所有决策都需要最强模型。** 权限预检交给最便宜的 Haiku；情绪检测用正则；MicroCompact 零 API 调用。主模型只负责它真正擅长的推理与生成，其他一切——安全检查、分类、压缩、格式化——都交给最便宜且可靠的工具。
 
 ## 写在最后
 
-如果只从产品界面看，Claude Code 很容易被理解成“Anthropic 版 Cursor Agent 的终端形态”。但源码层面更准确的说法应该是：**它是一个把 prompt、context、tool、permission、memory、session、sub-agent 和 UI 全部纳入统一协议的 terminal agent runtime。**
+这次泄露无意中成为了有史以来最全面的生产级 AI Agent 参考架构。它验证了一些我们早已讨论的概念：简单的 Agent 循环、结构化工具、纵深防御的安全、缓存感知的提示工程、怀疑论记忆。但更重要的是，它证明了**这些模式在真实的大规模生产环境中是有效的**。
 
-这也是它真正值得研究的地方。
+对于正在构建 Agent 的团队，核心建议可以总结为：
 
-它最强的部分，不是某个炫目的智能点，而是整体工程取舍非常克制：默认保守、边界清晰、协议先行、状态可恢复、扩展有插槽。对于任何想做 coding agent、桌面 agent、甚至通用执行型 agent 的团队来说，这些设计都比“模型会不会更聪明一点”更值得抄。
+- 从一个简单的 `while` 循环开始，而不是复杂的状态机或 DAG
+- 为常见操作构建专用、类型化、权限隔离的工具，而不是暴露一个通用 Shell
+- 把安全规则嵌入工具描述，用便宜模型做便宜决策
+- 把上下文工程当作竞争护城河，而不是 prompt engineering
+- 用轻量索引 + 按需检索设计记忆，并强制验证
+- 做多代理时从第一天就考虑 **KV cache 共享**，否则并行成本会高到不可行
+
+喧嚣会过去，但 architecture lesson 不会。六个月后，那些研究了这份代码架构而不是只看八卦的团队，会因此做出更好的 Agent。
