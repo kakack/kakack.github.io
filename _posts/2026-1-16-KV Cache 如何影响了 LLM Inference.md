@@ -87,6 +87,26 @@ $$
 - **没有 KV Cache**：每生成一个新 token，都需要把已经生成过的所有 token 重新跑一遍 attention，$K$、$V$ 被反复计算，浪费严重。生成 $N$ 个 token 的总复杂度量级直接攀升到 $O(N^2)$。
 - **有 KV Cache**：把历史 token 的 $K$、$V$ 缓存起来，每一步只为当前新 token 计算一行 $q$、$k$、$v$，再把新的 $k$、$v$ 拼接到缓存上。$Q$ 与缓存的完整 $K$、$V$ 做注意力计算，由 **GEMM 退化为 GEMV**，计算量大幅下降。
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-04.png)
+
+这样，计算第 $t$ 个 token 的输出就可以忽略 $[\vec{x_1}, ... , \vec{x_{t-1}}]$ 所在的历史上下文，而 $\vec{x_t}$ 是唯一需要的心输入，这样避免了对历史 token 进行重复的 Embedding 和线性层计算。接着用权重矩阵 $W_q, W_k, W_v$ 和当前的 $\vec{x_t}$ 计算对应向量：
+
+$$
+\vec{q_t}=\vec{x_t}W_q \\
+\vec{k_t}=\vec{x_t}W_k \\
+\vec{v_t}=\vec{x_t}W_v \\
+$$
+
+此时生成的 $\vec{q_t}, \vec{k_t}, \vec{v_t}$ 都只是行向量而不是大矩阵，因此很明显由 `矩阵-矩阵乘法（GEMM）` 退化为了 `举证-向量乘法（GEMV）`，计算量大大减小。当前的 query vector $\vec{q_t}$ 与完整的 $K_{new}$ 计算 attn score，并作用于：
+
+$$
+V_{new}=Softmax(\vec{q_t}K^T_{new})V_{new}
+$$
+
+将最新的 $\vec{k_t}, \vec{v_t}$ 追加写入现存中的 cache 区域，为生成第 $t+1$ 个 token 做好准备，这就是 `KV Cache`。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-05.png)
+
 > 这也顺带回答了一个常见疑问：**为什么没有 Q Cache？** 因为 decode 阶段每一步真正参与计算的只有当前 token 对应的那一行 $q$ 向量，历史 $Q$ 的信息在后续步骤中不再被使用，自然无需缓存。
 
 ## 三、KV Cache 带来的新问题：从“救星”到“瓶颈”
@@ -114,23 +134,46 @@ $$
 
 比显存容量更棘手的，是 **显存带宽**。GPU 中 HBM（显存）和 SRAM（计算单元）是两个独立的物理结构，attention 的实际计算发生在 SRAM 中，而缓存的 $K$、$V$ 存放在 HBM 中。每一步 decode 都需要把 KV Cache 从 HBM 搬运到 SRAM，搬运的速度由显存带宽决定。
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-06.png)
+
+
+| 架构 | 显卡 | 显存带宽 | FP16/BF16 算力 | 显存类型 |
+| --- | --- | --- | --- | --- |
+| Volta | Tesla V100 | 900 GB/s | ~125 TFLOPS | HBM2 |
+| Turing | Titan RTX | 672 GB/s | ~130 TFLOPS | GDDR6 |
+| Ampere（计算卡） | A100 | 2039 GB/s | 312 TFLOPS | HBM2e |
+| Ampere（游戏卡） | RTX 3090 Ti | 1008 GB/s | ~160 TFLOPS | GDDR6X |
+| Hopper | H100（SXM） | 3352 GB/s | 989 TFLOPS | HBM3 |
+| Ada Lovelace | RTX 4090 | 1008 GB/s | ~330 TFLOPS | GDDR6X |
+
+
 以 Llama-7B（FP16）为例，权重约 14GB，假设 KV Cache 累积到 1GB，每生成一个 token 就要搬运约 15GB 数据。在 A100（带宽约 2 TB/s，算力 312 TFLOPS）上：
 
-- 搬运耗时 ≈ 7.5 ms
-- 计算耗时 ≈ 0.04 ms
+- 搬运耗时: 15 GB/2000 GB/s = 7.5 ms
+- 计算耗时: 7B 模型大约对应 14G FLOPS。A100 算力 312 TFLOPS。计算时间 ≈ 0.04 ms
 - **搬运 / 计算 ≈ 187.5 倍**
 
-也就是说，绝大部分时间 GPU 的计算单元都在“摸鱼”等数据。这正是所谓的 **内存墙（Memory Wall）**：decode 阶段是典型的 **访存受限（Memory-bound）** 场景，而非计算受限。
+也就是说，绝大部分时间 GPU 的计算单元都在“摸鱼”等数据。这正是所谓的 **内存墙（Memory Wall）**：decode 阶段是典型的 **访存受限（Memory-bound）** 场景，而非计算受限。可以通过下列公式计算：
+
+$$
+\text{Latency} \approx \frac{\text{Model Weights} + \text{KV Cache Size}}{\text{Memory Bandwidth}}
+$$
 
 ### 3.3 优化方向：从公式里能动什么？
 
-回看 KV Cache 的显存公式，逐项排除：
+回看 KV Cache 的显存公式：
 
-- `2`：自注意力机制的根基，不能动；
-- `n_layers`：决定模型深度与抽象能力，动了容易“降智”；
-- `d_head`：通常为 128，决定每个头的特征容量，砍了同样伤模型质量；
-- `P_precision`：可以走低比特量化（INT8 / INT4），属于另一条正交的优化路线，可叠加使用；
-- `n_heads`：相对“可动”的维度，尤其是其中的 **KV Head 数量**。
+$$
+Size_{token} = 2 \times n_{layers} \times n_{heads} \times d_{heads} \times P_{precision}
+$$
+
+逐项排除：
+
+- 2：自注意力机制的根基，不能动；
+- $n_{layers}$：决定模型深度与抽象能力，动了容易“降智”；
+- $d_{head}$：通常为 128，决定每个头的特征容量，砍了同样伤模型质量；
+- $P_{precision}$：可以走低比特量化（INT8 / INT4），属于另一条正交的优化路线，可叠加使用；
+- $n_{heads}$：相对“可动”的维度，尤其是其中的 **KV Head 数量**。
 
 由此自然引出了核心问题：**我们真的需要那么多 KV Head 吗？** 这就是 MQA、GQA、MLA 出现的根本动机。
 
@@ -141,6 +184,8 @@ $$
 - **MQA（Multi-Query Attention）**：所有 Query Head 共享 **同一组** Key/Value Head，KV Cache 大小相对 MHA 直接减少 `n_heads` 倍。代价是模型质量通常会出现可感知下降。
 - **GQA（Grouped-Query Attention）**：将 Query Head 分成若干组，每组共享一组 KV Head。Group 数即最终的 KV Head 数，是介于 MHA 与 MQA 之间的折中方案，可在推理速度和模型质量之间灵活权衡。Llama-2/3、Qwen 系列等均采用 GQA。
 - **MLA（Multi-head Latent Attention）**：DeepSeek 提出的另一条思路，**不直接减少 KV Head 数量**，而是通过低秩潜在表示在计算图层面重构 Attention 结构，使得真正需要缓存到 HBM 的张量被显著压缩，同时尽量保持模型表达能力。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-07.png)
 
 三者目标一致——**压缩 KV Cache、突破内存墙**——但路径不同：MQA/GQA 走“物理瘦身”，MLA 走“结构重构”。具体的实现细节、各自的优缺点与工程难点，将在后续篇章中展开。
 
