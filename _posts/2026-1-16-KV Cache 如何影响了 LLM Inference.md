@@ -181,9 +181,11 @@ $$
 
 通过减少需要缓存的键值头数（`num_key_value_heads`），可以直接缩小 KV Cache 的体积，从而缓解显存带宽压力。
 
-- **MQA（Multi-Query Attention）**：所有 Query Head 共享 **同一组** Key/Value Head，KV Cache 大小相对 MHA 直接减少 `n_heads` 倍。代价是模型质量通常会出现可感知下降。
-- **GQA（Grouped-Query Attention）**：将 Query Head 分成若干组，每组共享一组 KV Head。Group 数即最终的 KV Head 数，是介于 MHA 与 MQA 之间的折中方案，可在推理速度和模型质量之间灵活权衡。Llama-2/3、Qwen 系列等均采用 GQA。
-- **MLA（Multi-head Latent Attention）**：DeepSeek 提出的另一条思路，**不直接减少 KV Head 数量**，而是通过低秩潜在表示在计算图层面重构 Attention 结构，使得真正需要缓存到 HBM 的张量被显著压缩，同时尽量保持模型表达能力。
+**MQA（Multi-Query Attention）**：所有 Query Head 共享 **同一组** Key/Value Head，KV Cache 大小相对 MHA 直接减少 `n_heads` 倍。代价是模型质量通常会出现可感知下降。其直接结果就是 $H_{kv}=1$。
+
+**GQA（Grouped-Query Attention）**：将 Query Head 分成若干组，每组共享一组 KV Head。Group 数即最终的 KV Head 数，是介于 MHA 与 MQA 之间的折中方案，可在推理速度和模型质量之间灵活权衡。Llama-2/3、Qwen 系列等均采用 GQA。这里的 Group 数就是最终 KV Head 的数量，即 $H_{kv}=g$ ，每个 KV Head 负责服务的 Query Head 数量为 $\frac{H_{query}}{H_{kv}}$ 
+
+**MLA（Multi-head Latent Attention）**：DeepSeek 提出的另一条思路，**不直接减少 KV Head 数量**，而是通过低秩潜在表示在计算图层面重构 Attention 结构，使得真正需要缓存到 HBM 的张量被显著压缩，同时尽量保持模型表达能力。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-07.png)
 
