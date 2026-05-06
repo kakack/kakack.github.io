@@ -40,7 +40,49 @@ LLM 在 inference 阶段可以拆解为两个性质截然不同的步骤：
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-01.png)
 
+我们每个head，都要执行一次attention的score计算：
+
+$$
+\mathrm{Scores}_1 = Q_1 K_1^T =
+\underbrace{
+\begin{bmatrix}
+1 & 0 \\
+0 & 1 \\
+1 & 1 \\
+0 & 0 \\
+1 & 0 \\
+0 & 1
+\end{bmatrix}
+}_{Q_1(6 \times 2)}
+\times
+\underbrace{
+\begin{bmatrix}
+2 & 0 & 2 & 0 & 2 & 0 \\
+0 & 2 & 2 & 0 & 0 & 2
+\end{bmatrix}
+}_{K_1^T(2 \times 6)}
+=
+\begin{bmatrix}
+2 & 0 & 2 & 0 & 2 & 0 \\
+0 & 2 & 2 & 0 & 0 & 2 \\
+2 & 2 & 4 & 0 & 2 & 2 \\
+0 & 0 & 0 & 0 & 0 & 0 \\
+2 & 0 & 2 & 0 & 2 & 0 \\
+0 & 2 & 2 & 0 & 0 & 2
+\end{bmatrix}
+$$
+
+在 Transformer 结构中，每一层的输出向量（Hidden State）中，只有最后一行（即最新 Token 的向量）会被传递到最终的LM Head或下一层对应的位置 ，用于生成下一个预测结果。
+
+在 Prefill 阶段因为我们没有见过所有输入，所以需要并行计算整个 attn 矩阵取最后一行进入 LM Head 预测下一个 token。然而在 Decoding 阶段，当我们已经有一个 token 生成后，需要计算下一个 token，当生成第 $t$ 个 token时，我们需要$[x_1, ... , x_{t-1}]$的 $K$ 和 $V$ 来计算注意力，但这些历史 token 的 $K$ 和 $V$ 在生成第 $t-1$ 个 token 的时候已经算过一遍了。
+
 ### 2.2 Decode 阶段：有无 KV Cache 的对比
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-02.png)
+
+上图中所有浅色部分都是计算过一遍的，随着 context length 的增长，计算资源被大量浪费在重复计算上。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-03.png)
 
 - **没有 KV Cache**：每生成一个新 token，都需要把已经生成过的所有 token 重新跑一遍 attention，$K$、$V$ 被反复计算，浪费严重。生成 $N$ 个 token 的总复杂度量级直接攀升到 $O(N^2)$。
 - **有 KV Cache**：把历史 token 的 $K$、$V$ 缓存起来，每一步只为当前新 token 计算一行 $q$、$k$、$v$，再把新的 $k$、$v$ 拼接到缓存上。$Q$ 与缓存的完整 $K$、$V$ 做注意力计算，由 **GEMM 退化为 GEMV**，计算量大幅下降。
