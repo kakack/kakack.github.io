@@ -20,7 +20,7 @@ pinned: false
 LLM 在 inference 阶段可以拆解为两个性质截然不同的步骤：
 
 - **Prefill 阶段**：模型接收完整的输入 Prompt，处于一个`预填充状态`。**并行**计算所有输入词元的中间表示（$Q$、$K$、$V$），并生成第一个输出词元。该过程是矩阵-矩阵乘法（GEMM），计算高度密集，能充分利用 GPU 的并行计算单元，属于典型的 **计算受限（Compute-bound）** 场景。
-- **Decode 阶段**：从第二个 token 开始，模型每次只生成一个新 token，并需要让当前 token 的 $Q$ 与历史序列的 $K$、$V$ 做注意力交互。如果不做任何缓存，每生成一个 token 都要为所有历史词元重新计算一遍 $K$、$V$，复杂度会随序列长度平方级膨胀，造成大量重复计算。
+- **Decode 阶段**：从第二个 token 开始，模型每次只生成一个新 token，并需要让当前 token 的 $\vec{q}$ 与历史序列的 $K$、$V$ 做注意力交互。如果不做任何缓存，每生成一个 token 都要为所有历史词元重新计算一遍 $K$、$V$，复杂度会随序列长度平方级膨胀，造成大量重复计算，理论复杂度攀升到$O(N^2)$。
 
 正是 Decode 阶段“自回归 + 重复计算”的特性，催生了 **KV Cache** 这一“以空间换时间”的优化思路。
 
@@ -33,8 +33,12 @@ LLM 在 inference 阶段可以拆解为两个性质截然不同的步骤：
 
 1. 输入序列经过线性层$W_q, W_k, W_v$投影成 $Q、K、V$，$Q,K,V \in \mathbb{R}^{t \times d}$， 并按 head 切分，维度变化为 $[b, h, L, d_h]$；
 2. 通过 $Q \times K^T$ 得到 $[b, h, L, L]$ 的注意力分数矩阵，再经 mask、softmax，与 $V$ 相乘聚合；
-3. 多头结果拼接还原回 $[b, L, d]$，依次经过 Add & Norm、FFN 等模块；
-4. 最终只取输出矩阵的最后一行 $[b, 1, d]$ 进入 LM Head 用于预测下一个 token，同时把整段序列对应的 $K$、$V$ 写入 **KV Cache**，作为后续增量计算的基础。
+3. 多头结果拼接还原回 $[b, L, d]$，依次经过 `Add & Norm`、`FFN` 等模块；
+4. 最终只取输出矩阵的最后一行 $[b, 1, d]$ 进入 `LM Head` 用于预测下一个 token，同时把整段序列对应的 $K$、$V$ 写入 **KV Cache**，作为后续增量计算的基础。
+
+在一个 multi-head attn 下，我们的 head 为 2，则会出现以下过程：
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-01.png)
 
 ### 2.2 Decode 阶段：有无 KV Cache 的对比
 
