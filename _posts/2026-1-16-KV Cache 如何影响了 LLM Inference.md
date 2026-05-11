@@ -191,14 +191,396 @@ $$
 
 三者目标一致——**压缩 KV Cache、突破内存墙**——但路径不同：MQA/GQA 走“物理瘦身”，MLA 走“结构重构”。具体的实现细节、各自的优缺点与工程难点，将在后续篇章中展开。
 
-## 五、小结
+MHA、MQA、GQA 三者其实改动很小，思想上就是从KV完全一一对应到份组对应。所以代码结构几乎完全相同。我们可以用一份代码去看出改动区别。
 
-- Prefill 是计算受限场景，Decode 是访存受限场景；
-- KV Cache 用空间换时间，解决了 Decode 阶段的重复计算问题；
-- 但 KV Cache 自身又带来了显存容量和带宽两个新瓶颈，构成 LLM 推理的“内存墙”；
-- MHA → MQA / GQA / MLA 的演进，本质上都是围绕“如何让 KV Cache 更小、更快地被读出”展开的架构层优化。
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
 
-理解了 KV Cache 与内存墙，才能真正看懂当前主流 LLM 在 Attention 模块上五花八门选择背后的统一逻辑。
+classUnifiedAttention(nn.Module):
+    """MHA/GQA/MQA 统一实现，只靠 num_kv_heads 区分。"""
+
+    def__init__(self, d_model, num_heads, num_kv_heads=None):
+        super().__init__()
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.head_dim = d_model // num_heads
+
+        # ---------- [差异1] KV 头数 ----------
+        # MHA: num_kv_heads == num_heads（默认）
+        # GQA: num_kv_heads < num_heads，比如 2
+        # MQA: num_kv_heads = 1
+        self.num_kv_heads = num_kv_heads if num_kv_heads isnotNoneelse num_heads
+        self.num_kv_groups = num_heads // self.num_kv_heads
+        assert num_heads % self.num_kv_heads == 0
+
+        # ---------- [差异2] K/V 投影维度随 KV 头数缩小 ----------
+        self.q_proj = nn.Linear(d_model, d_model, bias=False)
+        self.k_proj = nn.Linear(d_model, self.num_kv_heads * self.head_dim, bias=False)
+        self.v_proj = nn.Linear(d_model, self.num_kv_heads * self.head_dim, bias=False)
+        self.out_proj = nn.Linear(d_model, d_model, bias=False)
+
+    defforward(self, x):
+        B, L, _ = x.shape
+
+        q = self.q_proj(x).view(B, L, self.num_heads, self.head_dim).transpose(1, 2)
+        k = self.k_proj(x).view(B, L, self.num_kv_heads, self.head_dim).transpose(1, 2)
+        v = self.v_proj(x).view(B, L, self.num_kv_heads, self.head_dim).transpose(1, 2)
+
+        # ---------- [差异3] GQA/MQA 需要把 KV 头复制到和 Q 一样多 ----------
+        ifself.num_kv_groups > 1:
+            k = k[:, :, None, :, :].expand(B, self.num_kv_heads, self.num_kv_groups, L, self.head_dim)
+            k = k.reshape(B, self.num_heads, L, self.head_dim)
+            v = v[:, :, None, :, :].expand(B, self.num_kv_heads, self.num_kv_groups, L, self.head_dim)
+            v = v.reshape(B, self.num_heads, L, self.head_dim)
+
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        output = torch.matmul(F.softmax(scores, dim=-1), v)
+        returnself.out_proj(output.transpose(1, 2).contiguous().view(B, L, self.d_model))
+
+mha = UnifiedAttention(d_model=512, num_heads=8, num_kv_heads=8)
+gqa = UnifiedAttention(d_model=512, num_heads=8, num_kv_heads=2)
+mqa = UnifiedAttention(d_model=512, num_heads=8, num_kv_heads=1)
+
+```
+
+其实所有的差异都是为了引入 `num_kv_heads` 变量，以 `num_heads=32` 为例：
+
+- **MHA**：原始实现中没有 `num_kv_heads`，K/V 头数天然等于 `num_heads`
+- **GQA**：引入 `num_kv_heads = 8`，每 4 个 Q 头共享 1 组 KV（共 8 组，`num_heads / num_kv_heads = 32 / 8 = 4`）
+- **MQA**：引入 `num_kv_heads = 1`，所有 32 个 Q 头共享同一组 KV
+
+通过 `config.json` 其实能直观的看出来不同 attention 区别。`num_attention_heads` 和 `num_key_value_heads` 的数量对比，同样多的就是MHA，`num_key_value_heads` 少于 `num_attention_heads` 就是MQA或者GQA，如果 `num_key_value_heads = 1` 就是MQA了，如果不是1，那就是GQA了。
+
+第二个修改是 `nn.Linear` ，因为 KV 头数变少了，K 和 V 的投影矩阵（权重矩阵）变小了，参数量也随之减少。
+
+```python
+# ---------- [差异2] K/V 投影维度随 KV 头数缩小 ----------
+self.q_proj = nn.Linear(d_model, d_model, bias=False)
+self.k_proj = nn.Linear(d_model, self.num_kv_heads * self.head_dim, bias=False)
+self.v_proj = nn.Linear(d_model, self.num_kv_heads * self.head_dim, bias=False)
+self.out_proj = nn.Linear(d_model, d_model, bias=False)
+```
+
+还是以 `d_model=512, num_heads=8, head_dim=64` 为例：
+
+- **Q 投影**：三者相同，始终是 `Linear(512, 512)` ，输出维度 = `num_heads × head_dim = 8 × 64 = 512`
+- **K/V 投影**：这里是差异点：
+    - MHA: Linear(512, 512)
+    - GQA (kv=2): Linear(512, 128)
+    - MQA (kv=1): Linear(512, 64)
+
+直观点理解：在这个例子中每个 head 的投影维度是 64，Q 始终保持完整的 8 个 head，输出维度为 `8×64=512` ；而 KV 的输出维度取决于 KV head 的数量：GQA 有几组 KV head 就乘几个 64，MQA 则只有 1 组，输出维度仅为 64。本质上，k_proj 和 v_proj 的输出维度从 `num_heads × head_dim` 变成了 `num_kv_heads × head_dim` ，KV 头数越少，投影矩阵越小。这样一来，KV Cache所需要缓存的内容就变少了。
+
+第三个修改，因为 Q 有 8 个头，而 KV 可能只有 1 个头（MQA）或 N个头（GQA），矩阵形状对不上，没法直接做点积计算：
+
+$$
+Attention: Score=Q@K^T
+$$
+
+如果是MQA，Q 和 K 的头数维度不同，需要显式处理才能进行批量矩阵乘法。GQA也是同理。
+
+```python
+
+Q:   [B, 8, L, 64]   ← 8 个头
+K:   [B, 1, L, 64]   ← 1 个头 (MQA)
+K^T: [B, 1, 64, L]
+
+Q @ K^T = [B, 8, L, 64] @ [B, 1, 64, L] = ???  ← 第二维 8≠1，需要扩展
+```
+
+所以在这里，我们要做一个复制或者广播操作。
+
+以 `MQA（num_heads=8, num_kv_heads=1）`为例：
+
+- 只有 1 组 KV，但有 8 个 Q 头
+- 计算时，`Q[0]~Q[7]` 都要和同一个 K/V 做 attention
+- 为了让矩阵运算能批量进行，把唯一的 K 复制 8 份：`[K] → [K, K, K, K, K, K, K, K]`
+
+```python
+复制前:  Q: [B, 8, L, 64]    K: [B, 1, L, 64]  ← 形状不匹配，无法 matmul
+复制后:  Q: [B, 8, L, 64]    K: [B, 8, L, 64]  ← 形状匹配，可以批量计算
+
+实际计算:
+  Q[0] × K[0]  →  Attention Score[0]
+  Q[1] × K[0]  →  Attention Score[1]  (同一个 K)
+  Q[2] × K[0]  →  Attention Score[2]  (同一个 K)
+  ...
+  Q[7] × K[0]  →  Attention Score[7]  (同一个 K)
+  ```
+
+再看看以 `GQA（num_heads=8, num_kv_heads=2）`：
+
+- 有 2 组 KV，8 个 Q 头，每 4 个 Q 头共享 1 组 KV
+- Q[0]Q[3] 共享 K[0]，Q[4]Q[7] 共享 K[1]
+- 每组 KV 复制 4 份：`[K0, K1] → [K0, K0, K0, K0, K1, K1, K1, K1]`
+
+```python
+复制前:  Q: [B, 8, L, 64]    K: [B, 2, L, 64]  ← 形状不匹配
+复制后:  Q: [B, 8, L, 64]    K: [B, 8, L, 64]  ← 形状匹配
+
+实际计算:
+  Q[0] × K[0]  →  Score[0]  ─┐
+  Q[1] × K[0]  →  Score[1]   │ 共享 K[0]
+  Q[2] × K[0]  →  Score[2]   │
+  Q[3] × K[0]  →  Score[3]  ─┘
+  Q[4] × K[1]  →  Score[4]  ─┐
+  Q[5] × K[1]  →  Score[5]   │ 共享 K[1]
+  Q[6] × K[1]  →  Score[6]   │
+  Q[7] × K[1]  →  Score[7]  ─┘
+```
+
+从代码上可以看出来，这种做法本质上说有损的。MHA我们知道是Q和KV是一对一的。一定程度上是有点冗余，但是也得到了理论上最好的输出效果，但是一旦想着减少KV的数量，那么输出自然就随之降低了。这种人为的减少，代表着质量的下降。MQA就是减少的太多了，导致质量不理想。所以我们才有了GQA（目前仍是主流），减少一部分，但是又没到质量不能看的地步。
+
+
+## 五、MQA/GQA 的优化目标
+
+前面我们分析了 MQA/GQA 如何通过减少 KV 头数来降低 KV Cache 的显存占用。但这种优化真的能带来实质性的推理加速吗？要回答这个问题，我们需要深入分析 Decode 阶段的数据传输瓶颈。
+
+在 Decode 阶段，每生成一个新 token，GPU 需要从 HBM（高带宽显存）读取两类数据：
+
+1. **模型权重**：包括 Q/K/V 投影矩阵、FFN 权重等，这些参数在整个推理过程中保持不变
+2. **KV Cache**：历史 token 的 K 和 V 缓存，随着序列长度增长而线性增长
+
+我们以一个具体的例子来量化分析。假设模型配置如下：
+
+- 模型参数量：7B（70 亿参数）
+- 层数：32 层
+- 注意力头数：32 个
+- 每头维度：128
+- 隐藏层维度：4096
+- 精度：FP16（2 字节）
+
+
+对于单层 Transformer，主要的权重包括：
+
+- **Attention 投影矩阵**：$W_q, W_k, W_v, W_o$，每个都是 $d_{model} \times d_{model}$ 的矩阵
+- **FFN 权重**：$W_1, W_2$，通常 FFN 的中间维度是 $4 \times d_{model}$
+
+单层权重大小约为：
+
+$$
+\text{单层权重} \approx 4 \times d_{model}^2 + 2 \times d_{model} \times (4 \times d_{model}) = 12 \times d_{model}^2
+$$
+
+对于 $d_{model} = 4096$：
+
+$$
+\text{单层权重} = 12 \times 4096^2 \times 2 \text{ bytes} \approx 402 \text{ MB}
+$$
+
+32 层总权重约为 $402 \times 32 \approx 12.9 \text{ GB}$。
+
+
+对于 MHA，单层的 KV Cache 大小为：
+
+$$
+\text{单层 KV Cache}_{\text{MHA}} = 2 \times L \times n_{heads} \times d_{head} \times 2 \text{ bytes}
+$$
+
+以序列长度 $L = 2048$ 为例：
+
+$$
+\text{单层 KV Cache}_{\text{MHA}} = 2 \times 2048 \times 32 \times 128 \times 2 = 32 \text{ MB}
+$$
+
+32 层总 KV Cache 约为 $32 \times 32 = 1 \text{ GB}$。
+
+对于 GQA（假设 8 个 KV 头）：
+
+$$
+\text{单层 KV Cache}_{\text{GQA}} = 2 \times 2048 \times 8 \times 128 \times 2 = 8 \text{ MB}
+$$
+
+32 层总 KV Cache 约为 $8 \times 32 = 256 \text{ MB}$。
+
+从上面的计算可以看出：
+
+- **模型权重**：约 12.9 GB（固定）
+- **KV Cache（MHA）**：约 1 GB（随序列长度线性增长）
+- **KV Cache（GQA）**：约 256 MB（相比 MHA 降低 75%）
+
+在 batch size = 1 的情况下，每生成一个 token 需要传输的总数据量为：
+
+- **MHA**：$12.9 + 1 = 13.9 \text{ GB}$
+- **GQA**：$12.9 + 0.256 = 13.156 \text{ GB}$
+
+**关键发现**：虽然 GQA 将 KV Cache 降低了 75%，但由于模型权重占据了绝大部分数据传输量（约 93%），实际的总传输量只降低了约 5%。这意味着在 batch size = 1 的场景下，MQA/GQA 带来的加速效果非常有限。
+
+
+那么 MQA/GQA 在什么情况下才能发挥作用呢？答案是**增大 batch size**。
+
+当 batch size 增大时：
+- **模型权重**：所有样本共享，传输量保持不变（12.9 GB）
+- **KV Cache**：每个样本都需要独立的缓存，传输量线性增长
+
+以 batch size = 16 为例：
+
+- **MHA**：$12.9 + 16 \times 1 = 28.9 \text{ GB}$
+- **GQA**：$12.9 + 16 \times 0.256 = 17 \text{ GB}$
+
+此时 GQA 相比 MHA 的数据传输量降低了约 **41%**，加速效果开始显现。
+
+MQA/GQA 的优化目标可以归纳为：
+
+1. **降低 KV Cache 显存占用**：通过减少 KV 头数，使得相同显存容量下可以支持更长的序列或更大的 batch size
+2. **提升大 batch 场景下的吞吐量**：当 batch size 足够大时，KV Cache 的传输量占比提升，MQA/GQA 的加速效果才能充分体现
+3. **缓解内存墙问题**：在 Decode 阶段，计算强度低，访存成为瓶颈。减少 KV Cache 的访存量可以一定程度上缓解这一问题
+
+**实际应用中的权衡**：
+
+- **小 batch 场景**（如在线服务、单用户交互）：MQA/GQA 的加速效果有限，但可以节省显存，支持更长的上下文
+- **大 batch 场景**（如离线批处理、高并发服务）：MQA/GQA 的加速效果显著，同时显存节省允许更大的并发量
+- **质量考量**：GQA 在质量和效率之间取得了较好的平衡，是当前主流选择；MQA 虽然效率最高，但质量损失较大
+
+这也解释了为什么 Llama-3、Qwen2.5 等主流模型都采用 GQA 而非 MQA：在实际部署中，既要保证模型质量，又要在大 batch 场景下获得显著的推理加速。
+
+
+## 六、MLA（Multi-head Latent Attention）
+
+前面我们看到，MQA/GQA 通过减少 KV 头数来压缩 KV Cache，但这种"物理瘦身"不可避免地会带来一定的质量损失。DeepSeek 提出的 MLA（Multi-head Latent Attention）则走了另一条路：**不减少头数，而是通过低秩分解在结构层面重构 Attention，实现"几乎无损"的 KV Cache 压缩**。
+
+
+MLA 的设计哲学是：与其直接减少 KV 头数（有损压缩），不如通过**低秩投影**将高维的 K、V 压缩到低维的潜在空间（latent space），只缓存压缩后的低维表示。
+
+传统 MHA 中，每个 token 需要缓存的是：
+
+$$
+K, V \in \mathbb{R}^{n_{\text{heads}} \times d_{\text{head}}} = \mathbb{R}^{d_{\text{model}}}
+$$
+
+对于 Llama-2-7B（$d_{\text{model}} = 4096$），每个 token 需要缓存 $2 \times 4096 = 8192$ 个 FP16 数值。
+
+MLA 的做法是：引入一个**低秩压缩矩阵** $W_{DKV}$，将原始的 K、V 投影到低维空间：
+
+$$
+c_t^{KV} = x_t \cdot W_{DKV}, \quad W_{DKV} \in \mathbb{R}^{d_{\text{model}} \times d_c}
+$$
+
+其中 $d_c \ll d_{\text{model}}$（例如 $d_c = 512$），这样每个 token 只需要缓存 $d_c$ 维的压缩表示 $c_t^{KV}$，而不是完整的 $2 \times d_{\text{model}}$ 维的 K、V。
+
+乍一看，这种做法似乎只是把问题推迟了：虽然缓存的是压缩后的 $c^{KV}$，但在计算 Attention 时不还是要把它还原回高维的 K、V 吗？
+
+$$
+K = c^{KV} \cdot W_{UK}, \quad V = c^{KV} \cdot W_{UV}
+$$
+
+这样一来，每次 Decode 都要做一次解压（矩阵乘法），岂不是"以算换存"的代价太大？
+
+**MLA 的关键创新在于：通过矩阵结合律，将解压矩阵吸收进 Q 的投影权重，从而完全跳过解压步骤。**
+
+传统 MHA 的 Attention Score 计算：
+
+$$
+\text{Score} = Q \cdot K^T = (x_t W_Q) \cdot (c^{KV} W_{UK})^T
+$$
+
+利用矩阵结合律重新组合：
+
+$$
+\text{Score} = x_t \cdot (W_Q W_{UK}^T) \cdot (c^{KV})^T = x_t \cdot W_Q' \cdot (c^{KV})^T
+$$
+
+其中 $W_Q' = W_Q W_{UK}^T$ 可以在模型加载时**预先合并**，这样在推理时：
+
+1. **缓存的是**：低维的 $c^{KV} \in \mathbb{R}^{d_c}$
+2. **计算时直接用**：$Q' \cdot (c^{KV})^T$，无需解压
+
+这样就实现了"只搬运低维数据，直接在压缩空间计算"，完全避免了解压开销。
+
+以 Llama-2-7B 为例（$d_{\text{model}} = 4096$，$n_{\text{heads}} = 32$，$d_{\text{head}} = 128$），假设 MLA 的压缩维度 $d_c = 512$：
+
+| 方案 | 每 Token 缓存维度 | 单层 Cache（seq=4096） | 压缩比 |
+|------|------------------|----------------------|--------|
+| MHA | $2 \times 4096 = 8192$ | 64 MB | 1× |
+| GQA-8 | $2 \times 8 \times 128 = 2048$ | 16 MB | 4× |
+| MQA | $2 \times 128 = 256$ | 2 MB | 32× |
+| **MLA** | $512$ | **4 MB** | **16×** |
+
+MLA 的压缩比介于 GQA 和 MQA 之间，但关键优势在于：**几乎不损失模型质量**。
+
+
+MLA 的矩阵吸收技巧有一个前提：Q 和 K 的投影矩阵可以自由结合。但在使用 RoPE（旋转位置编码）的模型中，这个前提被打破了。
+
+RoPE 的旋转矩阵 $R_{\theta}$ 卡在 $W_Q$ 和 $W_{UK}$ 之间：
+
+$$
+\text{Score} = (x_t W_Q \cdot R_{\theta}) \cdot (c^{KV} W_{UK} \cdot R_{\theta})^T
+$$
+
+由于 $R_{\theta}$ 是位置相关的，无法预先合并到权重矩阵中，矩阵吸收失效。
+
+**DeepSeek 的解决方案：Decoupled RoPE**
+
+将 Q 和 K 拆分为两部分：
+
+1. **内容部分**（Content）：享受低秩压缩，维度为 $d_c$
+2. **位置部分**（Position）：独立存储 RoPE 编码，维度为 $d_{\text{rope}}$
+
+$$
+Q = [Q_{\text{content}}, Q_{\text{rope}}], \quad K = [K_{\text{content}}, K_{\text{rope}}]
+$$
+
+最终 KV Cache 的结构变为：
+
+$$
+\text{Cache} = [c^{KV}, k^{\text{rope}}]
+$$
+
+其中：
+- $c^{KV} \in \mathbb{R}^{d_c}$：压缩后的内容表示（如 512 维）
+- $k^{\text{rope}} \in \mathbb{R}^{d_{\text{rope}}}$：RoPE 位置编码（如 64 维）
+
+这样只增加了约 12.5% 的存储开销（$64 / 512$），但保留了 RoPE 的位置建模能力。
+
+
+MLA 的另一个重要意义在于：通过减少访存量，有可能将 Decode 阶段从 **Memory Bound 翻转为 Compute Bound**。
+
+回顾前面的分析，Decode 阶段之所以是 Memory Bound，是因为：
+
+$$
+\frac{\text{计算量（FLOPs）}}{\text{访存量（Bytes）}} \ll \frac{\text{GPU 算力（FLOPS）}}{\text{显存带宽（Bytes/s）}}
+$$
+
+MLA 通过压缩 KV Cache，大幅降低了访存量，使得计算强度（Compute Intensity）提升。以 A6000 为例（算力 309 TFLOPS，带宽 768 GB/s）：
+
+$$
+\text{翻转条件：} n_{\text{heads}} > \frac{\text{Peak Compute} \times 2}{4 \times \text{Bandwidth}} \approx 101
+$$
+
+- **Llama-2-7B**（$n_{\text{heads}} = 32$）：即使用 MLA，仍然是 Memory Bound
+- **DeepSeek-V2**（$n_{\text{heads}} = 128$）：成功翻转为 Compute Bound
+
+这也解释了为什么 DeepSeek-V2 特意设计了 128 个 head——**head 数量直接决定了能否实现瓶颈翻转**。
+
+### 6.6 MLA 的优势与局限
+
+**优势**：
+
+1. **压缩比高**：相比 MHA 可达 16× 压缩，接近 MQA 的效果
+2. **质量无损**：通过低秩分解而非直接减少头数，模型表达能力几乎不受影响
+3. **可能翻转瓶颈**：在足够多 head 的情况下，可以从 Memory Bound 转为 Compute Bound
+
+**局限**：
+
+1. **训练成本**：需要从头训练，无法像 GQA 那样从 MHA checkpoint 转换
+2. **实现复杂度**：矩阵吸收、Decoupled RoPE 等技巧增加了工程实现难度
+3. **硬件要求**：要实现瓶颈翻转，需要足够多的 head（通常 > 100），这对小模型不适用
+
+MLA 代表了 KV Cache 优化的另一条技术路线：
+
+- **MQA/GQA**：物理瘦身，直接减少 KV 头数，简单直接但有损
+- **MLA**：结构重构，通过低秩分解压缩 KV Cache，复杂但几乎无损
+
+两者并非互斥，而是针对不同场景的权衡：
+
+- **GQA** 适合快速迭代、对质量要求不极致的场景（如 Llama、Qwen）
+- **MLA** 适合追求极致性能、愿意投入训练成本的场景（如 DeepSeek-V2/V3）
+
+从长期来看，随着模型规模和 head 数量的增长，MLA 这类"以算换存"的方案可能会成为主流——毕竟，**算力在增长，但显存带宽的增长速度远远跟不上**。
+
 
 ## 参考
 
