@@ -410,7 +410,7 @@ $$
 
 **关键发现**：虽然 GQA 将 KV Cache 降低了 75%，但由于模型权重占据了绝大部分数据传输量（约 96%），实际的总传输量只降低了约 5%。这意味着在 batch size = 1 的场景下，MQA/GQA 带来的加速效果非常有限。
 
-### Batch Size 的影响
+### 5.3 Batch Size 的影响
 
 那么 MQA/GQA 在什么情况下才能发挥作用呢？答案是**增大 batch size**。
 
@@ -420,16 +420,42 @@ $$
 
 当 Batch Size 提升之后，计算时间会线性增长（GEMV → GEMM），而搬运时间的结构和计算时间不一样，因为模型权重是所有请求共享的。
 
+把两者写成 Batch Size 的函数，计算时间是标准的线性函数，过原点：
+
+$$T_{compute}(\text{Batch Size})=t_c \cdot \text{Batch Size}$$
+
+其中，$
+t_c = \frac{\text{FLOPs}_{\text{per\_token}}}{\text{Peak Compute}}
+= \frac{14 \text{ GFLOPS}}{155 \text{ TFLOPS}}
+\approx 0.09 \text{ ms}
+$。每多一个请求，计算时间就多 0.09 ms。
+
+而搬运时间则是仿射函数多了一个截距：
+
+$$
+T_{\text{memory}}(BS)
+= \underbrace{\frac{C_{kv}}{BW}}_{\text{斜率 } a} \cdot BS
++ \underbrace{\frac{W}{BW}}_{\text{截距 } b}
+$$
 
 
-以 batch size = 16 为例：
+其中 $W$ 是模型权重（13.5 GB），$C_{kv}$ 是单个请求的 KV Cache，$BW$ 是显存带宽（768 GB/s）。
 
-- **MHA**：$13.5 + 16 \times 0.5 = 21.5 \text{ GB}$
-- **GQA**：$13.5 + 16 \times 0.064 = 14.524 \text{ GB}$
+关键就在于截距 $b=\frac{W}{BW}=\frac{13.5}{768} \approx 17.6 \text{ ms}$ 这部分，不管 Batch Size 是 1 还是 100，这 13.5 GB 的权重都只搬一次。Batch Size 越大，这个固定开销被均摊到每个请求上的份额就越小。
 
-此时 GQA 相比 MHA ，可以获得更高的 Batch Size，或者把 context length 拉到更长而不被显存掣肘。
+而斜率 $a$ 取决于使用哪种 attn 方案：
 
-MQA/GQA 的优化目标可以归纳为：
+| 方案 | $C_{kv}$（seq=4096） | 斜率 $a=C_{kv}/BW$ |
+| --- | --- | --- |
+| MHA | 2 GB | 2.604 ms |
+| GQA-8 | 512 MB | 0.667 ms |
+| MQA | 64 MB | 0.083 ms |
+
+只要 Batch Size 够大，计算时间总有可能追上搬运时间，前提是计算的斜率 $t_c$ 比搬运的斜率 $a$ 更陡。
+
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-08.png)
+
+由此可见 MQA/GQA 的优化目标可以归纳为：
 
 1. **降低 KV Cache 显存占用**：通过减少 KV 头数，使得相同显存容量下可以支持更长的序列或更大的 batch size
 2. **提升大 batch 场景下的吞吐量**：当 batch size 足够大时，KV Cache 的传输量占比提升，MQA/GQA 的加速效果才能充分体现
