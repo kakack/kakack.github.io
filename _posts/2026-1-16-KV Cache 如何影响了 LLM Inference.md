@@ -483,6 +483,8 @@ $$
 K, V \in \mathbb{R}^{n_{\text{heads}} \times d_{\text{head}}} = \mathbb{R}^{d_{\text{model}}}
 $$
 
+![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-09.png)
+
 对于 Llama-2-7B（$d_{\text{model}} = 4096$），每个 token 需要缓存 $2 \times 4096 = 8192$ 个 FP16 数值。
 
 MLA 的做法是：引入一个**低秩压缩矩阵** $W_{DKV}$，将原始的 K、V 投影到低维空间：
