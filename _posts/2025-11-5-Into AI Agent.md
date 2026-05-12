@@ -27,6 +27,13 @@ pinned: false
 
 当需要更高的复杂性时，对于定义明确的任务，workflows 提供了可预测性（predictability）和一致性（consistency），而当需要大规模的灵活性和模型驱动的决策时，agents 则是更好的选择。然而，对于许多应用程序来说，通过检索和上下文示例来优化单次 LLM 调用通常就足够了。
 
+我个人非常认同对 LLM Agent 应用过程中的三个原则：
+
+1. Break down sessions into separate clear, actionable tasks. Don't try to "draw the owl" in one mega session.
+2. For vague requests, split the work into separate planning vs. execution sessions.
+3. If you give an agent a way to verify its work, it more often than not fixes its own mistakes and prevents regressions.
+
+
 ## 何时以及如何使用 Frameworks
 
 当前有许多 frameworks 可以用来帮助 agentic systems 更简单地被用到，包括：
