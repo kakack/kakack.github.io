@@ -2,7 +2,7 @@
 
 layout: post
 tags: [LLM, NLP, AI Infra, Attention]
-title: FlashAttention：从 IO 感知到异步流水线
+title: FlashAttention：从 IO 感知到软硬件协同流水线
 date: 2026-7-1
 author: Kyrie Chen
 comments: true
@@ -11,9 +11,9 @@ pinned: false
 
 ---
 
-几乎所有现代 LLM 的训练与推理都默认开着 FlashAttention，以至于它常常被当成一个「开了就快、开了就省显存」的黑盒开关。但如果你需要训练超长上下文、给模型加一种新的 attention 变体、或者把它移植到一块新硬件上，就绕不开它内部到底做了什么。
+主流 LLM 训练与推理栈通常都会在硬件、dtype、head dimension 和 mask 形态满足条件时，调度到 FlashAttention 或同类 memory-efficient attention kernel；它不是任何输入上都无条件启用的单一开关。如果你需要训练超长上下文、给模型加一种新的 attention 变体，或者把它移植到一块新硬件上，就绕不开它内部到底做了什么。
 
-这篇文章想把 FlashAttention 讲透：它解决的是什么瓶颈、核心算法（tiling + online softmax + recomputation）怎么推导、从 FA1 到 FA2 再到 FA3 每一代具体改了什么，以及在不同模型结构上做定制化开发时，应该从「接口层」还是「kernel 层」入手。
+这篇文章想把 FlashAttention 讲透：它解决的是什么瓶颈、核心算法（tiling + online softmax + recomputation）怎么推导、从 FA1 到 FA4 每一代具体改了什么，以及在不同模型结构上做定制化开发时，应该从「接口层」还是「kernel 层」入手。
 
 ---
 
@@ -40,20 +40,24 @@ O = P @ V                                         # [S, d]
 - **显存代价**：它的大小是 $O(S^2)$。当 $S = 8K$ 时，单个 head 的 attention score 在 FP16 下就是 $8192^2 \times 2 \approx 128\text{MB}$；乘上 batch、head、层数，长序列下这是灾难性的。
 - **读写代价**：$S_{\_}$ 和 $P$ 都要写回 GPU 的高带宽显存（HBM）再读回来。这一来一回的 HBM 读写，才是真正的瓶颈。
 
-### 1.2 attention 是 memory-bound，不是 compute-bound
+### 1.2 朴素 attention 往往受 IO 限制
 
-这是理解 FlashAttention 的前提。GPU 的内存层级大致是：
+这是理解 FlashAttention 的前提。以论文讨论的 A100 一代为例，GPU 的内存层级可以粗略看成：
 
 | 层级 | 容量（量级） | 带宽（量级） |
 |---|---|---|
-| 寄存器 / SRAM（on-chip） | 每个 SM ~100KB 级 | ~19 TB/s（A100） |
-| HBM（显存） | 几十 GB | ~1.5–3 TB/s |
+| 寄存器 / shared memory（on-chip） | 每个 SM 为 KB～百 KB 级 | 聚合带宽为数十 TB/s 量级 |
+| HBM（显存） | 数十 GB | A100 约 1.5–2.0 TB/s |
 
-SRAM 比 HBM 快一个数量级，但小得多。标准 attention 把整个 $[S,S]$ 矩阵在 HBM 上写出来又读回去，绝大部分时间花在等内存搬运，而不是 Tensor Core 算 matmul——也就是说它是 **memory-bound** 的。
+On-chip memory 比 HBM 快得多，但容量小得多。朴素 attention 把整个 $[S,S]$ 矩阵在 HBM 上写出来又读回去，在许多常见形状下，大量时间花在内存搬运而不是 Tensor Core 的 matmul 上。具体 kernel 是否 memory-bound 仍取决于序列长度、head dimension、dtype 和硬件，不能把所有 attention 形状一概而论。
 
-FlashAttention 的核心洞见就是：**不要把 $S \times S$ 写进 HBM**。如果能把 attention 拆成小块，让每块都在 SRAM 里算完、只把最终的 $[S, d]$ 输出写回 HBM，就能把 HBM 读写量从 $O(S^2)$ 降到接近 $O(S)$，从而把这个 memory-bound 的操作做到接近 compute-bound 的效率。
+FlashAttention 的核心洞见就是：**不要把完整的 $S \times S$ 中间矩阵写进 HBM**。它通过分块显著减少 HBM 读写，并把 attention 中间量的额外存储从二次规模降到随序列长度线性增长；但其精确 IO 复杂度是 $O(S^2d^2/M)$，并不是简单的 $O(S)$，计算量也仍是 $O(S^2d)$。
 
 难点在于：softmax 需要对一整行做归一化（要知道这一行的最大值和指数和），而分块计算时，我们一次只看到一行的一小段。怎么在「只看到局部」的情况下算出「全局正确」的 softmax？答案是 online softmax。
+
+![标准 Attention 与 FlashAttention 的数据搬运对比](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260701-1.png)
+
+*图 1：标准实现把完整 scores / probabilities 写入 HBM；FlashAttention 只让当前 tile 驻留片上存储，并在线维护 $m$、$\ell$ 与输出累加器。*
 
 ---
 
@@ -162,7 +166,7 @@ FA1 虽然已经把 attention 变成 IO-aware 的分块计算，但它在 GPU �
 
 现代 GPU 上 matmul 和非 matmul 运算的算力差距巨大。以 A100 为例，FP16/BF16 matmul 的峰值是 312 TFLOPs/s，而非 matmul 的 FP32 运算只有 19.5 TFLOPs/s——**每个 non-matmul FLOP 大约比 matmul FLOP 贵 16 倍**。online softmax 里的那些 `exp`、rescale、rowmax/rowsum 都属于 non-matmul，虽然占总 FLOPs 比例不高，却会拖慢整体。
 
-FA2 重写了 online softmax，尽量减少校正缩放的次数。核心技巧是：**在内层循环中不再每步都对 $O$ 做除以 $\ell$ 的归一化，而是把 rescale 推迟到最后**，中间只维护未归一化的累加器，每行只保存一个 logsumexp 标量：
+FA2 重新安排了 online softmax 的递推，减少除法、边界检查和校正缩放等 non-matmul 操作。可以把它理解为：中间尽量维护未归一化的累加器与 logsumexp 统计量，把能合并的归一化工作推迟或融合，而不是在每个 tile 上反复搬运、归一化输出：
 
 $$
 \tilde{O} = \sum_j e^{S_{ij} - m^{\text{final}}} V_j, \qquad O = \tilde{O} / \ell^{\text{final}}
@@ -221,25 +225,46 @@ Hopper 的 Tensor Core 在 FP8 下吞吐翻倍（FP16 ~989 TFLOPs/s vs FP8 ~1978
 
 FA3 在 H100 上：BF16 达到 ~840 TFLOPs/s（**85% 利用率**），相比 FA2 有 1.5–2.0× 加速；FP8 接近 1.3 PFLOPs/s，且数值误差比基线 FP8 attention 小 **2.6×**。
 
-### 5.5 三代演进一张表
+---
 
-| | FA1 (2022) | FA2 (2023) | FA3 (2024) |
-|---|---|---|---|
-| 关键词 | IO-aware、tiling | 工作划分、并行 | 异步、低精度 |
-| 主要瓶颈 | HBM 读写 $O(S^2)$ | GPU occupancy 低、warp 通信多 | Hopper 异步能力没用上 |
-| 核心改动 | online softmax + recompute | 减 non-matmul FLOPs、seq 并行、split-Q | warp-specialization、TMA/WGMMA、FP8 |
-| 目标硬件 | 通用（A100 为主） | Ampere（A100） | Hopper（H100） |
-| 利用率 | 25–40% | 50–73% | 75–85%（BF16） |
+## 六、FlashAttention-4：面向 Blackwell 的算法—流水线协同设计
 
-可以看到一条清晰的主线：**FA1 解决「要不要把 S×S 写进 HBM」，FA2 解决「怎么把工作均匀铺满 GPU」，FA3 解决「怎么让搬运和计算异步起来、并用上低精度」**。算法的数学骨架（tiling + online softmax + recompute）三代未变，变的是它如何贴合不断演进的 GPU 硬件。
+FlashAttention-4（2026）面对的是 Blackwell 上新的不对称扩展：Tensor Core 吞吐相较 Hopper 大幅提高，但指数单元、shared-memory 带宽等 non-matmul 资源并没有同比扩张。结果是，FA3 已经尽力隐藏的 softmax 与数据搬运，在更强的矩阵乘硬件面前重新成为瓶颈。FA4 因此不只“换一套指令”，而是同时改算法和 kernel pipeline。
+
+### 6.1 全异步 MMA 与更大的 tile
+
+FA4 重新设计流水线，利用 Blackwell 的全异步 MMA 与更大 tile，让矩阵乘、数据预取和 softmax 更深地重叠。更大的 tile 能提高 Tensor Core 利用率，但也会增加寄存器和片上存储压力，因此 tile 形状、流水级数与工作分配必须一起搜索，而不能各自独立调参。
+
+### 6.2 软件近似指数与条件 rescale
+
+当 `exp` 单元成为相对瓶颈时，FA4 用软件模拟的指数计算把部分工作转移到扩展更充分的算术单元；同时利用 online softmax 中 running max 只会单调增加的性质，**只在最大值确实变化时执行 rescale**，减少无效的校正操作。这体现了 FA4 的关键变化：算法递推本身开始主动适配硬件单元的非对称吞吐。
+
+### 6.3 Tensor Memory、2-CTA MMA 与 CuTe DSL
+
+反向传播中，FA4 利用 Blackwell Tensor Memory 和 2-CTA MMA 减少 shared-memory 流量与原子加；实现则从传统的 C++ 模板体系转向嵌入 Python 的 CuTe DSL。论文报告其在 B200、BF16 上达到最高 1613 TFLOPs/s（约 71% 利用率），相较 cuDNN 9.13 最高快 1.3×、相较 Triton 最高快 2.7×；这些都是特定硬件与 benchmark 配置下的峰值，不应直接当作任意模型的端到端加速比。
+
+### 6.4 四代演进一张表
+
+| | FA1 (2022) | FA2 (2023) | FA3 (2024) | FA4 (2026) |
+|---|---|---|---|---|
+| 关键词 | IO-aware、tiling | 工作划分、并行 | 异步、低精度 | 算法—pipeline 协同 |
+| 主要瓶颈 | 完整 $S^2$ 中间量与 HBM IO | occupancy 低、warp 通信多 | Hopper 异步能力没用上 | Blackwell tensor / non-matmul 吞吐失衡 |
+| 核心改动 | online softmax + recompute | 减 non-matmul FLOPs、seq 并行、split-Q | warp specialization、TMA/WGMMA、FP8 | 全异步 MMA、软件 exp、条件 rescale、Tensor Memory |
+| 主要目标硬件 | A100 等 | Ampere（A100） | Hopper（H100） | Blackwell（B200）并覆盖新 CuTe DSL 路线 |
+
+主线因此变成：**FA1 减少 HBM IO，FA2 改善工作划分，FA3 用异步流水吃透 Hopper，FA4 在 Blackwell 上把算法递推与硬件流水线一起重构**。tiling、online softmax 与 recomputation 的数学骨架仍在，但每一代都在重新回答“当前硬件上真正稀缺的资源是什么”。
+
+![FlashAttention 从 FA1 到 FA4 的演进](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260701-2.png)
+
+*图 2：四代实现共享同一数学骨架，但优化对象从 HBM IO 依次迁移到工作划分、异步流水和 Blackwell 上的软硬件协同。*
 
 ---
 
-## 六、不同模型结构上的定制化开发
+## 七、不同模型结构上的定制化开发
 
 实际项目里，你的模型往往不是「标准 full attention」：可能是 causal、sliding window、加了 ALiBi/相对位置偏置、用了 MQA/GQA、需要变长序列打包，甚至有一个完全自定义的 mask。这时该怎么用上 FlashAttention？分两个层面看。
 
-### 6.1 接口 / 集成层：能配置的就别改 kernel
+### 7.1 接口 / 集成层：能配置的就别改 kernel
 
 绝大多数常见变体，官方 `flash-attn` 已经内置参数支持，根本不用碰 CUDA。这一层应该是你的首选。
 
@@ -283,7 +308,7 @@ out = flash_attn_varlen_func(
 
 **经验法则**：如果你的需求是 causal、window、GQA/MQA、varlen、ALiBi 这类「主流变体」，几乎一定有现成参数——先翻文档，别急着写 kernel。
 
-### 6.2 kernel 改写层：当配置参数不够用时
+### 7.2 kernel 改写层：当配置参数不够用时
 
 如果你的 attention 有一个**任意的、数据相关的 score 修改**（比如一个无法用现成参数表达的自定义 mask，或者一种新的相对位置偏置、新的 attention 变体），就需要改 kernel 了。这时不建议直接动官方的 CUDA/CUTLASS 代码——门槛极高——而是用 **Triton** 写一个 FlashAttention 风格的 kernel，在分块循环里插入你的逻辑。
 
@@ -312,7 +337,7 @@ m_i, l_i = m_new, l_new
 - **数值稳定性别破坏**：自定义变换要兼容 online softmax 的减最大值机制。比如加 bias 后再求 max，不要在减 max 之前就把 bias 丢掉。
 - **优先找现成的可编程框架**：PyTorch 的 `FlexAttention` 提供了 `score_mod` 和 `mask_mod` 两个钩子，让你用纯 Python 函数表达「如何改 score / 如何 mask」，再由编译器生成融合 kernel。它正是为「我想要一个新变体但不想手写 Triton」这个场景设计的，应优先考虑。
 
-### 6.3 选择哪一层：一个决策顺序
+### 7.3 选择哪一层：一个决策顺序
 
 1. 需求是主流变体（causal/window/GQA/varlen/ALiBi）→ **用 `flash-attn` 参数**；
 2. 需求是自定义 score/mask，但能表达成 element-wise 函数 → **用 FlexAttention 的 `score_mod`/`mask_mod`**；
@@ -320,17 +345,22 @@ m_i, l_i = m_new, l_new
 
 层级越往下，灵活性越高，但开发和维护成本也越高。绝大多数模型工程师停在第 1、2 层就够了。
 
+![Attention 定制开发的逐级下沉决策](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260701-3.png)
+
+*图 3：先用现成参数，再用可编程 score / mask；只有语义或性能需求无法表达时，才进入 Triton / CuTe 并承担配套 backward 与验证成本。*
+
 ---
 
-## 七、总结
+## 八、总结
 
-FlashAttention 不是一个「近似」或「省显存的小技巧」，而是对 attention 计算方式的一次重写：它用 **tiling + online softmax + recomputation**，在数学上等价地避免了 materialize $O(S^2)$ 的注意力矩阵，把一个 memory-bound 的操作变回了 compute-bound。
+FlashAttention 不是一个「近似」或「省显存的小技巧」，而是对 attention 计算方式的一次重写：它用 **tiling + online softmax + recomputation**，在数学上等价地避免 materialize $O(S^2)$ 的注意力矩阵，显著降低 HBM IO，并让许多常见形状更接近硬件的计算吞吐上限。
 
-三代的演进是「同一套算法不断贴合硬件」的过程：
+四代的演进是「同一套算法不断贴合硬件」的过程：
 
 - **FA1** 确立 IO-aware 思想，不把 $S \times S$ 写进 HBM；
 - **FA2** 通过减少 non-matmul FLOPs、沿序列维并行、split-Q，把 GPU 喂满；
 - **FA3** 用 warp-specialization、TMA/WGMMA 异步和 FP8，吃透 Hopper 的硬件能力。
+- **FA4** 针对 Blackwell 的非对称扩展，让 online softmax 递推、异步 MMA 与 Tensor Memory 协同设计。
 
 而在自己的模型上做定制时，正确的顺序是**从接口层往 kernel 层走**：能用参数配置的（causal、window、GQA、varlen、ALiBi）就别写 kernel；需要自定义 score/mask 的优先用 FlexAttention 这类可编程框架；只有在极特殊或追求极致性能时，才下沉到 Triton 手写 kernel，并记住所有自定义都应发生在「online softmax 之前的那个钩子点」上，且 forward 与 backward 必须配套。
 
@@ -343,8 +373,7 @@ FlashAttention 不是一个「近似」或「省显存的小技巧」，而是�
 - [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness (arXiv:2205.14135)](https://arxiv.org/abs/2205.14135)
 - [FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning (arXiv:2307.08691)](https://arxiv.org/abs/2307.08691)
 - [FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision (arXiv:2407.08608)](https://arxiv.org/abs/2407.08608)
+- [FlashAttention-3 — NeurIPS 2024 published paper](https://papers.neurips.cc/paper_files/paper/2024/file/7ede97c3e082c6df10a8d6103a2eebd2-Paper-Conference.pdf)
+- [FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetric Hardware Scaling (arXiv:2603.05451)](https://arxiv.org/abs/2603.05451)
 - [FlashAttention-3 — PyTorch Blog](https://pytorch.org/blog/flashattention-3/)
 - [FlashAttention-3 — Colfax Research 技术详解](https://research.colfax-intl.com/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision/)
-
-
-

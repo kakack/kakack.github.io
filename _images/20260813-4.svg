@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 650" role="img" aria-labelledby="title desc">
+  <title id="title">分层去重与代表样本选择</title>
+  <desc id="desc">原始文档依次经过多个粒度的去重，先形成重复簇，再按质量、许可、时间和结构选择代表，最后加权采样为训练文档集。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.core{fill:#FAF9F5;stroke:#141413;stroke-width:5}.terminal{fill:#D97757;stroke:#141413;stroke-width:5}
+      .data{fill:#6A9BCC;stroke:#141413;stroke-width:5}.decision{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .noteBox{fill:#FAF9F5;stroke:#6A9BCC;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .title{font:700 38px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 17px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .small{font:500 14px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .note{font:600 18px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L16 9L2 16" fill="none" stroke="#141413" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="650"/>
+  <text class="title" x="52" y="61">去重不是删除：先建簇，再选代表</text>
+  <path class="flow" d="M52 80C488 77 1280 82 1748 79" stroke-width="2.5"/>
+
+  <!-- left-to-right pipeline -->
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M150 279C161 278 168 280 178 279"/><path d="M305 279C316 280 323 278 333 279"/>
+    <path d="M460 279C471 278 478 280 488 279"/><path d="M615 279C626 280 633 278 643 279"/>
+    <path d="M770 279C781 278 788 280 798 279"/><path d="M925 279C936 280 943 278 953 279"/>
+    <path d="M1080 279C1091 278 1098 280 1108 279"/><path d="M1235 279C1247 279 1254 279 1264 279"/>
+    <path d="M1376 279C1388 278 1398 280 1408 279"/><path d="M1548 279C1559 280 1568 278 1578 279"/>
+  </g>
+
+  <g>
+    <rect class="terminal" x="25" y="229" width="125" height="100" rx="23"/>
+    <rect class="core" x="180" y="229" width="125" height="100" rx="20"/>
+    <rect class="core" x="335" y="229" width="125" height="100" rx="22"/>
+    <rect class="core" x="490" y="229" width="125" height="100" rx="20"/>
+    <rect class="core" x="645" y="229" width="125" height="100" rx="22"/>
+    <rect class="core" x="800" y="229" width="125" height="100" rx="20"/>
+    <rect class="core" x="955" y="229" width="125" height="100" rx="22" stroke-dasharray="10 8"/>
+    <rect class="data" x="1110" y="229" width="125" height="100" rx="22"/>
+    <path class="decision" d="M1320 218L1377 279L1320 340L1263 279Z"/>
+    <rect class="core" x="1410" y="229" width="138" height="100" rx="20"/>
+    <rect class="terminal" x="1580" y="229" width="190" height="100" rx="23"/>
+  </g>
+
+  <g class="label">
+    <text x="87" y="274">原始文档</text><text x="242" y="264">URL</text><text x="242" y="288">与版本</text>
+    <text x="397" y="264">精确</text><text x="397" y="288">哈希</text><text x="552" y="264">段落</text><text x="552" y="288">去重</text>
+    <text x="707" y="264">MinHash</text><text x="707" y="288">+ LSH</text><text x="862" y="264">子串</text><text x="862" y="288">去重</text>
+    <text x="1017" y="264">语义</text><text x="1017" y="288">去重</text><text x="1172" y="264">重复簇</text><text x="1172" y="288">CLUSTERS</text>
+    <text x="1320" y="274">代表选择</text><text x="1479" y="274">加权采样</text><text x="1675" y="274">训练文档集</text>
+  </g>
+  <text class="small" x="1017" y="207">可选</text>
+
+  <!-- selection criteria and rationale -->
+  <path class="flow" d="M1320 340C1321 362 1319 374 1320 396" marker-end="url(#arrow)"/>
+  <text class="small" x="1320" y="426">质量 · 许可 · 时间 · 结构</text>
+
+  <rect class="noteBox" x="405" y="455" width="990" height="112" rx="24"/>
+  <text class="note" x="900" y="500">先发现重复关系并写入 cluster_id，再依据策略选择代表</text>
+  <text class="small" x="900" y="536">阈值或保留策略变化时，只需重算选择与采样，无需重跑原始抓取</text>
+  <path class="flow" d="M1172 329C1174 388 1110 428 1032 451" marker-end="url(#arrow)"/>
+</svg>

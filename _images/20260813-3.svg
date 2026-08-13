@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 980" role="img" aria-labelledby="title desc">
+  <title id="title">质量筛选的成本级联</title>
+  <desc id="desc">待筛文档从上到下依次经过URL结构、启发式规则、轻量模型、编码器和大模型抽检，最终进入高质量池或人工复核。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.core{fill:#FAF9F5;stroke:#141413;stroke-width:5}.terminal{fill:#D97757;stroke:#141413;stroke-width:5}
+      .data{fill:#6A9BCC;stroke:#141413;stroke-width:5}.decision{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+      .guide{fill:none;stroke:#141413;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+      .title{font:700 38px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 21px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .small{font:500 15px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .step{font:700 15px 'Poppins','Avenir Next',sans-serif;fill:#141413;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L16 9L2 16" fill="none" stroke="#141413" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1400" height="980"/>
+  <text class="title" x="52" y="61">质量筛选：从便宜规则到语义判断</text>
+  <path class="guide" d="M52 80C389 77 1015 82 1348 79" stroke-width="2.5"/>
+
+  <!-- vertical cascade -->
+  <rect class="terminal" x="500" y="111" width="400" height="76" rx="23"/>
+  <text class="label" x="700" y="158">待筛文档</text>
+
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M700 187C699 200 701 208 700 220"/><path d="M700 294C699 307 701 315 700 328"/>
+    <path d="M700 402C701 415 699 423 700 436"/><path d="M700 510C699 523 701 531 700 544"/>
+    <path d="M700 618C701 631 699 639 700 652"/><path d="M700 726C699 739 701 747 700 760"/>
+  </g>
+
+  <g>
+    <rect class="core" x="455" y="220" width="490" height="74" rx="22"/>
+    <rect class="core" x="495" y="328" width="410" height="74" rx="20"/>
+    <rect class="core" x="535" y="436" width="330" height="74" rx="22"/>
+    <rect class="core" x="575" y="544" width="250" height="74" rx="20"/>
+    <rect class="core" x="610" y="652" width="180" height="74" rx="22"/>
+  </g>
+  <g class="label">
+    <text x="700" y="264">URL 与结构</text><text x="700" y="372">启发式规则</text><text x="700" y="480">fastText / 困惑度</text>
+    <text x="700" y="588">Encoder 评分</text><text x="700" y="696">LLM 抽检</text>
+  </g>
+  <g class="step">
+    <text x="486" y="265">01</text><text x="526" y="373">02</text><text x="566" y="481">03</text><text x="606" y="589">04</text><text x="640" y="697">05</text>
+  </g>
+
+  <path class="decision" d="M700 758L772 810L700 862L628 810Z"/>
+  <text class="label" x="700" y="817">通过？</text>
+
+  <!-- split outcomes -->
+  <path class="flow" d="M628 810C545 810 492 828 437 853" marker-end="url(#arrow)"/>
+  <path class="flow" d="M772 810C856 810 908 828 963 853" marker-end="url(#arrow)"/>
+  <text class="small" x="535" y="800">不确定 / 拒绝</text><text class="small" x="866" y="800">通过</text>
+  <rect class="terminal" x="235" y="853" width="250" height="80" rx="22"/>
+  <rect class="data" x="915" y="853" width="250" height="80" rx="22"/>
+  <text class="label" x="360" y="901">隔离与人工复核</text><text class="label" x="1040" y="901">高质量数据池</text>
+
+  <!-- side semantics -->
+  <path class="guide" d="M180 185C176 385 184 598 180 768" marker-end="url(#arrow)"/>
+  <text class="label" x="180" y="132">数据量</text><text class="small" x="180" y="807">逐层减少</text>
+  <path class="guide" d="M1220 185C1216 385 1224 598 1220 768" marker-end="url(#arrow)"/>
+  <text class="label" x="1220" y="132">语义能力与成本</text><text class="small" x="1220" y="807">逐层增加</text>
+</svg>

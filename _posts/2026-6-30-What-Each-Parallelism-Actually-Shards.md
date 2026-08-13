@@ -101,7 +101,7 @@ $$
 1 \times 128K \times 128K \times 2 \approx 32\text{GB}
 $$
 
-而这还只是 forward 产生的 logits 张量本身。真正致命的往往是 backward：cross entropy 求梯度时通常需要先做一次 `softmax`，得到一个与 logits 同形状的概率张量 $[B,S,V]$，再产生同样大小的 `grad_logits`。如果框架还以 FP32 计算 softmax（数值稳定性的常见做法），单这一步就可能再吃掉 $1 \times 128K \times 128K \times 4 \approx 64\text{GB}$。也就是说，**logits 的显存峰值常常是「logits 本体」的 2~3 倍**，远不止那 32GB。
+而这还只是 forward 产生的 logits 张量本身。若代码像下面这样先把 logits 整体 `.float()`，会立刻再分配一份约 64 GiB 的 FP32 张量；未融合的 softmax / cross entropy 路径还可能保存或创建同形状的中间量。需要强调的是，**“logits 本体的 2～3 倍”不是所有框架都成立的定律**：融合 cross entropy、in-place 实现和自定义 backward 的峰值差别很大。可以确定的是，只要完整 $[B,S,V]$ 被 materialize，单个张量本身就已经足以 OOM，实际峰值必须用 profiler 或 allocator snapshot 测量。
 
 这种 OOM 的直觉很反常：模型参数可能已经被 ZeRO-3 切得很好，attention 也可能使用了 FlashAttention，但最后一个 vocabulary projection 和 loss 仍然能把单卡显存打爆。它出现在计算图的最末端，体积却可能超过前面任意一层。
 
@@ -117,6 +117,10 @@ loss = F.cross_entropy(
 ```
 
 `lm_head` 这一行就实打实地分配了 $[B,S,V]$，`.float()` 又复制了一份，backward 还要为它保留 autograd 所需的中间量。这几行代码本身没有任何 bug，但在长序列、大词表下，它们就是单卡 OOM 的直接来源。后文讨论的所有手段，本质上都是在改写这一小段逻辑。
+
+![训练显存由常驻模型状态和瞬时计算峰值共同构成](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260630-1.png)
+
+*图 1：ZeRO 即使切开了底部的模型状态，也不会自动切开同一时刻出现的 activation、workspace、logits 与 loss buffer。*
 
 ---
 
@@ -263,6 +267,10 @@ $$
 
 但 CP 本身不一定解决 logits OOM。因为 logits 的大头是 $S \times V$，不是 attention 的 $S \times S$。如果 loss 侧没有 sequence-sharded 或 chunked 实现，CP 之后仍然可能在输出层重新聚合成长序列 logits。
 
+![不同并行策略实际切分的维度](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260630-2.png)
+
+*图 2：判断策略是否有效时，不看 GPU 总数，而看它是否切中了峰值张量的致因维度：$B$、$S$、$H/V$、层深或模型状态。*
+
 ---
 
 ## 五、增加节点什么时候有用
@@ -317,6 +325,10 @@ $$
 ## 七、长序列 logits OOM 怎么处理
 
 回到开头的问题：长 sequence length 下，`logits` 和 loss backward 被一次性塞进 GPU，ZeRO-3、DP、增加节点都不能改善，应该怎么办？
+
+![训练 OOM 的诊断决策树](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260630-3.png)
+
+*图 3：先用 snapshot / profiler 定位峰值张量，再把它映射到真正有效的并行维度或 kernel 方案。*
 
 ### 7.1 确认是不是完整 logits
 
@@ -408,29 +420,26 @@ $$
 
 这会增加计算量或实现复杂度，但能把 logits 峰值从 $O(BSV)$ 降到 $O(BCV)$。
 
-最朴素的版本甚至不需要自定义 autograd，只要把 sequence 切块、让每个 chunk 各自走一次 `cross_entropy` 并按 token 数加权累加即可。但这里有个**容易写错的关键点**：如果只是把各 chunk 的 loss 累加成一个标量、最后统一 `.backward()`，那么每个 chunk 的 logits 计算图都会被 autograd 一直保留到反向，峰值并不会下降。真正省显存的写法是让每个 chunk 立刻反向、随即释放它的图：
+这里有个**容易写错的关键点**：把各 chunk 的 loss 累加成一个标量、最后统一 `.backward()`，会让各 chunk 的 logits 计算图一直存活，峰值不一定下降；但在同一份 transformer 输出上循环调用 `loss.backward()` 也不是通用修复——这些 chunk 共享上游计算图，第一次 backward 后图会被释放，后续 backward 可能直接报错；使用 `retain_graph=True` 又会保留上游图，抵消一部分收益。
+
+工程上应使用自定义 autograd / fused kernel，让 projection、cross entropy 与 backward 的分块生命周期由算子内部管理。例如 Apple 的 Cut Cross-Entropy 可以不把全量 logits 写入全局显存：
 
 ```python
-def chunked_cross_entropy_backward(hidden_states, lm_head, labels, chunk_size=2048):
-    # hidden_states: [B, S, H]（requires_grad），labels: [B, S]
-    B, S, H = hidden_states.shape
-    total_loss = 0.0
-    total_tokens = labels.ne(-100).sum().clamp(min=1)
-    for start in range(0, S, chunk_size):
-        end = min(start + chunk_size, S)
-        h_chunk = hidden_states[:, start:end, :]      # [B, C, H]
-        logits = lm_head(h_chunk).float()             # [B, C, V]，仅此 chunk 存活
-        lbl = labels[:, start:end].reshape(-1)
-        loss = F.cross_entropy(
-            logits.reshape(-1, logits.size(-1)), lbl,
-            ignore_index=-100, reduction="sum",
-        ) / total_tokens
-        loss.backward()                               # 立即反向，随后该 chunk 的 logits 图被释放
-        total_loss += loss.detach()
-    return total_loss
+from cut_cross_entropy import linear_cross_entropy
+
+# hidden_states: [B, S, H]
+# lm_head.weight: [V, H]
+loss = linear_cross_entropy(
+    hidden_states,
+    lm_head.weight,
+    labels,
+    shift=1,               # causal LM 的 next-token shift
+    ignore_index=-100,
+)
+loss.backward()
 ```
 
-每个 chunk 在 `loss.backward()` 后就把自己的 $[B,C,V]$ logits 和概率张量释放掉，梯度则累加进 `hidden_states.grad` 和 `lm_head` 的参数梯度里。于是同一时刻只有一个 chunk 的 logits 存活，峰值从 $O(BSV)$ 降到 $O(BCV)$。代价是把一次大的 matmul + loss 拆成了多次小的，kernel launch 和访存效率略有损失。生产环境里更进一步的做法（如 Liger-Kernel 的 fused linear cross entropy、cut cross entropy）会把 projection 和 loss 融进一个 kernel，连 chunk 的完整 logits 都不 materialize，把峰值压到接近 $O(BC)$。
+这类实现把 linear projection、log-sum-exp、目标 token 读取和 backward 融合或分块，在算子内部维护正确的 autograd 语义。Liger-Kernel 的 fused linear cross entropy 采用 chunking，Cut Cross-Entropy 则只显式计算目标 token 的 logit、在线归约其余 vocabulary 的 log-sum-exp，从而避免在全局显存中保存完整 $[B,S,V]$。实际使用仍应检查模型支持范围、精度模式和 distributed / vocab-parallel 兼容性。
 
 ### 7.5 降低 micro batch 或做梯度累积
 
@@ -495,3 +504,15 @@ $$
 - 避免训练 step 返回或保存完整 logits。
 
 并行训练不是“卡越多显存越小”，而是“被切开的那个维度，必须正好是造成 OOM 的那个维度”。只有把 OOM 的张量形状和并行策略的切分维度对齐，扩卡和并行才真正有意义。
+
+---
+
+## 参考资料
+
+- [ZeRO Overview — DeepSpeed](https://www.deepspeed.ai/tutorials/zero/)
+- [Parallelism Strategies Guide — Megatron Core](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/parallelism-guide.html)
+- [Context Parallel Package — Megatron Core](https://docs.nvidia.com/megatron-core/developer-guide/latest/user-guide/features/context_parallel.html)
+- [VocabParallelCrossEntropy — Megatron Core](https://docs.nvidia.com/megatron-core/developer-guide/latest/apidocs/core/core.tensor_parallel.cross_entropy.html)
+- [Understanding CUDA Memory Usage — PyTorch](https://docs.pytorch.org/docs/stable/torch_cuda_memory.html)
+- [Cut Your Losses in Large-Vocabulary Language Models](https://arxiv.org/abs/2411.09009)
+- [Liger Kernel](https://github.com/linkedin/Liger-Kernel)

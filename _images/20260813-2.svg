@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 980" role="img" aria-labelledby="title desc">
+  <title id="title">预训练数据工程完整生产架构</title>
+  <desc id="desc">来源层、处理层、训练组装层和贯穿各层的元数据谱系控制面。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .outer{fill:none;stroke:#141413;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+      .level1{fill:#FAF9F5;stroke:#D97757;stroke-width:5}.level2{fill:#FAF9F5;stroke:#6A9BCC;stroke-width:5}.level3{fill:#FAF9F5;stroke:#788C5D;stroke-width:5}
+      .module{fill:#FAF9F5;stroke:#141413;stroke-width:4}.link{fill:none;stroke:#141413;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#788C5D;stroke-width:3.5;stroke-dasharray:9 10;stroke-linecap:round}
+      .title{font:700 38px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .layerTitle{font:700 21px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 18px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .small{font:500 14px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L16 9L2 16" fill="none" stroke="#141413" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="980"/>
+  <text class="title" x="52" y="61">预训练数据工程：完整生产架构</text>
+  <path class="ink" d="M52 80C480 77 1290 82 1748 79" stroke-width="2.5"/>
+
+  <!-- enclosing system and three levels -->
+  <rect class="outer" x="52" y="111" width="1696" height="814" rx="34"/>
+  <rect class="level1" x="92" y="145" width="1438" height="190" rx="27"/>
+  <rect class="level2" x="92" y="367" width="1438" height="276" rx="25"/>
+  <rect class="level3" x="92" y="675" width="1438" height="210" rx="28"/>
+
+  <g class="layerTitle">
+    <text x="122" y="181">01 / 来源层</text><text x="122" y="403">02 / 处理层</text><text x="122" y="711">03 / 组装层</text>
+  </g>
+
+  <!-- source modules -->
+  <g>
+    <rect class="module" x="210" y="205" width="245" height="88" rx="18"/>
+    <rect class="module" x="520" y="205" width="245" height="88" rx="20"/>
+    <rect class="module" x="830" y="205" width="245" height="88" rx="18"/>
+    <rect class="module" x="1140" y="205" width="245" height="88" rx="20"/>
+    <g class="label"><text x="332" y="243">Web / HTML</text><text x="642" y="243">PDF / OCR</text><text x="952" y="243">代码仓库</text><text x="1262" y="243">授权数据</text></g>
+    <g class="small"><text x="332" y="271">WARC · 页面结构</text><text x="642" y="271">版面 · 公式 · 表格</text><text x="952" y="271">Repo · Commit</text><text x="1262" y="271">许可 · 时间 · 用途</text></g>
+  </g>
+
+  <!-- processing modules -->
+  <g>
+    <rect class="module" x="137" y="454" width="164" height="92" rx="19"/>
+    <rect class="module" x="337" y="454" width="164" height="92" rx="17"/>
+    <rect class="module" x="537" y="454" width="164" height="92" rx="20"/>
+    <rect class="module" x="737" y="454" width="164" height="92" rx="18"/>
+    <rect class="module" x="937" y="454" width="164" height="92" rx="20"/>
+    <rect class="module" x="1137" y="454" width="164" height="92" rx="18"/>
+    <rect class="module" x="1337" y="454" width="154" height="92" rx="20"/>
+    <g class="label">
+      <text x="219" y="494">规范化</text><text x="419" y="494">语言路由</text><text x="619" y="494">规则过滤</text>
+      <text x="819" y="494">质量评分</text><text x="1019" y="494">分层去重</text><text x="1219" y="494">隐私与权利</text><text x="1414" y="494">去污染</text>
+    </g>
+    <g class="small">
+      <text x="219" y="522">结构与编码</text><text x="419" y="522">语言 · 领域</text><text x="619" y="522">低成本拒绝</text>
+      <text x="819" y="522">多维分数</text><text x="1019" y="522">Exact · MinHash</text><text x="1219" y="522">PII · License</text><text x="1414" y="522">Eval Guard</text>
+    </g>
+  </g>
+
+  <g class="link" marker-end="url(#arrow)">
+    <path d="M301 500C314 499 321 501 334 500"/><path d="M501 500C514 501 521 499 534 500"/>
+    <path d="M701 500C714 499 721 501 734 500"/><path d="M901 500C914 501 921 499 934 500"/>
+    <path d="M1101 500C1114 499 1121 501 1134 500"/><path d="M1301 500C1314 501 1321 499 1334 500"/>
+  </g>
+
+  <!-- assembly modules -->
+  <g>
+    <rect x="130" y="755" width="210" height="88" rx="19" fill="#FAF9F5" stroke="#D97757" stroke-width="4" stroke-dasharray="10 8"/>
+    <rect class="module" x="380" y="755" width="170" height="88" rx="20"/>
+    <rect class="module" x="590" y="755" width="170" height="88" rx="18"/>
+    <rect class="module" x="800" y="755" width="170" height="88" rx="20"/>
+    <rect class="module" x="1010" y="755" width="170" height="88" rx="18"/>
+    <rect x="1220" y="755" width="230" height="88" rx="20" fill="#6A9BCC" stroke="#141413" stroke-width="4"/>
+    <g class="label">
+      <text x="235" y="795">合成与改写</text><text x="465" y="795">数据配比</text><text x="675" y="795">Tokenizer</text>
+      <text x="885" y="795">Packing</text><text x="1095" y="795">QA</text><text x="1335" y="795">训练分片</text>
+    </g>
+    <g class="small"><text x="235" y="823">可选</text><text x="465" y="823">Mixture</text><text x="675" y="823">Token Budget</text><text x="885" y="823">Sequence</text><text x="1095" y="823">Manifest</text><text x="1335" y="823">Immutable Shards</text></g>
+  </g>
+  <g class="link" marker-end="url(#arrow)">
+    <path d="M340 799C353 798 364 800 377 799"/><path d="M550 799C563 800 574 798 587 799"/>
+    <path d="M760 799C773 798 784 800 797 799"/><path d="M970 799C983 800 994 798 1007 799"/>
+    <path d="M1180 799C1193 798 1204 800 1217 799"/>
+  </g>
+
+  <!-- vertical handoffs -->
+  <path class="link" d="M800 335C799 345 801 353 800 364" marker-end="url(#arrow)"/>
+  <path class="link" d="M800 643C799 654 801 661 800 672" marker-end="url(#arrow)"/>
+
+  <!-- metadata / lineage control plane -->
+  <rect x="1573" y="145" width="130" height="740" rx="28" fill="#FAF9F5" stroke="#788C5D" stroke-width="5"/>
+  <g class="label">
+    <text x="1638" y="236">元数据</text><text x="1638" y="270">谱系</text><text x="1638" y="304">审计</text>
+  </g>
+  <path class="ink" d="M1638 342C1635 452 1641 592 1638 700" stroke-width="3.5"/>
+  <circle cx="1638" cy="397" r="8" fill="#788C5D"/><circle cx="1638" cy="520" r="8" fill="#788C5D"/><circle cx="1638" cy="648" r="8" fill="#788C5D"/>
+  <g class="small"><text x="1638" y="753">ID</text><text x="1638" y="786">版本</text><text x="1638" y="819">原因码</text></g>
+  <g class="dash"><path d="M1530 240H1570"/><path d="M1530 500H1570"/><path d="M1530 799H1570"/></g>
+</svg>

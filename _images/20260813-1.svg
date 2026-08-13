@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 650" role="img" aria-labelledby="title desc">
+  <title id="title">现代大模型训练生命周期</title>
+  <desc id="desc">从原始数据、数据工程、预训练到后训练、最终模型、蒸馏与评估的完整流程，并由评估反馈到早期阶段。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .flow{fill:none;stroke:#141413;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+      .feedback{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 11;stroke-linecap:round;stroke-linejoin:round}
+      .core{fill:#FAF9F5;stroke:#141413;stroke-width:5}.data{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .terminal{fill:#D97757;stroke:#141413;stroke-width:5}.decision{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .label{font:600 20px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .small{font:500 15px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .title{font:700 38px 'Poppins','Avenir Next','Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L16 9L2 16" fill="none" stroke="#141413" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="650"/>
+  <text class="title" x="52" y="61">现代 LLM 训练生命周期</text>
+  <path class="ink" d="M52 80C470 77 1240 83 1748 79" fill="none" stroke-width="2.5"/>
+
+  <!-- main left-to-right flow -->
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M190 260C201 260 205 259 218 260"/><path d="M362 260C374 259 379 261 388 260"/>
+    <path d="M532 260C544 260 548 259 558 260"/><path d="M702 260C712 259 719 260 728 260"/>
+    <path d="M872 260C882 261 889 259 898 260"/><path d="M1042 260C1052 259 1059 261 1068 260"/>
+    <path d="M1212 260C1222 260 1229 259 1238 260"/><path d="M1382 260C1392 261 1399 259 1408 260"/>
+    <path d="M1552 260C1562 259 1569 260 1578 260"/>
+  </g>
+
+  <g>
+    <rect class="terminal" x="50" y="211" width="140" height="98" rx="23"/>
+    <rect class="core" x="220" y="211" width="142" height="98" rx="21"/>
+    <rect class="core" x="390" y="211" width="142" height="98" rx="22"/>
+    <rect class="core" x="560" y="211" width="142" height="98" rx="20" stroke-dasharray="11 9"/>
+    <rect class="data" x="730" y="211" width="142" height="98" rx="23"/>
+    <rect class="core" x="900" y="211" width="142" height="98" rx="20"/>
+    <rect class="core" x="1070" y="211" width="142" height="98" rx="22" stroke-dasharray="11 9"/>
+    <rect class="core" x="1240" y="211" width="142" height="98" rx="20" stroke-dasharray="11 9"/>
+    <rect class="core" x="1410" y="211" width="142" height="98" rx="22" stroke-dasharray="11 9"/>
+    <rect class="terminal" x="1580" y="211" width="168" height="98" rx="23"/>
+  </g>
+
+  <g class="label">
+    <text x="120" y="252">原始数据</text><text class="small" x="120" y="279">RAW SOURCES</text>
+    <text x="291" y="252">数据工程</text><text class="small" x="291" y="279">CURATION</text>
+    <text x="461" y="253">Pretrain</text><text class="small" x="461" y="279">预训练</text>
+    <text x="631" y="251">Mid-train</text><text class="small" x="631" y="278">续训</text>
+    <text x="801" y="251">Base Model</text><text class="small" x="801" y="278">模型资产</text>
+    <text x="971" y="252">SFT</text><text class="small" x="971" y="279">指令微调</text>
+    <text x="1141" y="251">偏好优化</text><text class="small" x="1141" y="278">DPO / PPO</text>
+    <text x="1311" y="251">推理 RL</text><text class="small" x="1311" y="278">RLVR</text>
+    <text x="1481" y="251">Agentic</text><text class="small" x="1481" y="278">环境交互</text>
+    <text x="1664" y="252">最终模型</text><text class="small" x="1664" y="279">DEPLOYABLE</text>
+  </g>
+
+  <g class="small">
+    <text x="631" y="190">可选</text><text x="1141" y="190">可选</text><text x="1311" y="190">可选</text><text x="1481" y="190">可选</text>
+  </g>
+
+  <!-- distillation and evaluation loop -->
+  <rect class="core" x="1112" y="409" width="190" height="82" rx="20"/>
+  <text class="label" x="1207" y="443">蒸馏</text><text class="small" x="1207" y="470">TEACHER → STUDENT</text>
+  <path class="decision" d="M1467 396L1550 450L1467 504L1384 450Z"/>
+  <text class="label" x="1467" y="444">评估</text><text class="small" x="1467" y="470">EVAL</text>
+
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M1664 309C1666 355 1622 397 1553 432"/>
+    <path d="M1603 312C1519 351 1402 398 1305 439"/>
+    <path d="M1302 450C1332 449 1352 451 1381 450"/>
+  </g>
+  <path class="feedback" d="M1387 483C1240 579 558 587 291 515C260 505 254 454 270 316" marker-end="url(#arrow)"/>
+  <path class="feedback" d="M1420 495C1320 555 1090 545 1006 492C978 474 973 392 971 316" marker-end="url(#arrow)"/>
+  <text class="small" x="769" y="591">评估结果、合成数据与失败样本持续回流</text>
+</svg>

@@ -11,7 +11,7 @@ pinned: false
 
 ## Intro
 
-`Harness Engineering`这个词最早是 `HashiCorp` 联合创始人 `Mitchell Hashimoto` 在 2026 年 2 月的博客中最早提出的。他的原话是：Agents 如果第一次就能给出正确的结果，或者至少只需稍作修改，效率会更高。实现这一目标最可靠的方法是为 agents 提供快速、高质量的工具，以便在出错时自动发出警报。对此，他总结为两种形式：
+`Harness Engineering` 不是一套有严格边界的标准。2026 年 2 月，HashiCorp 联合创始人 Mitchell Hashimoto 在《[My AI Adoption Journey](https://mitchellh.com/writing/my-ai-adoption-journey)》中用 **Engineer the Harness** 概括了一类实践：让 agent 尽可能第一次就得到正确结果；一旦犯错，就把教训固化成下一次可自动触发的约束或检查。他也说明当时并不确定业界是否已有统一术语，因此这里不把它写成一个可以严格考证“首创者”的概念。其落地形式主要有两类：
 
 - 1.  **Better implicit prompting (AGENTS.md)**：对于一些简单的问题，例如代理重复运行错误的命令或找到错误的 API，请更新 AGENTS.md （或等效文件）。
 - 2. **Actual, programmed tools.**： 例如，用于截屏、运行筛选测试等的脚本。通常需要修改 AGENTS.md 文件，以告知系统这些工具的存在。
@@ -24,6 +24,10 @@ pinned: false
 
 和单一框架或单次 prompt 不同，harness 强调：**把错误当成信号**——通过文档、脚本、测试与策略，让同类错误难以再次发生，或让 agent 能自动发现自己做错了。业界也有人把 agent harness 类比为「操作系统」：模型近似 CPU，上下文窗口近似 RAM，而 **harness 负责调度、驱动与资源管理**，agent 则是在其上运行的「应用」逻辑。
 
+![Harness Engineering 的组成结构](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260512-1.png)
+
+*图 1：Harness 不是一段更长的 prompt，而是同时覆盖上下文、工具、验证、trace 与外部记忆的运行时外壳。*
+
 ## Why Harness Engineering
 
 `Anthropic`做过一些验证实验总结通用 agents 使用过程中的失败场景：
@@ -35,10 +39,10 @@ pinned: false
 
 ### Real Cost
 
-这些失败场景不仅影响开发效率，更会带来实际的、可量化的成本：
+这些失败场景不仅影响开发效率，也会带来真实成本。但公开案例目前并没有给出可跨项目复用的“平均耗时”或“固定 token 倍数”；下面讨论的是成本结构，而不是行业基准：
 
-- **时间成本**：每次环境重启失败或上下文丢失，平均需要 15-30 分钟的"考古"工作来重建状态。对于复杂项目，这个时间可能翻倍。当 agent 陷入 one-shotting 陷阱时，用户往往需要花费数小时清理半成品代码，甚至不得不回滚重来。
-- **Token 成本**：重复的环境诊断、错误重现、上下文重建会消耗 2-3 倍的 token。以 Claude Opus 为例，一次失败的长任务可能消耗数百万 token，而其中大部分是在"空转"——反复尝试错误的命令、重新理解已经做过的工作。
+- **时间成本**：环境重启失败或上下文交接不完整，会迫使下一会话重新定位仓库状态、复现错误和恢复基础链路；任务越长，这种“考古”越容易吞掉原本用于实现的时间。
+- **Token 成本**：重复诊断环境、重读无关文件、再次复现同一错误都会消耗上下文与推理预算。具体增幅取决于模型、任务、compaction 和工具设计，不能脱离测量直接写成固定倍数。
 - **信任成本**：过早宣布胜利和缺少验证会导致用户对 agent 的输出产生怀疑，不得不对每个结果进行人工复查。这种"信任赤字"会让协作效率大幅下降，最终用户可能退回到"只让 agent 做简单任务"的保守模式。
 - **技术债务**：半成品代码、缺少测试的功能、未文档化的配置会在代码库中累积。这些问题在短期内可能不明显，但会在后续迭代中引发连锁反应——新功能难以集成、重构风险增大、onboarding 新成员的成本上升。
 
@@ -52,7 +56,7 @@ pinned: false
 
 Agent 的上下文窗口虽然在不断扩大（从 4K 到 200K+），但本质上仍然是"短期记忆"。一旦会话结束或上下文被压缩，关键信息就会丢失：上一次为什么选择这个技术栈？哪些方案已经尝试过但失败了？当前项目的架构约束和团队规范是什么？
 
-Dex Horthy 有过一个有趣的实验发现：**上下文填得越满，LLM 输出质量越差。** 以 168K token 的上下文窗口为例，大约用到 40% 就开始走下坡路了：前 40% 的 context window 可以视作一个 smart zone，聚焦准确精炼的信息；后 60% 是一个 dumb zone，充满了幻觉、循环和错误。
+更长的上下文窗口也不等于可以无成本地塞入更多信息。Anthropic 在《[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)》中把 context 描述为一种边际收益递减的有限资源：随着无关历史和工具输出累积，检索精度与长程推理可能逐渐下降。这更像连续的性能梯度，而不是所有模型都共享某个固定的“40% 断崖”。
 
 人类开发者通过文档、注释、commit message 来构建"外部记忆"，但 agent 往往缺少这种机制。
 
@@ -103,7 +107,7 @@ Anthropic 在其工程博客 [Effective harnesses for long-running agents](https
 - **Git 作为外部记忆**：每完成一个 feature 就立即 commit，并写清晰的 commit message。当出现问题时，可以通过 `git revert` 快速回滚到已知良好状态。
 - **结构化任务清单**：JSON 格式的特征列表初始时全部标记为 "failing"，agent 每完成并验证一条才能把它改为 "passing"。这强迫 agent 在每一步都有明确的目标与产出。
 
-[Vasilopoulos et al. (2026)](https://arxiv.org/abs/2602.20478) 将上下文形式化为三层：`热记忆（Hot Memory）`、`领域专家（Domain Experts）`、`冷记忆知识库（Cold-Memory Knowledge）`。然后分成三个上下文体系层级：
+[Vasilopoulos (2026)](https://arxiv.org/abs/2602.20478) 报告了一个 108K 行 C# 项目的观察性案例，把 codified context 组织成三类基础设施：`热记忆（Hot Memory）`、`领域专家（Domain Experts）`、`冷记忆知识库（Cold-Memory Knowledge）`。它是一种经过 283 个开发会话使用的工程方案，而不是已经被普遍验证的唯一分层标准：
 
 | 层级 | 加载时机 | 内容示例 | 上下文占用 |
 | --- | --- | --- | --- |
@@ -130,6 +134,10 @@ Anthropic 在其工程博客 [Effective harnesses for long-running agents](https
 - **特征列表的状态转移**：通过观察哪些 feature 长期停留在 "failing"，可以发现 harness 本身的短板（例如某类任务缺少合适的验证工具）。
 
 这一层的核心思想是：**harness 不是一次性写完的，而是从 agent 的失败中持续演进出来的**。可观测性决定了你能多快从失败里学到东西。
+
+![Harness 的执行与失败反馈闭环](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260512-2.png)
+
+*图 2：Verifier 决定的是证据是否足够。失败分支会留下 trace，并把新规则、脚本或测试补回 harness，再进入下一轮执行。*
 
 ## Best Practices & Patterns
 
@@ -166,7 +174,7 @@ Early-victory（过早宣布胜利）和过早标记功能完成，本质上都�
 - **把环境约束写进 AGENTS.md**：依赖版本、必需的环境变量、常见的踩坑命令、哪些目录不能动——这些规则写在仓库里，agent 每次会话都能读到，不需要在 prompt 里反复交代。
 - **先修环境再写代码**：如果 `init.sh` 跑不起来，会话的第一优先级是修环境而不是加新功能。把这条规则明文写进 AGENTS.md，可以避免 agent 在"环境其实是坏的"前提下继续叠功能。
 
-这一组做法的共同特征是：**把"如何把项目跑起来"从 agent 每次都要重新推理的开放问题，变成 harness 已经替它答好的封闭问题**。这也直接缓解了前面提到的"前 40% smart zone"被环境诊断浪费掉的窘境——把宝贵的上下文留给真正的开发工作。
+这一组做法的共同特征是：**把"如何把项目跑起来"从 agent 每次都要重新推理的开放问题，变成 harness 已经替它答好的封闭问题**。这样也能减少环境诊断对有限 context budget 的占用，把高信号上下文留给真正的开发工作。
 
 ## Case Study
 
@@ -182,9 +190,13 @@ Anthropic 在 [Effective harnesses for long-running agents](https://www.anthropi
 
 对照前面 Why 一节的四种失败场景：one-shotting 被"两阶段 + 单次会话只挑一条特征"切碎了；early-victory 被"特征初始为 failing、需配套验证才能改 passing"挡住了；环境启动困难被"`init.sh` + 固定起手序列"消解了。这是一个把 harness 的几条原则做齐的最小可复用案例。
 
+![Initializer 与 Coding Agent 的两阶段长任务 Harness](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260512-3.png)
+
+*图 3：Initializer 只负责建立可重复环境和外部状态；后续每个 coding session 都从仓库状态起步，只推进一个可验证切片。*
+
 ### OpenAI：Codex 在百万行内部项目里的 harness
 
-Martin Fowler 的 [Harness Engineering - first thoughts](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering-memo.html) 转述了 OpenAI 内部用 Codex 构建一个项目的做法：5 个月、超过百万行代码、"没有手写代码"。其 harness 被归纳为三类组件：
+OpenAI 的《[Harness engineering: leveraging Codex in an agent-first world](https://openai.com/index/harness-engineering/)》记录了一项内部实验：最初五个月形成约百万行仓库、约 1,500 个合并 PR，由三名工程师驱动，代码、测试、CI、文档与内部工具均由 Codex 生成；“零手写代码”是该实验有意设置的约束，不应外推成所有团队都该追求的目标。Martin Fowler 网站上的[分析文章](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering-memo.html)把其中的 harness 归纳为三类组件：
 
 - **上下文工程**：持续演进的代码库知识库，配合 agent 在需要时按需调取可观测性数据与浏览器导航能力。
 - **架构约束**：一组**确定性的自定义 linter 和结构测试**，由 LLM agent 监控；这是把"是否符合架构规范"这件事从 agent 主观判断挪到了可执行检查上。
@@ -226,3 +238,5 @@ Martin Fowler 的 [Harness Engineering - first thoughts](https://martinfowler.co
 - [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [Harness Engineering - first thoughts](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering-memo.html)
 - [My AI Adoption Journey](https://mitchellh.com/writing/my-ai-adoption-journey)
+- [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
+- [Codified Context: Infrastructure for AI Agents in a Complex Codebase](https://arxiv.org/abs/2602.20478)
