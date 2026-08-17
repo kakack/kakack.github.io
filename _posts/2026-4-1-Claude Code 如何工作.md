@@ -86,6 +86,9 @@ Claude Code 没有一份静态 system prompt。它是**数百个提示碎片在�
 
 引擎层使用 `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` 模式，把静态指令（会话间不变）与动态上下文（会话相关）显式分离。这不仅是代码组织上的优化，更是**缓存优化**：静态内容命中 prompt cache，动态内容放在边界之后。据社区分析，团队还专门跟踪了多个会导致缓存失效的因素（cache-break vectors），监控到底是什么让缓存失效——因为在这个规模上，每一次缓存失效都直接等于真金白银。（这与后文基础设施层提到的 14 个**缓存断点（cache breakpoints）**是两个不同概念：前者是"什么会打断缓存"，后者是"在哪些位置切分缓存"。）
 
+![动态 Prompt 的稳定前缀、动态上下文与缓存边界](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-11.png)
+*动态提示词组装的关键不是“堆更多文字”，而是把可复用的稳定前缀与不断变化的会话上下文分开。*
+
 ### 三层上下文压缩
 
 ![三层上下文压缩机制示意图](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-5.png)
@@ -196,6 +199,9 @@ GrowthBook 提供远程 kill switch，可以针对特定用户禁用功能。Pol
 
 三件套的共同逻辑：**对外不露身份，对对手不露推理，对非官方客户端不提供服务。**
 
+![身份、推理可见性与请求真实性的三道信息边界](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-12.png)
+*按泄露代码的社区分析归纳出的三道信息边界；代码存在不等于相应机制已经在线启用。*
+
 ## Auto-Dream：代码里的 REM 睡眠
 
 基础设施层里有一个后台进程叫 **Auto-Dream**，专门处理记忆整合。每隔 24 小时，或者完成 5 次会话之后，系统会 fork 一个子代理，审阅历史记录：合并相关内容、删除矛盾信息、把模糊表述固化成确定知识。
@@ -231,6 +237,9 @@ Feature flag 关着，但逻辑已写完。
 代码底层的遥测系统显示，Anthropic 非常在意开发者的"挫败感"——系统会专门追踪用户是否在终端里对 Claude 爆粗口，以及连续输入 `continue`（通常因为模型输出中断导致的烦躁行为）的频率。这些信号被捕捉后可能用于体验优化或产品反馈分析。
 
 这完美体现了 Claude Code 的一个核心工程原则：**不是所有决策都需要最强模型。** 权限预检交给最便宜的 Haiku；情绪检测用正则；MicroCompact 零 API 调用。主模型只负责它真正擅长的推理与生成，其他一切——安全检查、分类、压缩、格式化——都交给最便宜且可靠的方案。这种分层路由的思路，才是真正大规模跑起来之后的成本智慧。
+
+![从本地规则、轻量模型到主模型的成本感知路由](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260401-13.png)
+*路由原则不是“永远调用最强模型”，而是逐级寻找能够可靠完成当前判断的最低成本机制。*
 
 ## 写在最后
 

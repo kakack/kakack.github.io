@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 800" role="img" aria-labelledby="title desc">
+  <title id="title">成本感知路由：把最强模型留给真正的推理</title>
+  <desc id="desc">任务先由本地规则判断，再在必要时升级至轻量模型和主模型；越向后成本、延迟与语义复杂度越高。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M1 1L11 6L1 11" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrowOrange" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M1 1L11 6L1 11" fill="none" stroke="#D97757" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+  <style>
+    .title{font:700 40px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#141413}
+    .label{font:650 22px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#141413;text-anchor:middle}
+    .small{font:500 17px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#5F5A54;text-anchor:middle}
+    .tiny{font:650 15px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#5F5A54;letter-spacing:.8px}
+    .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+    .flowO{fill:none;stroke:#D97757;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrowOrange)}
+    .yes{font:700 15px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#788C5D}
+    .no{font:700 15px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#D97757}
+  </style>
+  <rect width="1600" height="800" fill="#FAF9F5"/>
+  <text class="title" x="54" y="63">成本感知路由：把最强模型留给真正的推理</text>
+  <path d="M54 85C456 81 1111 89 1546 83" fill="none" stroke="#141413" stroke-width="2.8" stroke-linecap="round"/>
+
+  <g transform="rotate(-.18 137 392)"><path d="M58 335Q45 336 46 351L48 435Q48 449 63 447L212 449Q227 448 225 432L227 352Q225 338 210 339Z" fill="#D97757" stroke="#141413" stroke-width="4.5" stroke-linejoin="round"/><text class="label" x="137" y="386">Signal</text><text class="small" x="137" y="416" style="fill:#141413">任务 / 状态 / 风险</text></g>
+  <path class="flow" d="M230 392H306"/>
+
+  <g transform="rotate(.15 421 392)"><path d="M421 300L538 392L421 484L304 392Z" fill="#788C5D" stroke="#141413" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><text class="label" x="421" y="386">规则能判定？</text><text class="small" x="421" y="416" style="fill:#141413">deterministic</text></g>
+  <text class="yes" x="454" y="272">YES</text>
+  <path class="flow" d="M421 297C421 217 489 200 550 200"/>
+  <g transform="rotate(-.2 692 200)"><path d="M556 146Q541 147 543 163L544 237Q544 253 561 251L823 253Q840 252 838 235L840 163Q838 147 821 149Z" fill="#FAF9F5" stroke="#141413" stroke-width="4.5" stroke-linejoin="round"/><text class="label" x="692" y="195">Local rule</text><text class="small" x="692" y="224">Regex · MicroCompact</text></g>
+
+  <text class="no" x="554" y="375">NO</text>
+  <path class="flow" d="M541 392H631"/>
+  <g transform="rotate(-.14 748 392)"><path d="M748 300L865 392L748 484L631 392Z" fill="#788C5D" stroke="#141413" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><text class="label" x="748" y="386">轻量模型够用？</text><text class="small" x="748" y="416" style="fill:#141413">classification</text></g>
+  <text class="yes" x="782" y="272">YES</text>
+  <path class="flow" d="M748 297C748 217 816 200 877 200"/>
+  <g transform="rotate(.18 1019 200)"><path d="M883 146Q868 147 870 163L871 237Q871 253 888 251L1150 253Q1167 252 1165 235L1167 163Q1165 147 1148 149Z" fill="#6A9BCC" stroke="#141413" stroke-width="4.5" stroke-linejoin="round"/><text class="label" x="1019" y="195">Small model</text><text class="small" x="1019" y="224" style="fill:#141413">Haiku · precheck</text></g>
+
+  <text class="no" x="778" y="523">NO</text>
+  <path class="flowO" d="M748 488C748 567 816 584 877 584"/>
+  <g transform="rotate(-.18 1019 584)"><path d="M883 530Q868 531 870 547L871 621Q871 637 888 635L1150 637Q1167 636 1165 619L1167 547Q1165 531 1148 533Z" fill="#D97757" stroke="#141413" stroke-width="4.5" stroke-linejoin="round"/><text class="label" x="1019" y="579">Main model</text><text class="small" x="1019" y="608" style="fill:#141413">推理 · 生成</text></g>
+
+  <path class="flow" d="M692 143C692 112 1218 109 1377 322"/>
+  <path class="flow" d="M1171 200C1217 218 1265 275 1294 346"/>
+  <path class="flowO" d="M1171 584C1222 561 1268 507 1295 442"/>
+  <g transform="rotate(.16 1400 392)"><path d="M1277 325Q1261 326 1263 343L1264 441Q1264 458 1282 456L1518 458Q1537 457 1534 439L1536 343Q1535 326 1517 328Z" fill="#FAF9F5" stroke="#D97757" stroke-width="5" stroke-linejoin="round"/><text class="label" x="1400" y="386">Reliable result</text><text class="small" x="1400" y="416">刚好够用，而非越贵越好</text></g>
+
+  <path d="M78 686C408 676 958 694 1505 682" fill="none" stroke="#141413" stroke-width="3" stroke-linecap="round"/>
+  <text class="tiny" x="107" y="729">LOW COST · LOW LATENCY</text>
+  <path class="flowO" d="M345 724C670 721 1061 721 1437 722"/>
+  <text class="tiny" x="1490" y="729" text-anchor="end">HIGHER SEMANTIC COMPLEXITY</text>
+</svg>

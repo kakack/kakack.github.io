@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 780" role="img" aria-labelledby="title desc">
+  <title id="title">动态 Prompt 的缓存边界</title>
+  <desc id="desc">稳定的系统指令作为可缓存前缀，动态的项目与会话上下文置于边界之后，再由 QueryEngine 组装并发送给模型。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M1 1L11 6L1 11" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrowOrange" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M1 1L11 6L1 11" fill="none" stroke="#D97757" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+  <style>
+    .title{font:700 40px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#141413}
+    .kicker{font:600 17px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;letter-spacing:2px;fill:#756F68}
+    .head{font:700 25px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#141413}
+    .label{font:600 21px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#141413;text-anchor:middle}
+    .small{font:500 17px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#625E58;text-anchor:middle}
+    .tiny{font:600 15px Poppins,Inter,"PingFang SC","Noto Sans SC",sans-serif;fill:#625E58;text-anchor:middle;letter-spacing:.7px}
+    .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}
+    .flowOrange{fill:none;stroke:#D97757;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrowOrange)}
+  </style>
+  <rect width="1600" height="780" fill="#FAF9F5"/>
+  <text class="title" x="54" y="63">动态 Prompt：稳定前缀与会话上下文的分界</text>
+  <path d="M54 85C420 81 1090 88 1545 83" fill="none" stroke="#141413" stroke-width="2.7" stroke-linecap="round"/>
+
+  <path d="M55 148Q53 132 72 132L505 135Q522 135 520 153L518 613Q519 632 500 631L70 628Q52 629 54 611Z" fill="#FAF9F5" stroke="#D97757" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="kicker" x="86" y="177">STATIC · CACHEABLE</text>
+  <text class="head" x="86" y="215">稳定系统前缀</text>
+  <g transform="rotate(-.25 285 296)"><path d="M88 250Q77 251 78 263L79 330Q79 341 92 340L479 342Q491 341 490 328L489 264Q490 251 477 252Z" fill="#FAF9F5" stroke="#141413" stroke-width="3.8" stroke-linejoin="round"/><text class="label" x="284" y="302">Base Instructions</text></g>
+  <g transform="rotate(.18 285 407)"><path d="M88 362Q77 363 78 375L79 442Q79 453 92 452L479 454Q491 453 490 440L489 376Q490 363 477 364Z" fill="#FAF9F5" stroke="#141413" stroke-width="3.8" stroke-linejoin="round"/><text class="label" x="284" y="414">Safety Rules</text></g>
+  <g transform="rotate(-.12 285 519)"><path d="M88 474Q77 475 78 487L79 554Q79 565 92 564L479 566Q491 565 490 552L489 488Q490 475 477 476Z" fill="#6A9BCC" stroke="#141413" stroke-width="3.8" stroke-linejoin="round"/><text class="label" x="284" y="526">Tool Schemas</text></g>
+  <path d="M101 590C211 599 363 585 471 594" fill="none" stroke="#D97757" stroke-width="3" stroke-linecap="round"/>
+  <text class="small" x="285" y="615">跨会话复用 · 命中 Prompt Cache</text>
+
+  <path d="M564 137C558 254 570 499 563 635" fill="none" stroke="#141413" stroke-width="3.2" stroke-dasharray="10 11" stroke-linecap="round"/>
+  <g transform="translate(563 384) rotate(-90)"><rect x="-145" y="-18" width="290" height="36" rx="18" fill="#FAF9F5"/><text class="tiny" x="0" y="6">SYSTEM_PROMPT_DYNAMIC_BOUNDARY</text></g>
+
+  <path d="M608 148Q606 132 625 132L1049 135Q1067 135 1065 153L1063 613Q1064 632 1045 631L623 628Q605 629 607 611Z" fill="#FAF9F5" stroke="#6A9BCC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="kicker" x="640" y="177">DYNAMIC · PER SESSION</text>
+  <text class="head" x="640" y="215">动态会话上下文</text>
+  <g transform="rotate(-.2 729 302)"><path d="M639 252Q629 252 630 264L632 340Q631 351 644 350L814 352Q826 351 825 338L824 265Q825 253 812 254Z" fill="#6A9BCC" stroke="#141413" stroke-width="3.7" stroke-linejoin="round"/><text class="label" x="728" y="306">Project</text><text class="small" x="728" y="331">context</text></g>
+  <g transform="rotate(.24 939 302)"><path d="M849 252Q839 252 840 264L842 340Q841 351 854 350L1024 352Q1036 351 1035 338L1034 265Q1035 253 1022 254Z" fill="#6A9BCC" stroke="#141413" stroke-width="3.7" stroke-linejoin="round"/><text class="label" x="938" y="306">Active files</text><text class="small" x="938" y="331">&amp; edits</text></g>
+  <g transform="rotate(.17 729 443)"><path d="M639 393Q629 393 630 405L632 481Q631 492 644 491L814 493Q826 492 825 479L824 406Q825 394 812 395Z" fill="#FAF9F5" stroke="#141413" stroke-width="3.7" stroke-linejoin="round"/><text class="label" x="728" y="447">Mode / flags</text></g>
+  <g transform="rotate(-.18 939 443)"><path d="M849 393Q839 393 840 405L842 481Q841 492 854 491L1024 493Q1036 492 1035 479L1034 406Q1035 394 1022 395Z" fill="#FAF9F5" stroke="#141413" stroke-width="3.7" stroke-linejoin="round"/><text class="label" x="938" y="437">Recent</text><text class="small" x="938" y="466">messages</text></g>
+  <path d="M658 555C753 544 917 560 1014 550" fill="none" stroke="#6A9BCC" stroke-width="3" stroke-linecap="round"/>
+  <text class="small" x="835" y="586">按项目、模式与当前回合变化</text>
+
+  <path class="flow" d="M1066 383C1103 379 1111 378 1142 380"/>
+  <g transform="rotate(-.28 1260 383)"><path d="M1148 278Q1132 279 1134 296L1135 469Q1135 486 1153 484L1368 486Q1387 485 1384 467L1386 296Q1385 279 1367 281Z" fill="#FAF9F5" stroke="#788C5D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><text class="head" x="1260" y="372" text-anchor="middle">QueryEngine</text><text class="small" x="1260" y="405">组装 · 流式 · 压缩</text></g>
+  <path class="flowOrange" d="M1388 382C1415 379 1424 381 1444 381"/>
+  <g transform="rotate(.25 1511 382)"><path d="M1450 319Q1438 320 1440 334L1441 431Q1441 445 1456 443L1566 445Q1579 443 1578 429L1579 335Q1578 321 1564 322Z" fill="#D97757" stroke="#141413" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><text class="label" x="1510" y="375">Model</text><text class="small" x="1510" y="405" style="fill:#141413">request</text></g>
+
+  <path d="M76 694C401 684 979 706 1518 691" fill="none" stroke="#141413" stroke-width="3" stroke-linecap="round"/>
+  <text class="label" x="800" y="739">边界之前追求复用，边界之后容纳变化</text>
+</svg>
