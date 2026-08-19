@@ -1,7 +1,7 @@
 ---
 layout: post
 tags: [LLM, NLP, Training]
-title: 大模型是怎么炼成的（一）：训练全景与数据工程
+title: 大模型是怎么炼成的（一）：训练全景与开训准备
 date: 2026-8-13
 author: Kyrie Chen
 comments: true
@@ -9,15 +9,17 @@ toc: true
 pinned: false
 ---
 
-一个大模型从原始网页、代码仓库和论文，变成能对话、写代码、做数学题乃至调用工具的系统，中间到底经历了什么？2022 年，人们习惯用「Pretrain + RLHF」概括它；今天，更准确的描述是一组相互回流的模块：**数据工程 → Pretrain → Mid-training → SFT → 偏好优化 → 推理 RL（RLVR）→ Agentic 训练 → 蒸馏与评估**。
+大模型训练并不是从第一次 `optimizer.step()` 才开始。正式 batch 进入 GPU 之前，团队已经要回答一组会贯穿整个生命周期的问题：模型最终服务什么能力，训练和推理预算是多少，哪些数据可以使用，评测集如何冻结，tokenizer、样本边界和训练分片如何定义，以及每项数据决策凭什么被接受。
 
-这里刻意说「模块」，而不是八个必经的串行阶段：并非每个模型都经过每一环，SFT、偏好优化和 RL 也经常交替多轮；评估结果、模型生成数据和线上失败案例还会回流到更早的环节。下面这张总图和八篇文章，是理解真实训练系统的坐标系，而不是唯一配方。
+这些问题不能只看 Pretrain 来回答。一个大模型从网页、代码仓库和论文，走到对话、代码、推理和工具调用，中间已经不再只是「Pretrain + RLHF」，而是一组相互回流的模块：**数据准备 → Pretrain → Mid-training → SFT → 偏好优化 → 推理 RL（RLVR）→ Agentic 训练 → 蒸馏与评估**。后面的训练目标，会反过来决定前面应该保留什么数据、元数据和评测接口。
+
+因此，本系列第一篇先做一次 **开训评审（training readiness review）**：先看完整训练地图，理解后续阶段会向上游提出什么要求；再把视角拉回第一个 training step 之前，展开目标定义、数据治理、tokenizer、packing、训练分片和 QA。全文沿着同一条路径，从全局约束逐步收束到训练程序可以直接消费的输入。
 
 本系列会围绕 Llama 3、DeepSeek-V3/R1、Tulu 等公开程度较高的系统，回答三类问题：每个阶段解决什么问题、核心目标和算法是什么、工程上如何验证它确实有效。涉及实操时，只展示最关键的 1～2 段代码；完整脚本另放仓库。
 
 | 篇目 | 主题 | 核心问题与招牌内容 |
 |---|---|---|
-| ①（本篇） | 训练全景 + 数据工程 | 从来源治理到训练分片的完整数据 DAG；方案选择与消融方法 |
+| ①（本篇） | 训练全景 + 开训准备 | 从目标与冻结评测集，到来源治理、tokenizer 和训练分片 |
 | ② | Pretrain | Scaling Laws、Dense/MoE、精度与调度；**Loss Spike 排查实录** |
 | ③ | Mid-training | 高质量数据升配、领域续训、长上下文扩展；LR 与数据配比双轴图 |
 | ④ | SFT | 指令数据、chat template、full FT/LoRA；**Loss Masking 代码实战** |
@@ -26,43 +28,45 @@ pinned: false
 | ⑦ | Agentic 训练 | 工具调用 SFT、多轮环境 RL、credit assignment、异步 rollout |
 | ⑧ | 蒸馏与评估 | 黑盒/白盒蒸馏、judge 偏差、污染与动态评测；训练—评估闭环 |
 
-全系列使用同一套视觉语法：**象牙白节点表示核心处理，橙色表示流程起止，蓝色表示数据、存储或模型资产，绿色表示决策；实线箭头表示主流程，虚线边框或连线表示可选阶段与反馈**。涉及 PPO/GRPO 等多模型交互时，再用节点内的状态标签明确「可训练」与「冻结」，避免让颜色同时承担两套含义。第五篇与第六篇会采用相同布局，直接显示 GRPO 主要省掉的是 learned critic，而不是笼统地说「少两个模型」。
-
-> **范围说明**：数据研究不存在可以在一篇文章里逐篇穷尽的「所有论文」。本文覆盖截至 2026 年中、对文本 LLM 预训练最有代表性的公开论文、数据集与生产实践，并给出一条可落地的完整参考管线。多模态数据、SFT/偏好数据的专门治理留到后续文章。
+> **范围说明**：本文讨论的「开训准备」以文本 LLM 的通用预训练为主，覆盖截至 2026 年中的代表性公开论文、数据集与生产实践。模型架构、优化器和数值稳定性只介绍它们对前置准备提出的约束，具体训练留到第二篇；多模态数据、SFT、偏好与 RL 数据的专门治理留到后续文章。
 
 ---
 
-## 一、全系列总地图：线性叙事，循环系统
+## 一、从终局倒推：训练系统的全景与前置约束
 
 ![现代大模型训练生命周期总地图](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-1.png)
 
 *图 1：现代大模型训练生命周期。橙色表示起止节点，蓝色表示模型资产，绿色表示评估决策；虚线边框表示可选阶段，虚线连接表示反馈回流。*
 
-这张图有四个需要提前澄清的地方。
+全系列使用同一套视觉语法：**象牙白节点表示核心处理，橙色表示流程起止，蓝色表示数据、存储或模型资产，绿色表示决策；实线箭头表示主流程，虚线边框或连线表示可选阶段与反馈**。涉及 PPO/GRPO 等多模型交互时，再用节点内的状态标签明确「可训练」与「冻结」，避免让颜色同时承担两套含义。第五篇与第六篇会采用相同布局，直接显示 GRPO 主要省掉的是 learned critic，而不是笼统地说「少两个模型」。
 
-**第一，Pretrain 通常是单次正式训练中最大的训练算力项，但「90%」不是普适常数。** [DeepSeek-V3 报告](https://arxiv.org/abs/2412.19437)列出的最终训练账本是：预训练 266.4 万、上下文扩展 11.9 万、后训练 0.5 万 H800 GPU 小时，合计 278.8 万；按这套口径，pretrain 与 context extension 占绝大多数。但它不包含所有失败实验、数据处理、人工标注，也不等于在线 RL 的 rollout 推理成本。后文谈算力占比都会注明口径，不把单个案例外推成行业定律。
+这里刻意说「模块」，而不是八个必经的串行阶段：并非每个模型都经过每一环，SFT、偏好优化和 RL 也经常交替多轮；评估结果、模型生成数据和线上失败案例还会回流到更早的环节。对本篇来说，看全图不是为了提前讲完后七篇，而是为了确定开训前必须锁定哪些边界。下面四点都会直接落到后文的数据预算、版本、评测集和实验设计上。
 
-**第二，能力上限与用户体验不能简单二分。** Pretrain 决定大部分知识、语言和表征能力，post-training 改变能力的可调用性、行为分布和安全边界；推理 RL 还可能实质性提高某些可验证任务的能力。更准确的说法是：它们优化不同分布上的目标，而不是一个只管「上限」、另一个只管「性格」。
+**第一，Pretrain 通常是单次正式训练中最大的训练算力项，但「90%」不是普适常数。** [DeepSeek-V3 报告](https://arxiv.org/abs/2412.19437)列出的最终训练账本是：预训练 266.4 万、上下文扩展 11.9 万、后训练 0.5 万 H800 GPU 小时，合计 278.8 万；按这套口径，pretrain 与 context extension 占绝大多数。但它不包含所有失败实验、数据处理、人工标注，也不等于在线 RL 的 rollout 推理成本。因此，开训前要分别核算正式训练 token、代理实验、数据处理和后续 rollout，不能用一个固定占比反推全部预算。
 
-**第三，Mid-training 不是统一定义的标准阶段。** 本系列把它操作性地定义为：主干通用预训练之后、典型 post-training 之前，仍使用语言建模目标进行的继续训练，包括退火期高质量混合、领域继续预训练和长上下文扩展。不同论文可能称它 annealing、continued pretraining、context extension 或第二阶段预训练。
+**第二，能力上限与用户体验不能简单二分。** Pretrain 决定大部分知识、语言和表征能力，post-training 改变能力的可调用性、行为分布和安全边界；推理 RL 还可能实质性提高某些可验证任务的能力。更准确的说法是：它们优化不同分布上的目标，而不是一个只管「上限」、另一个只管「性格」。这要求项目在准备阶段就把 base 能力、行为目标和安全目标拆成不同评测切片，而不是等模型训完再找一个总分解释一切。
 
-**第四，评估不是终点，而是数据系统的控制信号。** 数据质量分类器、混合权重和合成策略如果没有冻结评测集、污染检查与受控训练实验，就只是审美判断。训练项目真正的闭环是「提出数据假设 → 代理实验 → 规模复核 → 失败切片 → 修改数据」。
+**第三，Mid-training 不是统一定义的标准阶段。** 本系列把它操作性地定义为：主干通用预训练之后、典型 post-training 之前，仍使用语言建模目标进行的继续训练，包括退火期高质量混合、领域继续预训练和长上下文扩展。不同论文可能称它 annealing、continued pretraining、context extension 或第二阶段预训练。既然阶段边界会变，数据系统就必须保留来源、领域、质量和长度标签，支持同一原料在不同 curriculum 中重新配比。
+
+**第四，评估不是终点，而是开训准备的控制信号。** 数据质量分类器、混合权重和合成策略如果没有冻结评测集、污染检查与受控训练实验，就只是审美判断。训练项目真正的闭环是「提出数据假设 → 代理实验 → 规模复核 → 失败切片 → 修改数据」。所以冻结评测集不是训练后的验收动作，而是数据选择开始前就要完成的前置工作。
 
 ---
 
-## 二、七个训练模块速览
+## 二、从后续训练倒推：开训前要预留什么
+
+站在训练算法的视角，下面是七个模块的速览；站在本篇的视角，它们更像七组上游需求。每种目标都会要求不同的数据结构、版本信息和评估信号。先把这些接口看清楚，后面才知道为什么数据准备不能只是一串网页过滤器。
 
 ### 2.1 Pretrain：规模化的下一个 token 预测
 
-自回归预训练在上下文 (x_{<t}) 下预测 (x_t)，最小化 token 级负对数似然。Scaling Laws 用小规模实验估计参数量、有效数据量与算力之间的关系；Chinchilla 给出 compute-optimal 视角，后来的超量训练与数据受限研究则说明：最优点还取决于推理预算、数据质量和可重复数据量。
+自回归预训练在上下文 $$x_{<t}$$ 下预测 $$x_t$$，最小化 token 级负对数似然。Scaling Laws 用小规模实验估计参数量、有效数据量与算力之间的关系；[Chinchilla](https://arxiv.org/abs/2203.15556) 给出 compute-optimal 视角，后来的超量训练与数据受限研究则说明：最优点还取决于推理预算、数据质量和可重复数据量。
 
-架构上常见 Dense（如 Llama 3）和 MoE（如 DeepSeek-V3）两条路线；注意力实现包括 MHA、GQA 和 MLA。第二篇会把单个 training step 的 data/gradient flow、LR schedule、BF16/FP8 与 loss spike 诊断放在同一张图里。案例数字也会明确 tokenizer 口径：Llama 3 405B 报告约 15.6T 训练 token；DeepSeek-V3 报告 14.8T token。
+架构上常见 Dense（如 [Llama 3](https://arxiv.org/abs/2407.21783)）和 MoE（如 DeepSeek-V3）两条路线；注意力实现包括 MHA、GQA 和 MLA。第二篇会把单个 training step 的 data/gradient flow、LR schedule、BF16/FP8 与 loss spike 诊断放在同一张图里。案例数字也会明确 tokenizer 口径：Llama 3 405B 报告约 15.6T 训练 token；DeepSeek-V3 报告 14.8T token。
 
 ### 2.2 Mid-training：高杠杆，但不是魔法窗口
 
 Mid-training 常做三类事：在训练后段提高数学、代码与精选网页的采样权重；用领域数据继续预训练；通过 RoPE 参数与分阶段序列长度扩展上下文。LR 退火与换数据常同时发生，因此不能仅凭一次结果断言提升来自「低 LR 更容易记住好数据」；需要固定 token、调度与初始化做消融。
 
-代表实践包括 OLMo 2 的 Dolmino mix、MiniCPM 的 WSD/退火实验、Llama 3 的长上下文训练。第三篇会重点讨论能力收益、遗忘、数据重复和上下文长度之间的因果拆分。
+代表实践包括 [OLMo 2](https://arxiv.org/abs/2501.00656) 的 Dolmino mix、[MiniCPM](https://arxiv.org/abs/2404.06395) 的 WSD/退火实验、Llama 3 的长上下文训练。第三篇会重点讨论能力收益、遗忘、数据重复和上下文长度之间的因果拆分。
 
 ### 2.3 SFT：教模型条件化地完成任务
 
@@ -88,11 +92,27 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 
 黑盒蒸馏用 teacher 生成训练样本，白盒蒸馏匹配 logits 或中间分布。[DeepSeek-R1](https://arxiv.org/abs/2501.12948)的公开实验显示，在其若干小模型设置中，推理轨迹蒸馏优于直接对相应小模型做同类 RL；这是一组具体实验结果，不能泛化成「蒸馏永远胜过 RL」。评估则贯穿每一阶段：base 模型看受控能力曲线，post-training 看任务与偏好，agent 看端到端成功率，同时审计 judge 偏差、训练—测试污染和重复运行方差。
 
+把这七个模块放回同一条生命周期，可以得到一张更具体的「前置接口表」：
+
+| 后续模块 | 开训前需要预留的输入与接口 |
+|---|---|
+| Pretrain | tokenizer、数据 mixture、序列边界、训练与验证切片 |
+| Mid-training | 来源/领域/质量/长度标签、阶段化 checkpoint、可重配数据池 |
+| SFT | `messages`/chat template、role 与 loss mask、生成 lineage |
+| 偏好优化 | chosen/rejected 或二元反馈、policy/reference 版本 |
+| 推理 RL | problem、verifier/grader 版本、rollout 与 reward 日志 |
+| Agentic 训练 | environment/tool schema 与版本、trajectory、权限边界 |
+| 蒸馏与评估 | teacher/checkpoint/prompt lineage、holdout、污染与 judge 版本 |
+
+本篇聚焦 Pretrain 一行以及所有阶段共用的控制面：目标、权利、谱系、评测和版本；后训练专用数据留到对应篇目。接下来把总图的起点放大，回答这些接口如何在第一个 batch 进入 GPU 之前落地。
+
 ---
 
-## 三、数据工程首先是目标、治理与实验设计
+## 三、真正的第一步：把训练目标翻译成数据系统
 
-### 3.1 为什么它不是一串 filter
+训练全景给出了约束，接下来要把这些约束变成可以执行和验收的系统。数据工程负责把能力目标、预算和权利边界，翻译为可追踪的数据版本、冻结评测集、tokenizer、mixture 与训练 manifest。它最终交付的不是一个装满文本的目录，而是一套可以被训练程序稳定消费、被实验结果反向审计的资产。
+
+### 3.1 开训准备为什么不是一串 filter
 
 数据管线优化的对象至少有六个，而且彼此冲突：
 
@@ -105,7 +125,9 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 
 因此「质量」不是单一标量。教育价值分类器可能提升 MMLU，却压缩叙事、口语和文化多样性；全局去重提高 unique tokens，也可能取消高质量内容原本的自然上采样。成熟系统会**保留多维 score 与原因标签，在 mixture 阶段决策**，而不是早早把世界压成一个布尔值。
 
-### 3.2 公开研究的演进脉络
+### 3.2 从清洗脚本到可验证的数据系统
+
+这套交付物不是一次设计出来的。公开研究大体经历了从规则清洗、多源治理，到可学习的数据选择和完整谱系的演进。按它们解决的问题排列，比按年份罗列更容易看清今天的数据管线为什么必须是一套系统。
 
 | 路线 | 代表工作 | 留下的关键方法 |
 |---|---|---|
@@ -121,7 +143,9 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 
 这条演进线的方向不是「模型过滤取代所有规则」，而是：**原始数据与标签分离、便宜到昂贵的级联、来源专用分支、受控训练实验，以及可撤销的数据决策。**
 
-### 3.3 完整参考流水线
+### 3.3 从原始来源到训练样本的总装图
+
+把这些方法组合到同一个生产环境，可以得到下面这张参考 DAG：来源层保留原始事实，处理层产生内容与标签，组装层再根据训练目标作版本化选择。
 
 ![预训练数据工程完整生产 DAG](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-2.png)
 
@@ -131,7 +155,9 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 
 ---
 
-## 四、十四个模块：功能、实现与方案比较
+## 四、从原始来源到训练分片：十四个准备模块
+
+下面十四个模块不是必须线性执行的固定配方，而是一次开训评审需要回答的十四类问题。具体拓扑取决于处理成本、政策边界和数据依赖；重要的是每项决策都有版本、证据和可回退路径。
 
 ### 4.1 目标、数据契约与冻结评测集
 
@@ -212,7 +238,7 @@ FineWeb 英文管线使用 fastText 分数 0.65 作为其阈值，这是案例�
 - lorem ipsum、cookie/banner、SEO 关键词堆砌、机器乱码；
 - 代码/数学专用的可解析性、注释比例、测试/文档与 minified 检测。
 
-C4、Gopher/MassiveText 和 Dolma 提供了成熟规则集，但不能原样复制。C4 的 blocklist 分析显示，词表过滤会不成比例地移除某些身份与方言相关文本；英语句末标点规则用于中文、代码或表格也会大规模误杀。规则必须输出 `reason_code` 与原始数值，按语言、来源、时间、domain 分层看 retention rate，并人工抽查边界样本。
+C4、Gopher/MassiveText 和 Dolma 提供了成熟规则集，但不能原样复制。[C4 的后续审计](https://arxiv.org/abs/2104.08758)显示，blocklist 过滤会不成比例地移除关于少数群体的文本；英语句末标点规则用于中文、代码或表格也会大规模误杀。规则必须输出 `reason_code` 与原始数值，按语言、来源、时间、domain 分层看 retention rate，并人工抽查边界样本。
 
 FineWeb 的公开消融是一个好例子：其三条 custom filter 合用约移除 22% token，而不是 7%；团队通过训练小模型比较了 token 损失与能力收益。启发式规则的最佳角色是高精度拒绝和特征生产，不是单独承担全部质量判断。
 
@@ -273,7 +299,7 @@ FineWeb 采用 5-gram、112 个 hash、14×8 band 的配置，并最终选择每
 
 ### 4.10 去污染：保护评估，不只是跑一次 13-gram
 
-没有普适的 n-gram 长度。GPT-3 报告使用过 13-gram，Llama 3 的分析使用 8-gram；tokenizer、语言和文档长度不同，阈值也应不同。[PALOMA](https://arxiv.org/abs/2312.10523)使用段落级匹配与 Bloom filter，并对短段落另作处理；[污染综述](https://arxiv.org/abs/2406.04244)系统总结了精确、词面与语义检测的盲点。
+没有普适的 n-gram 长度。[GPT-3](https://arxiv.org/abs/2005.14165) 的训练集过滤使用 13-gram；其面向非合成任务的事后分析按数据集使用 8～13 gram，少数合成任务另设更短的 $$N$$。Llama 3 的分析使用 8-gram。tokenizer、语言和文档长度不同，阈值也应不同。[PALOMA](https://arxiv.org/abs/2312.10523)使用段落级匹配与 Bloom filter，并对短段落另作处理；[污染综述](https://arxiv.org/abs/2406.04244)系统总结了精确、词面与语义检测的盲点。
 
 推荐分层：
 
@@ -313,8 +339,8 @@ Llama 3 报告的预训练混合约为 50% general knowledge、25% math/reasonin
 | DoReMi | proxy model + group DRO 学 domain 权重 | 可在固定 domain 上自动调权 | 依赖 reference 与 proxy transfer |
 | DoGE | 以目标域泛化做双层优化 | 目标明确 | 优化与计算更复杂 |
 | RegMix | 多个微型训练实验拟合 mixture→metric 回归 | 可搜索大量组合、成本相对低 | 小模型排序可能翻转 |
-| Online mixing/Skill-It | 训练中按 loss/skill 动态更新 | 能适应学习进度 | 系统更复杂、可复现性下降 |
-| CLIMB | embedding 聚类发现隐式 domain 后搜索 | 不要求人工域标签 | 聚类语义和最终能力未必一致 |
+| Online mixing/[Skill-It](https://arxiv.org/abs/2307.14430) | 训练中按 loss/skill 动态更新 | 能适应学习进度 | 系统更复杂、可复现性下降 |
+| [CLIMB](https://arxiv.org/abs/2504.13161) | embedding 聚类发现隐式 domain 后搜索 | 不要求人工域标签 | 聚类语义和最终能力未必一致 |
 
 实用流程是：先用人工/政策约束给可行域；再用 DSIR/DoReMi/RegMix 等产生候选；用相同架构、token、超参和多个 seed 的小模型比较；最后在较大 checkpoint 的 continued training 上复核。代理实验并非永远可靠：[DataDecide](https://arxiv.org/abs/2504.11393)在 25 个 corpus、多个尺度和 seed 上发现，小模型/连续指标能以很低成本预测不少比较，但预测能力依任务和尺度变化，不能只跑一个 150M 模型就宣布大模型最优配比。
 
@@ -322,7 +348,7 @@ Llama 3 报告的预训练混合约为 50% general knowledge、25% math/reasonin
 
 ### 4.13 Tokenizer：决定 token 预算、吞吐和语言公平
 
-常见选择是 BPE、SentencePiece BPE/Unigram 或 byte-level BPE，并配置 byte fallback 和 special tokens。词表变大通常减少序列 token 数、改善代码和多语言压缩，但会扩大 embedding/LM head、logits 计算和稀有 token 学习难度。Llama 3 使用 128K 词表，并报告相对 Llama 2 tokenizer 最多约 15% 的 token 压缩改善。
+常见选择是 BPE、[SentencePiece](https://arxiv.org/abs/1808.06226) BPE/Unigram 或 byte-level BPE，并配置 byte fallback 和 special tokens。词表变大通常减少序列 token 数、改善代码和多语言压缩，但会扩大 embedding/LM head、logits 计算和稀有 token 学习难度。Llama 3 使用 128K 词表：[Meta 初始发布说明](https://ai.meta.com/blog/meta-llama-3/)称其相对 Llama 2 最多减少 15% token；后续 Herd 论文则在一组英文样本上报告从 3.17 提升到 3.94 characters/token。两者的样本与指标口径不同，不应合并成一个普适压缩率。
 
 Tokenizer 不必机械地在「最终完整混合」上训练，而应在**反映目标 mixture 的分层代表样本**上训练；最终比例尚未确定时允许迭代。审计指标包括每种语言/领域的 bytes-per-token、字符/token、UNK/byte fallback 率、数字/公式/代码边界、词表利用率、压缩率与 loader 吞吐。研究表明 tokenizer 选择会改变性能与训练/推理成本，英语中心词表会显著提高部分语言的 token 成本（[Tokenizer Choice](https://arxiv.org/abs/2310.08754)、[Getting the Most out of your Tokenizer](https://arxiv.org/abs/2402.01035)）。
 
@@ -343,7 +369,9 @@ Tokenizer 后还不是训练数据。需要决定：
 
 ---
 
-## 五、三条公开生产管线告诉我们的不是同一个答案
+## 五、公开管线如何做不同的开训决策
+
+用前面的开训评审视角看公开案例，重点不是选出唯一赢家，而是理解它们在质量、覆盖、成本与可追溯性之间做了什么取舍。
 
 ### 5.1 FineWeb / FineWeb-Edu：消融优先的高精度路线
 
@@ -367,7 +395,9 @@ OLMo 3 / Dolma 3 则展示了完整开放的数据生命周期：不同来源各
 
 ---
 
-## 六、工具链：按工作负载和可复现性选，不按 Logo 选
+## 六、落地这些准备：按工作负载和可复现性选工具
+
+目标、数据契约和管线拓扑确定后，工具只是实现手段。选择标准应是它能否稳定承载对应工作负载，并保留前文要求的版本、sidecar 和重放能力。
 
 | 工具 | 擅长 | 注意点 |
 |---|---|---|
@@ -381,7 +411,9 @@ OLMo 3 / Dolma 3 则展示了完整开放的数据生命周期：不同来源各
 
 ---
 
-## 七、如何证明某一步真的有效
+## 七、开训前最后一关：证明数据步骤真的有效
+
+代理训练同样属于开训评审：在烧掉正式训练预算前，用受控实验验证某个过滤、配比或解析决策是否真的改善目标能力，以及它的收益能否覆盖处理成本和副作用。
 
 一套可复用的实验协议：
 
@@ -398,11 +430,11 @@ FineWeb 官方博客修正了一个常见误传：在逐 Common Crawl 快照的�
 
 ---
 
-## 八、总结：一条可落地的检查清单
+## 八、总结：从训练全景收束到开训清单
 
-现代 LLM 训练不是八个固定步骤，而是由数据、语言建模、行为学习、偏好/可验证奖励、环境交互、蒸馏和评估组成的反馈系统。本系列后七篇会逐一「点亮」这些模块，并严格区分论文事实、工程经验和合理推断。
+把本篇看成一次正式训练前的开训评审：总图先说明后续阶段需要什么，数据系统再把这些要求落实为可追踪、可验证、可重复生产的训练资产。准备完成时，团队交付的不只是「一个语料库」，还包括目标与预算、冻结评测集、数据契约、tokenizer、mixture、训练分片和完整证据链。
 
-对于文本预训练数据，一条足够完整的生产清单是：
+在第一次正式 Pretrain 前，一条足够完整的检查清单是：
 
 1. 明确目标、权利政策和冻结评测集；
 2. 建不可变 raw lake、stable ID、provenance 与删除谱系；
@@ -421,7 +453,7 @@ FineWeb 官方博客修正了一个常见误传：在逐 Common Crawl 快照的�
 
 最值得带走的不是某个阈值，而是三个原则：**原始内容与决策标签分离；按成本级联但按依赖排 DAG；任何“最佳配方”都要用自己的目标、数据池与尺度重新消融。**
 
-下一篇进入 Pretrain：next-token objective、Scaling Laws、Dense/MoE、LR schedule 与 BF16/FP8。重点会是一套 loss spike 诊断路径——如何用 batch 指纹、梯度范数、激活统计和数值重放区分坏数据与数值不稳定，再决定 skip batch、回滚、降 LR、QK-Norm、attention scale、z-loss 或 embedding 独立 LR。
+完成这些工作后，第二篇的 optimizer 才真正有了可消费、可追溯的输入：冻结的 tokenizer、可重放的 sample order、通过 QA 的 packed sequences，以及能把 loss spike 追溯到具体数据批次的 manifest。下一篇就从这里进入 Pretrain：next-token objective、Scaling Laws、Dense/MoE、LR schedule 与 BF16/FP8。重点会是一套 loss spike 诊断路径——如何用 batch 指纹、梯度范数、激活统计和数值重放区分坏数据与数值不稳定，再决定 skip batch、回滚、降 LR、QK-Norm、attention scale、z-loss 或 embedding 独立 LR。
 
 ---
 
@@ -432,20 +464,24 @@ FineWeb 官方博客修正了一个常见误传：在逐 Common Crawl 快照的�
 - [C4 / T5: Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer](https://arxiv.org/abs/1910.10683)
 - [CCNet: Extracting High Quality Monolingual Datasets from Web Crawl Data](https://arxiv.org/abs/1911.00359)
 - [Gopher: Scaling Language Models — Methods, Analysis & Insights from Training Gopher](https://arxiv.org/abs/2112.11446)
+- [The Pile](https://arxiv.org/abs/2101.00027)
 - [ROOTS: A Multilingual Dataset for Training Language Models](https://arxiv.org/abs/2303.03915)
 - [RefinedWeb](https://arxiv.org/abs/2306.01116)
-- [Dolma](https://arxiv.org/abs/2402.00159) / [OLMo](https://arxiv.org/abs/2402.00838) / [OLMo 3](https://arxiv.org/abs/2512.13961)
+- [Dolma](https://arxiv.org/abs/2402.00159) / [OLMo](https://arxiv.org/abs/2402.00838) / [OLMo 2](https://arxiv.org/abs/2501.00656) / [OLMo 3](https://arxiv.org/abs/2512.13961)
 - [FineWeb](https://arxiv.org/abs/2406.17557) / [FineWeb 官方实验报告](https://huggingface.co/spaces/HuggingFaceFW/blogpost-fineweb-v1) / [FineWeb2](https://arxiv.org/abs/2506.20920)
 - [DataComp-LM](https://arxiv.org/abs/2406.11794)
 - [Nemotron-CC](https://arxiv.org/abs/2412.02595)
 - [The Stack v2 / StarCoder2](https://arxiv.org/abs/2402.19173)
 - [AICC](https://arxiv.org/abs/2511.16397) / [Beyond a Single Extractor](https://arxiv.org/abs/2602.19548)
+- [GlotLID](https://arxiv.org/abs/2310.16248) / [CommonLID](https://arxiv.org/abs/2601.18026)
+- [C4 数据审计](https://arxiv.org/abs/2104.08758) / [Data-Juicer](https://arxiv.org/abs/2501.14755)
 
 ### 质量、选择、配比与合成
 
 - [Ask-LLM](https://arxiv.org/abs/2402.09668) / [QuRating](https://arxiv.org/abs/2402.09739)
+- [Chinchilla](https://arxiv.org/abs/2203.15556) / [MiniCPM](https://arxiv.org/abs/2404.06395)
 - [DSIR](https://arxiv.org/abs/2302.03169)
-- [DoReMi](https://arxiv.org/abs/2305.10429) / [DoGE](https://arxiv.org/abs/2310.15393) / [RegMix](https://arxiv.org/abs/2407.01492) / [CLIMB](https://arxiv.org/abs/2504.13161)
+- [DoReMi](https://arxiv.org/abs/2305.10429) / [DoGE](https://arxiv.org/abs/2310.15393) / [RegMix](https://arxiv.org/abs/2407.01492) / [Skill-It](https://arxiv.org/abs/2307.14430) / [CLIMB](https://arxiv.org/abs/2504.13161)
 - [DataDecide](https://arxiv.org/abs/2504.11393)
 - [Scaling Data-Constrained Language Models](https://arxiv.org/abs/2305.16264)
 - [Phi-1: Textbooks Are All You Need](https://arxiv.org/abs/2306.11644)
@@ -456,9 +492,11 @@ FineWeb 官方博客修正了一个常见误传：在逐 Common Crawl 快照的�
 - [Deduplicating Training Data Makes Language Models Better](https://arxiv.org/abs/2107.06499)
 - [SemDeDup](https://arxiv.org/abs/2303.09540) / [D4](https://arxiv.org/abs/2308.12284)
 - [PALOMA](https://arxiv.org/abs/2312.10523) / [Survey on Data Contamination](https://arxiv.org/abs/2406.04244)
+- [GPT-3: Language Models are Few-Shot Learners](https://arxiv.org/abs/2005.14165)
 - [Extracting Training Data from Large Language Models](https://arxiv.org/abs/2012.07805) / [Quantifying Memorization Across Neural Language Models](https://arxiv.org/abs/2202.07646)
 - [SentencePiece](https://arxiv.org/abs/1808.06226) / [Tokenizer Choice](https://arxiv.org/abs/2310.08754) / [Getting the Most out of your Tokenizer](https://arxiv.org/abs/2402.01035)
 - [The Llama 3 Herd of Models](https://arxiv.org/abs/2407.21783)
+- [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
 
 ### 偏好优化与推理 RL（对应系列总览）
 

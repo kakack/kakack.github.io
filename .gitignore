@@ -51,3 +51,4 @@ yarn-error.log*
 
 # Optional: uncomment if you don't want to commit shared editor config
 # .vscode/
+.aider*
