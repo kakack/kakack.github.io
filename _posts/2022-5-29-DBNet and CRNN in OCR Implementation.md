@@ -30,22 +30,22 @@ pinned: false
 
 DBNet 名字中的 DB 指 Differentiable Binarization（可微二值化）模块。传统的分割式文本检测通常先设定固定阈值将概率图二值化，再用启发式聚类获得文本实例；而 DBNet 将“阈值学习”与“二值化”纳入网络端到端联合优化，网络同时输出概率图 P 与阈值图 T，使阈值对不同像素自适应：
 
-\[ \hat{B} = \frac{1}{1 + \exp\left(-k\cdot(P - T)\right)} \] 
+$$ \hat{B} = \frac{1}{1 + \exp\left(-k\cdot(P - T)\right)} $$
 
-其中 \(k\) 为放大系数（常取 50–100），\(\hat{B}\) 为近似二值图。训练时可组合使用 Dice/BCE 对 P 的监督，L1 对 T 的监督，以及对 \(\hat{B}\) 的 BCE 以贴近“收缩标签”（shrink map）。这种设计能在细文本边界与粘连场景下显著提升可分割性。
+其中 $$k$$ 为放大系数（常取 50–100），$$\hat{B}$$ 为近似二值图。训练时可组合使用 Dice/BCE 对 P 的监督，L1 对 T 的监督，以及对 $$\hat{B}$$ 的 BCE 以贴近“收缩标签”（shrink map）。这种设计能在细文本边界与粘连场景下显著提升可分割性。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220528-3.jpeg)
 
 DBNet 整体流程如下：
 
-1. 图像经过 FPN 网络结构，得到四个尺度特征图，分别为 $\tfrac{1}{4}$、$\tfrac{1}{8}$、$\tfrac{1}{16}$、$\tfrac{1}{32}$；
-2. 将四个特征图上采样至 $\tfrac{1}{4}$ 并 concat，得到特征图 F；
+1. 图像经过 FPN 网络结构，得到四个尺度特征图，分别为 $$\tfrac{1}{4}$$、$$\tfrac{1}{8}$$、$$\tfrac{1}{16}$$、$$\tfrac{1}{32}$$；
+2. 将四个特征图上采样至 $$\tfrac{1}{4}$$ 并 concat，得到特征图 F；
 3. 由 F 预测概率图 P 与阈值图 T；
-4. 通过 P、T 计算近似二值图 \(\hat{B}\)。
+4. 通过 P、T 计算近似二值图 $$\hat{B}$$。
 
 ## 后处理与框生成（Post-processing）
 
-- 二值化与连通域：对 \(\hat{B}\) 进行阈值化与连通域提取；
+- 二值化与连通域：对 $$\hat{B}$$ 进行阈值化与连通域提取；
 - 多边形拟合与“外扩”（unclip）：将连通域拟合为多边形/最小外接矩形，并按比例外扩，得到与文本边缘贴合的检测框；
 - NMS：对重叠框执行 NMS/框合并，输出最终 BBox/Polygon。
 
@@ -54,7 +54,7 @@ DBNet 整体流程如下：
 - 训练标签：对 GT 多边形做“收缩”（如 pyclipper，收缩比例 0.3–0.5）得到 shrink map；
 - 输入分辨率：短边 736/1024，保持长宽比随机缩放与多尺度训练；
 - 增广：随机旋转/仿射、颜色抖动、模糊、Mosaic/Copy-Paste（谨慎）；
-- 优化与损失：AdamW/SGD，Dice+BCE（P），L1（T），BCE（\(\hat{B}\)）；
+- 优化与损失：AdamW/SGD，Dice+BCE（P），L1（T），BCE（$$\hat{B}$$）；
 - 指标：Precision/Recall/H-mean；同时记录“召回漏检长文本/细文本”的典型失败案例以迭代数据。
 
 

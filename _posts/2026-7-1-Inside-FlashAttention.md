@@ -27,7 +27,7 @@ $$
 \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d}}\right) V
 $$
 
-其中 $Q, K, V \in \mathbb{R}^{S \times d}$，$S$ 是 sequence length，$d$ 是 head dimension。朴素实现会分三步走：
+其中 $$Q, K, V \in \mathbb{R}^{S \times d}$$，$$S$$ 是 sequence length，$$d$$ 是 head dimension。朴素实现会分三步走：
 
 ```python
 S_ = (Q @ K.transpose(-1, -2)) / math.sqrt(d)   # [S, S]，显式 materialize
@@ -35,10 +35,10 @@ P = torch.softmax(S_, dim=-1)                    # [S, S]
 O = P @ V                                         # [S, d]
 ```
 
-问题就出在中间那个 $[S, S]$ 的注意力矩阵上：
+问题就出在中间那个 $$[S, S]$$ 的注意力矩阵上：
 
-- **显存代价**：它的大小是 $O(S^2)$。当 $S = 8K$ 时，单个 head 的 attention score 在 FP16 下就是 $8192^2 \times 2 \approx 128\text{MB}$；乘上 batch、head、层数，长序列下这是灾难性的。
-- **读写代价**：$S_{\_}$ 和 $P$ 都要写回 GPU 的高带宽显存（HBM）再读回来。这一来一回的 HBM 读写，才是真正的瓶颈。
+- **显存代价**：它的大小是 $$O(S^2)$$。当 $$S = 8K$$ 时，单个 head 的 attention score 在 FP16 下就是 $$8192^2 \times 2 \approx 128\text{MB}$$；乘上 batch、head、层数，长序列下这是灾难性的。
+- **读写代价**：$$S_{\_}$$ 和 $$P$$ 都要写回 GPU 的高带宽显存（HBM）再读回来。这一来一回的 HBM 读写，才是真正的瓶颈。
 
 ### 1.2 朴素 attention 往往受 IO 限制
 
@@ -49,15 +49,15 @@ O = P @ V                                         # [S, d]
 | 寄存器 / shared memory（on-chip） | 每个 SM 为 KB～百 KB 级 | 聚合带宽为数十 TB/s 量级 |
 | HBM（显存） | 数十 GB | A100 约 1.5–2.0 TB/s |
 
-On-chip memory 比 HBM 快得多，但容量小得多。朴素 attention 把整个 $[S,S]$ 矩阵在 HBM 上写出来又读回去，在许多常见形状下，大量时间花在内存搬运而不是 Tensor Core 的 matmul 上。具体 kernel 是否 memory-bound 仍取决于序列长度、head dimension、dtype 和硬件，不能把所有 attention 形状一概而论。
+On-chip memory 比 HBM 快得多，但容量小得多。朴素 attention 把整个 $$[S,S]$$ 矩阵在 HBM 上写出来又读回去，在许多常见形状下，大量时间花在内存搬运而不是 Tensor Core 的 matmul 上。具体 kernel 是否 memory-bound 仍取决于序列长度、head dimension、dtype 和硬件，不能把所有 attention 形状一概而论。
 
-FlashAttention 的核心洞见就是：**不要把完整的 $S \times S$ 中间矩阵写进 HBM**。它通过分块显著减少 HBM 读写，并把 attention 中间量的额外存储从二次规模降到随序列长度线性增长；但其精确 IO 复杂度是 $O(S^2d^2/M)$，并不是简单的 $O(S)$，计算量也仍是 $O(S^2d)$。
+FlashAttention 的核心洞见就是：**不要把完整的 $$S \times S$$ 中间矩阵写进 HBM**。它通过分块显著减少 HBM 读写，并把 attention 中间量的额外存储从二次规模降到随序列长度线性增长；但其精确 IO 复杂度是 $$O(S^2d^2/M)$$，并不是简单的 $$O(S)$$，计算量也仍是 $$O(S^2d)$$。
 
 难点在于：softmax 需要对一整行做归一化（要知道这一行的最大值和指数和），而分块计算时，我们一次只看到一行的一小段。怎么在「只看到局部」的情况下算出「全局正确」的 softmax？答案是 online softmax。
 
 ![标准 Attention 与 FlashAttention 的数据搬运对比](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260701-1.png)
 
-*图 1：标准实现把完整 scores / probabilities 写入 HBM；FlashAttention 只让当前 tile 驻留片上存储，并在线维护 $m$、$\ell$ 与输出累加器。*
+*图 1：标准实现把完整 scores / probabilities 写入 HBM；FlashAttention 只让当前 tile 驻留片上存储，并在线维护 $$m$$、$$\ell$$ 与输出累加器。*
 
 ---
 
@@ -71,7 +71,7 @@ $$
 \text{softmax}(x)_i = \frac{e^{x_i - m}}{\sum_j e^{x_j - m}}, \quad m = \max_j x_j
 $$
 
-现在假设一行的 score 被切成两块 $x^{(1)}, x^{(2)}$，我们想分别处理、再合并。定义每块的局部最大值和局部指数和：
+现在假设一行的 score 被切成两块 $$x^{(1)}, x^{(2)}$$，我们想分别处理、再合并。定义每块的局部最大值和局部指数和：
 
 $$
 m^{(1)} = \max(x^{(1)}), \quad \ell^{(1)} = \sum e^{x^{(1)} - m^{(1)}}
@@ -83,17 +83,17 @@ $$
 m^{\text{new}} = \max(m^{(1)}, m^{(2)})
 $$
 
-关键一步：之前用旧的 $m^{(1)}$ 算出的指数和 $\ell^{(1)}$，需要按新旧最大值的差做一次**校正缩放**，再把第二块累加进来：
+关键一步：之前用旧的 $$m^{(1)}$$ 算出的指数和 $$\ell^{(1)}$$，需要按新旧最大值的差做一次**校正缩放**，再把第二块累加进来：
 
 $$
 \ell^{\text{new}} = e^{m^{(1)} - m^{\text{new}}} \, \ell^{(1)} + e^{m^{(2)} - m^{\text{new}}} \, \ell^{(2)}
 $$
 
-这就是 online softmax 的精髓：用一个 running max $m$ 和 running sum $\ell$，就能在只看局部的情况下，增量地维护出全局正确的归一化分母。
+这就是 online softmax 的精髓：用一个 running max $$m$$ 和 running sum $$\ell$$，就能在只看局部的情况下，增量地维护出全局正确的归一化分母。
 
 ### 2.2 把 V 也一起增量更新
 
-attention 不只要 softmax，还要乘上 $V$。FlashAttention 把输出的累加器 $O$ 也一起做增量更新。遍历 $K, V$ 的每一个 block $j$ 时：
+attention 不只要 softmax，还要乘上 $$V$$。FlashAttention 把输出的累加器 $$O$$ 也一起做增量更新。遍历 $$K, V$$ 的每一个 block $$j$$ 时：
 
 $$
 \begin{aligned}
@@ -106,10 +106,10 @@ m, \ell &\leftarrow m^{\text{new}}, \ell^{\text{new}}
 \end{aligned}
 $$
 
-遍历完所有 block 后，最后做一次归一化 $O \leftarrow O / \ell$。注意整个过程里：
+遍历完所有 block 后，最后做一次归一化 $$O \leftarrow O / \ell$$。注意整个过程里：
 
-- $S_{ij}$ 和 $P_{ij}$ 只是当前 block 的小矩阵 $[B_q, B_k]$，算完即弃，**从不 materialize 完整的 $[S, S]$**；
-- 常驻的只有累加器 $O$（$[B_q, d]$）和两个标量向量 $m, \ell$（$[B_q]$）。
+- $$S_{ij}$$ 和 $$P_{ij}$$ 只是当前 block 的小矩阵 $$[B_q, B_k]$$，算完即弃，**从不 materialize 完整的 $$[S, S]$$**；
+- 常驻的只有累加器 $$O$$（$$[B_q, d]$$）和两个标量向量 $$m, \ell$$（$$[B_q]$$）。
 
 写成伪代码就是经典的双重循环（FA1 的视角，外层 K/V、内层 Q）：
 
@@ -130,19 +130,19 @@ O = O / l[:, None]
 
 ### 2.3 IO 复杂度：为什么这样就快了
 
-设 on-chip SRAM 大小为 $M$。标准 attention 的 HBM 访问量是 $O(S^2)$（要写读完整的 score 矩阵）。FlashAttention 通过分块，把 HBM 访问量降到：
+设 on-chip SRAM 大小为 $$M$$。标准 attention 的 HBM 访问量是 $$O(S^2)$$（要写读完整的 score 矩阵）。FlashAttention 通过分块，把 HBM 访问量降到：
 
 $$
 O\left(\frac{S^2 d^2}{M}\right)
 $$
 
-由于 $d^2$ 通常远小于 $M$（例如 $d=128$，$d^2 = 16384$，而 SRAM 可容纳的元素数更大），这个量比 $O(S^2)$ 小很多。换句话说，**FlashAttention 没有减少计算量（FLOPs 还是 $O(S^2 d)$），但大幅减少了 HBM 读写量**，把瓶颈从内存搬运转回了实际计算。
+由于 $$d^2$$ 通常远小于 $$M$$（例如 $$d=128$$，$$d^2 = 16384$$，而 SRAM 可容纳的元素数更大），这个量比 $$O(S^2)$$ 小很多。换句话说，**FlashAttention 没有减少计算量（FLOPs 还是 $$O(S^2 d)$$），但大幅减少了 HBM 读写量**，把瓶颈从内存搬运转回了实际计算。
 
 ### 2.4 recomputation：反向不存 attention 矩阵
 
-反向传播需要 attention 概率 $P$ 来求梯度。标准实现会把 forward 的 $[S,S]$ 存下来给 backward 用——但这正是我们想避免的。FlashAttention 的做法是：**只存下 $O$ 和 logsumexp 统计量 $L = m + \log \ell$（每行一个标量），backward 时用它们重新算出 $P$**。
+反向传播需要 attention 概率 $$P$$ 来求梯度。标准实现会把 forward 的 $$[S,S]$$ 存下来给 backward 用——但这正是我们想避免的。FlashAttention 的做法是：**只存下 $$O$$ 和 logsumexp 统计量 $$L = m + \log \ell$$（每行一个标量），backward 时用它们重新算出 $$P$$**。
 
-这是一种典型的「用计算换显存」：多花一点重算的 FLOPs，换掉 $O(S^2)$ 的 activation 存储。由于 attention 本身的算力在重算后仍远快于额外的 HBM 往返，这笔交易在长序列下非常划算。
+这是一种典型的「用计算换显存」：多花一点重算的 FLOPs，换掉 $$O(S^2)$$ 的 activation 存储。由于 attention 本身的算力在重算后仍远快于额外的 HBM 往返，这笔交易在长序列下非常划算。
 
 ---
 
@@ -150,7 +150,7 @@ $$
 
 FlashAttention-1（2022）的贡献是把上面这套 IO-aware 算法第一次落成了高效的 CUDA kernel，并证明了它在端到端训练里的价值：
 
-- **显存**：attention 部分从 $O(S^2)$ 降到 $O(S)$，使得训练能支持远更长的上下文；
+- **显存**：attention 部分从 $$O(S^2)$$ 降到 $$O(S)$$，使得训练能支持远更长的上下文；
 - **速度**：在 GPT-2/GPT-3 规模上，相比当时 PyTorch 的标准实现有数倍加速；
 - **精确**：它是**精确 attention**，不是近似——输出和标准 attention 在数值上等价（仅有浮点误差）。
 
@@ -212,14 +212,14 @@ FA3 把一个线程块里的 warp group 分成两类角色，组成一条流水�
 
 ### 5.2 matmul 与 softmax 的交织 overlap
 
-即使在 consumer 内部，matmul（走 Tensor Core）和 softmax（走普通 CUDA core 的 `exp` 等）也是两类不同的硬件单元。FA3 把相邻 block 的这两类操作**交织**起来：在对当前 block 做 softmax 的同时，让 Tensor Core 去算下一个 block 的 $QK^\top$。这样 Tensor Core 不会因为等 softmax 而空转，进一步压满算力。
+即使在 consumer 内部，matmul（走 Tensor Core）和 softmax（走普通 CUDA core 的 `exp` 等）也是两类不同的硬件单元。FA3 把相邻 block 的这两类操作**交织**起来：在对当前 block 做 softmax 的同时，让 Tensor Core 去算下一个 block 的 $$QK^\top$$。这样 Tensor Core 不会因为等 softmax 而空转，进一步压满算力。
 
 ### 5.3 FP8 低精度 + block quantization + incoherent processing
 
 Hopper 的 Tensor Core 在 FP8 下吞吐翻倍（FP16 ~989 TFLOPs/s vs FP8 ~1978 TFLOPs/s）。但 FP8 位数少，直接用会有明显精度损失。FA3 用两个技巧把误差压回来：
 
 - **block quantization**：不对整个张量用一个 scale，而是按 block 分别量化，让每块用更贴合自己数值范围的 scale；
-- **incoherent processing**：在量化前用随机正交矩阵（如 Hadamard 变换）把 $Q, K$ 旋转一下，把个别异常大的 outlier「摊平」到各维度，从而减小量化误差。
+- **incoherent processing**：在量化前用随机正交矩阵（如 Hadamard 变换）把 $$Q, K$$ 旋转一下，把个别异常大的 outlier「摊平」到各维度，从而减小量化误差。
 
 ### 5.4 结果
 
@@ -248,7 +248,7 @@ FA4 重新设计流水线，利用 Blackwell 的全异步 MMA 与更大 tile，�
 | | FA1 (2022) | FA2 (2023) | FA3 (2024) | FA4 (2026) |
 |---|---|---|---|---|
 | 关键词 | IO-aware、tiling | 工作划分、并行 | 异步、低精度 | 算法—pipeline 协同 |
-| 主要瓶颈 | 完整 $S^2$ 中间量与 HBM IO | occupancy 低、warp 通信多 | Hopper 异步能力没用上 | Blackwell tensor / non-matmul 吞吐失衡 |
+| 主要瓶颈 | 完整 $$S^2$$ 中间量与 HBM IO | occupancy 低、warp 通信多 | Hopper 异步能力没用上 | Blackwell tensor / non-matmul 吞吐失衡 |
 | 核心改动 | online softmax + recompute | 减 non-matmul FLOPs、seq 并行、split-Q | warp specialization、TMA/WGMMA、FP8 | 全异步 MMA、软件 exp、条件 rescale、Tensor Memory |
 | 主要目标硬件 | A100 等 | Ampere（A100） | Hopper（H100） | Blackwell（B200）并覆盖新 CuTe DSL 路线 |
 
@@ -304,7 +304,7 @@ out = flash_attn_varlen_func(
 )
 ```
 
-**ALiBi 等位置偏置**：FA 支持传入 `alibi_slopes`，在 kernel 内部把线性偏置加到 score 上，而不必在外面 materialize 一个 $[S,S]$ 的 bias 矩阵（那又会把我们省下的显存吃回去）。
+**ALiBi 等位置偏置**：FA 支持传入 `alibi_slopes`，在 kernel 内部把线性偏置加到 score 上，而不必在外面 materialize 一个 $$[S,S]$$ 的 bias 矩阵（那又会把我们省下的显存吃回去）。
 
 **经验法则**：如果你的需求是 causal、window、GQA/MQA、varlen、ALiBi 这类「主流变体」，几乎一定有现成参数——先翻文档，别急着写 kernel。
 
@@ -312,7 +312,7 @@ out = flash_attn_varlen_func(
 
 如果你的 attention 有一个**任意的、数据相关的 score 修改**（比如一个无法用现成参数表达的自定义 mask，或者一种新的相对位置偏置、新的 attention 变体），就需要改 kernel 了。这时不建议直接动官方的 CUDA/CUTLASS 代码——门槛极高——而是用 **Triton** 写一个 FlashAttention 风格的 kernel，在分块循环里插入你的逻辑。
 
-关键是理解：所有自定义都发生在「算完 $S_{ij}$、做 online softmax 之前」这个钩子点上。拿到当前 block 的 score 子矩阵后，加 bias、应用 mask、做任何 element-wise 变换，再交给后续的 max/exp/累加：
+关键是理解：所有自定义都发生在「算完 $$S_{ij}$$、做 online softmax 之前」这个钩子点上。拿到当前 block 的 score 子矩阵后，加 bias、应用 mask、做任何 element-wise 变换，再交给后续的 max/exp/累加：
 
 ```python
 # Triton FlashAttention 内层循环的示意（省略 boilerplate）
@@ -332,7 +332,7 @@ m_i, l_i = m_new, l_new
 
 几个落地要点：
 
-- **mask 要在 block 级别短路**：如果某个 $(Q_{\text{block}}, K_{\text{block}})$ 整块都被 mask 掉（比如 causal 的上三角块），直接 `continue` 跳过，别白算——这正是 causal 比 full 快的原因，自定义 mask 也应沿用。
+- **mask 要在 block 级别短路**：如果某个 $$(Q_{\text{block}}, K_{\text{block}})$$ 整块都被 mask 掉（比如 causal 的上三角块），直接 `continue` 跳过，别白算——这正是 causal 比 full 快的原因，自定义 mask 也应沿用。
 - **backward 要自己配套**：改了 forward 的 score 逻辑，反向的梯度公式也得相应推导。Triton 里通常要手写对应的 backward kernel，或确保你的 bias/mask 对输入的梯度被正确处理（很多自定义 bias 本身带可学习参数，梯度不能漏）。
 - **数值稳定性别破坏**：自定义变换要兼容 online softmax 的减最大值机制。比如加 bias 后再求 max，不要在减 max 之前就把 bias 丢掉。
 - **优先找现成的可编程框架**：PyTorch 的 `FlexAttention` 提供了 `score_mod` 和 `mask_mod` 两个钩子，让你用纯 Python 函数表达「如何改 score / 如何 mask」，再由编译器生成融合 kernel。它正是为「我想要一个新变体但不想手写 Triton」这个场景设计的，应优先考虑。
@@ -353,11 +353,11 @@ m_i, l_i = m_new, l_new
 
 ## 八、总结
 
-FlashAttention 不是一个「近似」或「省显存的小技巧」，而是对 attention 计算方式的一次重写：它用 **tiling + online softmax + recomputation**，在数学上等价地避免 materialize $O(S^2)$ 的注意力矩阵，显著降低 HBM IO，并让许多常见形状更接近硬件的计算吞吐上限。
+FlashAttention 不是一个「近似」或「省显存的小技巧」，而是对 attention 计算方式的一次重写：它用 **tiling + online softmax + recomputation**，在数学上等价地避免 materialize $$O(S^2)$$ 的注意力矩阵，显著降低 HBM IO，并让许多常见形状更接近硬件的计算吞吐上限。
 
 四代的演进是「同一套算法不断贴合硬件」的过程：
 
-- **FA1** 确立 IO-aware 思想，不把 $S \times S$ 写进 HBM；
+- **FA1** 确立 IO-aware 思想，不把 $$S \times S$$ 写进 HBM；
 - **FA2** 通过减少 non-matmul FLOPs、沿序列维并行、split-Q，把 GPU 喂满；
 - **FA3** 用 warp-specialization、TMA/WGMMA 异步和 FP8，吃透 Hopper 的硬件能力。
 - **FA4** 针对 Blackwell 的非对称扩展，让 online softmax 递推、异步 MMA 与 Tensor Memory 协同设计。

@@ -82,7 +82,7 @@ pinned: false
 
 # Multiple Object Recognition with Visual Attention
 
-与上文中的RMVA不同的是，这个模型提供了两层RNN，并在最上层输入原始整图。其中enc是编码网络encoder，$r_i^{(1)}$是解码网络decoder，$r_i^{(2)}$是注意力网络，输出概率在解码网络的最后一个unit输出。
+与上文中的RMVA不同的是，这个模型提供了两层RNN，并在最上层输入原始整图。其中enc是编码网络encoder，$$r_i^{(1)}$$是解码网络decoder，$$r_i^{(2)}$$是注意力网络，输出概率在解码网络的最后一个unit输出。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-11.png)
 
@@ -96,7 +96,7 @@ SENet是一个非常通用的模块化结构，可以嵌入当今各种主流网
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-13.png)
 
-SENet block处理的过程可以理解为两部分：Squeeze和Excitation。其中$c*1*1$的global pooling称之为squeeze，而之后的两个fully connect layer称为excitation，最终用sigmoid将输出限制在$[0, 1]$范围内，把这个值作为scale权重乘到各个channel上，作为下一级的输入。这么做的原理就是通过控制权重scale的大小把重要channel的特征增强，无关channel的特征削弱。
+SENet block处理的过程可以理解为两部分：Squeeze和Excitation。其中$$c*1*1$$的global pooling称之为squeeze，而之后的两个fully connect layer称为excitation，最终用sigmoid将输出限制在$$[0, 1]$$范围内，把这个值作为scale权重乘到各个channel上，作为下一级的输入。这么做的原理就是通过控制权重scale的大小把重要channel的特征增强，无关channel的特征削弱。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-14.png)
 
@@ -112,9 +112,9 @@ CBAM相对于SENet的区别就在于其即关注不同channel的重要性，也�
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/2021010-17.png)
 
-与SENet不同的是，一开始的pooling分为MaxPool和AvgPool两条支线，再将两个输出结果相加后做sigmoid控制在$[0, 1]$范围内，最后跟feature map相乘。两种不同的pooling意味着提取的高层次特征更加丰富，这是通道上的attention。
+与SENet不同的是，一开始的pooling分为MaxPool和AvgPool两条支线，再将两个输出结果相加后做sigmoid控制在$$[0, 1]$$范围内，最后跟feature map相乘。两种不同的pooling意味着提取的高层次特征更加丰富，这是通道上的attention。
 
-之后还会进一步做空间上的attention。首先将基于channel attention的feature结果再做一次MaxPool和AvgPool，但这次是在channel这个维度进行，即把所有输入channel全部pooling到2个实数，由$(h * w * c)$的形状transfer到两个$(h * w * 1)$的feature map，紧接着使用一个7*7的conv kernel形成新的$(h * w * 1)$的feature map。最后也是相同的scale操作，注意力模块特征与得到的新特征图相乘得到经过双重注意力调整的特征图。
+之后还会进一步做空间上的attention。首先将基于channel attention的feature结果再做一次MaxPool和AvgPool，但这次是在channel这个维度进行，即把所有输入channel全部pooling到2个实数，由$$(h * w * c)$$的形状transfer到两个$$(h * w * 1)$$的feature map，紧接着使用一个7*7的conv kernel形成新的$$(h * w * 1)$$的feature map。最后也是相同的scale操作，注意力模块特征与得到的新特征图相乘得到经过双重注意力调整的特征图。
 
 ---
 

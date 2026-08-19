@@ -68,7 +68,7 @@ RCNN 及其系列（Fast‑RCNN、Faster‑RCNN）将 region proposal 与 CNN �
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220527-3.jpeg)
 
-以 U‑Net 为代表的编码‑解码结构相较常见 CNN，会在尾部使用转置卷积（Transpose Conv）或上采样以恢复到输入分辨率（约为 \(n_H \times n_W\)），并通过多条 skip 连接融合浅层细节与深层语义。转置卷积可视为卷积的“逆过程”，用于高效地进行分辨率提升并保留上下文信息。
+以 U‑Net 为代表的编码‑解码结构相较常见 CNN，会在尾部使用转置卷积（Transpose Conv）或上采样以恢复到输入分辨率（约为 $$n_H \times n_W$$），并通过多条 skip 连接融合浅层细节与深层语义。转置卷积可视为卷积的“逆过程”，用于高效地进行分辨率提升并保留上下文信息。
 
 在 U‑Net 的下采样路径中，常用卷积与最大池化逐步减小宽高并增加通道；在上采样路径中，使用转置卷积/插值上采样恢复分辨率并减少通道，左右对齐的 skip 连接提供细粒度边界信息。
 

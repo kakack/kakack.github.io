@@ -120,7 +120,7 @@ $$d^{(1)}(i,j)=(d_j-y_i)^T S_i^{-1} (d_j-y_i)$$
 
 <a href="https://www.codecogs.com/eqnedit.php?latex=b_{i,j}^{(2)}=1[d^{(2)}(i,j)\leqslant&space;t^{(2)}]" target="_blank"><img src="https://latex.codecogs.com/gif.latex?b_{i,j}^{(2)}=1[d^{(2)}(i,j)\leqslant&space;t^{(2)}]" title="b_{i,j}^{(2)}=1[d^{(2)}(i,j)\leqslant t^{(2)}]" /></a>
 
-默认阈值 t^(2)=0.2。综合匹配程度可以将上述二者加权求和（实际常用 \(\lambda\approx 0.98\)，表观主导）：
+默认阈值 t^(2)=0.2。综合匹配程度可以将上述二者加权求和（实际常用 $$\lambda\approx 0.98$$，表观主导）：
 
 <a href="https://www.codecogs.com/eqnedit.php?latex=c_{i,j}=\lambda&space;d^{(1)}(i,j)&plus;(1-\lambda)d^{(2)}(i,j)" target="_blank"><img src="https://latex.codecogs.com/gif.latex?c_{i,j}=\lambda&space;d^{(1)}(i,j)&plus;(1-\lambda)d^{(2)}(i,j)" title="c_{i,j}=\lambda d^{(1)}(i,j)+(1-\lambda)d^{(2)}(i,j)" /></a>
 

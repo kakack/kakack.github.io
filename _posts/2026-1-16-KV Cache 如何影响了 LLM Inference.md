@@ -19,8 +19,8 @@ pinned: false
 
 LLM 在 inference 阶段可以拆解为两个性质截然不同的步骤：
 
-- **Prefill 阶段**：模型接收完整的输入 Prompt，处于一个`预填充状态`。**并行**计算所有输入词元的中间表示（$Q$、$K$、$V$），并生成第一个输出词元。该过程是矩阵-矩阵乘法（GEMM），计算高度密集，能充分利用 GPU 的并行计算单元，属于典型的 **计算受限（Compute-bound）** 场景。
-- **Decode 阶段**：从第二个 token 开始，模型每次只生成一个新 token，并需要让当前 token 的 $\vec{q}$ 与历史序列的 $K$、$V$ 做注意力交互。如果不做任何缓存，每生成一个 token 都要为所有历史词元重新计算一遍 $K$、$V$，复杂度会随序列长度平方级膨胀，造成大量重复计算，理论复杂度攀升到$O(N^2)$。
+- **Prefill 阶段**：模型接收完整的输入 Prompt，处于一个`预填充状态`。**并行**计算所有输入词元的中间表示（$$Q$$、$$K$$、$$V$$），并生成第一个输出词元。该过程是矩阵-矩阵乘法（GEMM），计算高度密集，能充分利用 GPU 的并行计算单元，属于典型的 **计算受限（Compute-bound）** 场景。
+- **Decode 阶段**：从第二个 token 开始，模型每次只生成一个新 token，并需要让当前 token 的 $$\vec{q}$$ 与历史序列的 $$K$$、$$V$$ 做注意力交互。如果不做任何缓存，每生成一个 token 都要为所有历史词元重新计算一遍 $$K$$、$$V$$，复杂度会随序列长度平方级膨胀，造成大量重复计算，理论复杂度攀升到$$O(N^2)$$。
 
 正是 Decode 阶段“自回归 + 重复计算”的特性，催生了 **KV Cache** 这一“以空间换时间”的优化思路。
 
@@ -28,13 +28,13 @@ LLM 在 inference 阶段可以拆解为两个性质截然不同的步骤：
 
 ### 2.1 Prefill 阶段
 
-模型接收到完整的输入序列，可以写作: $X=[\vec{x_1}, \vec{x_2}, ... ,\vec{x_t},]$
+模型接收到完整的输入序列，可以写作: $$X=[\vec{x_1}, \vec{x_2}, ... ,\vec{x_t},]$$
 在 MHA 的 prefill 阶段：
 
-1. 输入序列经过线性层$W_q, W_k, W_v$投影成 $Q、K、V$，$Q,K,V \in \mathbb{R}^{t \times d}$， 并按 head 切分，维度变化为 $[b, h, L, d_h]$；
-2. 通过 $Q \times K^T$ 得到 $[b, h, L, L]$ 的注意力分数矩阵，再经 mask、softmax，与 $V$ 相乘聚合；
-3. 多头结果拼接还原回 $[b, L, d]$，依次经过 `Add & Norm`、`FFN` 等模块；
-4. 最终只取输出矩阵的最后一行 $[b, 1, d]$ 进入 `LM Head` 用于预测下一个 token，同时把整段序列对应的 $K$、$V$ 写入 **KV Cache**，作为后续增量计算的基础。
+1. 输入序列经过线性层$$W_q, W_k, W_v$$投影成 $$Q、K、V$$，$$Q,K,V \in \mathbb{R}^{t \times d}$$， 并按 head 切分，维度变化为 $$[b, h, L, d_h]$$；
+2. 通过 $$Q \times K^T$$ 得到 $$[b, h, L, L]$$ 的注意力分数矩阵，再经 mask、softmax，与 $$V$$ 相乘聚合；
+3. 多头结果拼接还原回 $$[b, L, d]$$，依次经过 `Add & Norm`、`FFN` 等模块；
+4. 最终只取输出矩阵的最后一行 $$[b, 1, d]$$ 进入 `LM Head` 用于预测下一个 token，同时把整段序列对应的 $$K$$、$$V$$ 写入 **KV Cache**，作为后续增量计算的基础。
 
 在一个 multi-head attn 下，我们的 head 为 2，则会出现以下过程：
 
@@ -74,7 +74,7 @@ $$
 
 在 Transformer 结构中，每一层的输出向量（Hidden State）中，只有最后一行（即最新 Token 的向量）会被传递到最终的LM Head或下一层对应的位置 ，用于生成下一个预测结果。
 
-在 Prefill 阶段因为我们没有见过所有输入，所以需要并行计算整个 attn 矩阵取最后一行进入 LM Head 预测下一个 token。然而在 Decoding 阶段，当我们已经有一个 token 生成后，需要计算下一个 token，当生成第 $t$ 个 token时，我们需要$[x_1, ... , x_{t-1}]$的 $K$ 和 $V$ 来计算注意力，但这些历史 token 的 $K$ 和 $V$ 在生成第 $t-1$ 个 token 的时候已经算过一遍了。
+在 Prefill 阶段因为我们没有见过所有输入，所以需要并行计算整个 attn 矩阵取最后一行进入 LM Head 预测下一个 token。然而在 Decoding 阶段，当我们已经有一个 token 生成后，需要计算下一个 token，当生成第 $$t$$ 个 token时，我们需要$$[x_1, ... , x_{t-1}]$$的 $$K$$ 和 $$V$$ 来计算注意力，但这些历史 token 的 $$K$$ 和 $$V$$ 在生成第 $$t-1$$ 个 token 的时候已经算过一遍了。
 
 ### 2.2 Decode 阶段：有无 KV Cache 的对比
 
@@ -84,12 +84,12 @@ $$
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-03.png)
 
-- **没有 KV Cache**：每生成一个新 token，都需要把已经生成过的所有 token 重新跑一遍 attention，$K$、$V$ 被反复计算，浪费严重。生成 $N$ 个 token 的总复杂度量级直接攀升到 $O(N^2)$。
-- **有 KV Cache**：把历史 token 的 $K$、$V$ 缓存起来，每一步只为当前新 token 计算一行 $q$、$k$、$v$，再把新的 $k$、$v$ 拼接到缓存上。$Q$ 与缓存的完整 $K$、$V$ 做注意力计算，由 **GEMM 退化为 GEMV**，计算量大幅下降。
+- **没有 KV Cache**：每生成一个新 token，都需要把已经生成过的所有 token 重新跑一遍 attention，$$K$$、$$V$$ 被反复计算，浪费严重。生成 $$N$$ 个 token 的总复杂度量级直接攀升到 $$O(N^2)$$。
+- **有 KV Cache**：把历史 token 的 $$K$$、$$V$$ 缓存起来，每一步只为当前新 token 计算一行 $$q$$、$$k$$、$$v$$，再把新的 $$k$$、$$v$$ 拼接到缓存上。$$Q$$ 与缓存的完整 $$K$$、$$V$$ 做注意力计算，由 **GEMM 退化为 GEMV**，计算量大幅下降。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-04.png)
 
-这样，计算第 $t$ 个 token 的输出就可以忽略 $[\vec{x_1}, ... , \vec{x_{t-1}}]$ 所在的历史上下文，而 $\vec{x_t}$ 是唯一需要的新输入，这样避免了对历史 token 进行重复的 Embedding 和线性层计算。接着用权重矩阵 $W_q, W_k, W_v$ 和当前的 $\vec{x_t}$ 计算对应向量：
+这样，计算第 $$t$$ 个 token 的输出就可以忽略 $$[\vec{x_1}, ... , \vec{x_{t-1}}]$$ 所在的历史上下文，而 $$\vec{x_t}$$ 是唯一需要的新输入，这样避免了对历史 token 进行重复的 Embedding 和线性层计算。接着用权重矩阵 $$W_q, W_k, W_v$$ 和当前的 $$\vec{x_t}$$ 计算对应向量：
 
 $$
 \vec{q_t}=\vec{x_t}W_q \\
@@ -97,17 +97,17 @@ $$
 \vec{v_t}=\vec{x_t}W_v \\
 $$
 
-此时生成的 $\vec{q_t}, \vec{k_t}, \vec{v_t}$ 都只是行向量而不是大矩阵，因此很明显由 `矩阵-矩阵乘法（GEMM）` 退化为了 `矩阵-向量乘法（GEMV）`，计算量大大减小。需要注意的是，这种退化成立的前提是 batch size = 1；当 batch 增大后，多个请求的 query 会重新拼成矩阵，又回到 GEMM（这一点会在第五节展开）。当前的 query vector $\vec{q_t}$ 与完整的 $K_{new}$ 计算 attn score，并作用于：
+此时生成的 $$\vec{q_t}, \vec{k_t}, \vec{v_t}$$ 都只是行向量而不是大矩阵，因此很明显由 `矩阵-矩阵乘法（GEMM）` 退化为了 `矩阵-向量乘法（GEMV）`，计算量大大减小。需要注意的是，这种退化成立的前提是 batch size = 1；当 batch 增大后，多个请求的 query 会重新拼成矩阵，又回到 GEMM（这一点会在第五节展开）。当前的 query vector $$\vec{q_t}$$ 与完整的 $$K_{new}$$ 计算 attn score，并作用于：
 
 $$
 \vec{o_t}=Softmax(\vec{q_t}K^T_{new})V_{new}
 $$
 
-将最新的 $\vec{k_t}, \vec{v_t}$ 追加写入显存中的 cache 区域，为生成第 $t+1$ 个 token 做好准备，这就是 `KV Cache`。
+将最新的 $$\vec{k_t}, \vec{v_t}$$ 追加写入显存中的 cache 区域，为生成第 $$t+1$$ 个 token 做好准备，这就是 `KV Cache`。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-05.png)
 
-> 这也顺带回答了一个常见疑问：**为什么没有 Q Cache？** 因为 decode 阶段每一步真正参与计算的只有当前 token 对应的那一行 $q$ 向量，历史 $Q$ 的信息在后续步骤中不再被使用，自然无需缓存。
+> 这也顺带回答了一个常见疑问：**为什么没有 Q Cache？** 因为 decode 阶段每一步真正参与计算的只有当前 token 对应的那一行 $$q$$ 向量，历史 $$Q$$ 的信息在后续步骤中不再被使用，自然无需缓存。
 
 ## 三、KV Cache 带来的新问题：从“救星”到“瓶颈”
 
@@ -132,7 +132,7 @@ $$
 
 ### 3.2 显存带宽：真正的“内存墙”
 
-比显存容量更棘手的，是 **显存带宽**。GPU 中 HBM（显存）和 SRAM（计算单元）是两个独立的物理结构，attention 的实际计算发生在 SRAM 中，而缓存的 $K$、$V$ 存放在 HBM 中。每一步 decode 都需要把 KV Cache 从 HBM 搬运到 SRAM，搬运的速度由显存带宽决定。
+比显存容量更棘手的，是 **显存带宽**。GPU 中 HBM（显存）和 SRAM（计算单元）是两个独立的物理结构，attention 的实际计算发生在 SRAM 中，而缓存的 $$K$$、$$V$$ 存放在 HBM 中。每一步 decode 都需要把 KV Cache 从 HBM 搬运到 SRAM，搬运的速度由显存带宽决定。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-06.png)
 
@@ -170,10 +170,10 @@ $$
 逐项排除：
 
 - 2：自注意力机制的根基，不能动；
-- $n_{layers}$：决定模型深度与抽象能力，动了容易“降智”；
-- $d_{head}$：通常为 128，决定每个头的特征容量，砍了同样伤模型质量；
-- $P_{precision}$：可以走低比特量化（INT8 / INT4），属于另一条正交的优化路线，可叠加使用；
-- $n_{heads}$：相对“可动”的维度，尤其是其中的 **KV Head 数量**。
+- $$n_{layers}$$：决定模型深度与抽象能力，动了容易“降智”；
+- $$d_{head}$$：通常为 128，决定每个头的特征容量，砍了同样伤模型质量；
+- $$P_{precision}$$：可以走低比特量化（INT8 / INT4），属于另一条正交的优化路线，可叠加使用；
+- $$n_{heads}$$：相对“可动”的维度，尤其是其中的 **KV Head 数量**。
 
 由此自然引出了核心问题：**我们真的需要那么多 KV Head 吗？** 这就是 MQA、GQA、MLA 出现的根本动机。
 
@@ -181,9 +181,9 @@ $$
 
 通过减少需要缓存的键值头数（`num_key_value_heads`），可以直接缩小 KV Cache 的体积，从而缓解显存带宽压力。
 
-**MQA（Multi-Query Attention）**：所有 Query Head 共享 **同一组** Key/Value Head，KV Cache 大小相对 MHA 直接减少 `n_heads` 倍。代价是模型质量通常会出现可感知下降。其直接结果就是 $n_{kv}=1$。
+**MQA（Multi-Query Attention）**：所有 Query Head 共享 **同一组** Key/Value Head，KV Cache 大小相对 MHA 直接减少 `n_heads` 倍。代价是模型质量通常会出现可感知下降。其直接结果就是 $$n_{kv}=1$$。
 
-**GQA（Grouped-Query Attention）**：将 Query Head 分成若干组，每组共享一组 KV Head。Group 数即最终的 KV Head 数，是介于 MHA 与 MQA 之间的折中方案，可在推理速度和模型质量之间灵活权衡。Llama-2/3、Qwen 系列等均采用 GQA。这里的 Group 数就是最终 KV Head 的数量，即 $n_{kv}=g$ ，每个 KV Head 负责服务的 Query Head 数量为 $\frac{n_{heads}}{n_{kv}}$ 
+**GQA（Grouped-Query Attention）**：将 Query Head 分成若干组，每组共享一组 KV Head。Group 数即最终的 KV Head 数，是介于 MHA 与 MQA 之间的折中方案，可在推理速度和模型质量之间灵活权衡。Llama-2/3、Qwen 系列等均采用 GQA。这里的 Group 数就是最终 KV Head 的数量，即 $$n_{kv}=g$$ ，每个 KV Head 负责服务的 Query Head 数量为 $$\frac{n_{heads}}{n_{kv}}$$
 
 **MLA（Multi-head Latent Attention）**：DeepSeek 提出的另一条思路，**不直接减少 KV Head 数量**，而是通过低秩潜在表示在计算图层面重构 Attention 结构，使得真正需要缓存到 HBM 的张量被显著压缩，同时尽量保持模型表达能力。
 
@@ -352,10 +352,10 @@ Q @ K^T = [B, 8, L, 64] @ [B, 1, 64, L] = ???  ← 第二维 8≠1，需要扩�
 我们以一个具体的例子来量化分析。需要说明的是，这里换用了一组更接近常见部署卡（A6000 级别，带宽 768 GB/s、FP16 稠密算力约 155 TFLOPS）的参数，与第三节中用 A100（2 TB/s、312 TFLOPS）估算的数字并不冲突，只是硬件不同、量级一致。假设模型配置如下：
 
 - 模型参数量：7B（70 亿参数）
-- 层数 $n_{layer}$：32 层
-- 注意力头数 $n_h$：32 个
-- 每头维度 $d_h$：128
-- 隐藏层维度 $d_{model}$：$n_h \times d_h = 32 \times 128 = 4096$
+- 层数 $$n_{layer}$$：32 层
+- 注意力头数 $$n_h$$：32 个
+- 每头维度 $$d_h$$：128
+- 隐藏层维度 $$d_{model}$$：$$n_h \times d_h = 32 \times 128 = 4096$$
 - 精度：FP16（2 字节）
 - Model Weights：～13.5GB
 - Context Length：4096
@@ -368,7 +368,7 @@ MHA模式下，每个token的KV Cache占用：
 
 $$2 \times \underbrace{32}_{\text{layers}} \times \underbrace{32}_{\text{heads}} \times \underbrace{128}_{d_{head}} \times 2\text{ bytes} = 0.5\text{ MB}$$
 
-算上 context length 为 4096 时，整个 KV Cache size = $0.5 MB \times 4096 \approx 2 GB$。
+算上 context length 为 4096 时，整个 KV Cache size = $$0.5 MB \times 4096 \approx 2 GB$$。
 
 每次decoding要搬运的数据：
 
@@ -386,7 +386,7 @@ $$\text{搬运时间}=\frac{15.5\text{ GB}}{768\text{ GB/s}} \approx 20.2\text{ 
 
 如果换成 GQA 和 MQA 会怎样？
 
-**GQA-8** 下，4个 Query 共享1组 KV Head ，$n_{kv}=8$：
+**GQA-8** 下，4个 Query 共享1组 KV Head ，$$n_{kv}=8$$：
 
 $$
 Size_{token}=2 \times 32 \times 8 \times 128 \times 2=0.125 \text{ MB}
@@ -394,9 +394,9 @@ Size_{token}=2 \times 32 \times 8 \times 128 \times 2=0.125 \text{ MB}
  \text{KV Cache} = 0.125 \times 4096 =0.5  \text{ GB}
 $$
 
-比MHA的2GB减少了75%。搬运时间：$\frac{13.5\text{ GB}+0.5\text{ GB}}{768\text{ GB/s}} \approx 18.2 ms$
+比MHA的2GB减少了75%。搬运时间：$$\frac{13.5\text{ GB}+0.5\text{ GB}}{768\text{ GB/s}} \approx 18.2 ms$$
 
-**MQA** ($n_{kv}= 1$)下，所有 Query 共享一组 KV Head：
+**MQA** ($$n_{kv}= 1$$)下，所有 Query 共享一组 KV Head：
 
 $$
 Size_{token}=2 \times 32 \times 1 \times 128 \times 2=0.016 \text{ MB}
@@ -404,7 +404,7 @@ Size_{token}=2 \times 32 \times 1 \times 128 \times 2=0.016 \text{ MB}
  \text{KV Cache} = 0.016\times 4096 =64  \text{ MB}
 $$
 
-比MHA减少了97%。搬运时间：$\frac{13.5\text{ GB}+0.064\text{ GB}}{768\text{ GB/s}} \approx 17.7 ms$
+比MHA减少了97%。搬运时间：$$\frac{13.5\text{ GB}+0.064\text{ GB}}{768\text{ GB/s}} \approx 17.7 ms$$
 
 
 
@@ -424,11 +424,15 @@ $$
 
 $$T_{compute}(\text{Batch Size})=t_c \cdot \text{Batch Size}$$
 
-其中，$
+其中，
+
+$$
 t_c = \frac{\text{FLOPs}_{\text{per\_token}}}{\text{Peak Compute}}
 = \frac{14 \text{ GFLOPS}}{155 \text{ TFLOPS}}
 \approx 0.09 \text{ ms}
-$。每多一个请求，计算时间就多 0.09 ms。
+$$
+
+每多一个请求，计算时间就多 0.09 ms。
 
 而搬运时间则是仿射函数多了一个截距：
 
@@ -439,19 +443,19 @@ T_{\text{memory}}(BS)
 $$
 
 
-其中 $W$ 是模型权重（13.5 GB），$C_{kv}$ 是单个请求的 KV Cache，$BW$ 是显存带宽（768 GB/s）。
+其中 $$W$$ 是模型权重（13.5 GB），$$C_{kv}$$ 是单个请求的 KV Cache，$$BW$$ 是显存带宽（768 GB/s）。
 
-关键就在于截距 $b=\frac{W}{BW}=\frac{13.5}{768} \approx 17.6 \text{ ms}$ 这部分，不管 Batch Size 是 1 还是 100，这 13.5 GB 的权重都只搬一次。Batch Size 越大，这个固定开销被均摊到每个请求上的份额就越小。
+关键就在于截距 $$b=\frac{W}{BW}=\frac{13.5}{768} \approx 17.6 \text{ ms}$$ 这部分，不管 Batch Size 是 1 还是 100，这 13.5 GB 的权重都只搬一次。Batch Size 越大，这个固定开销被均摊到每个请求上的份额就越小。
 
-而斜率 $a$ 取决于使用哪种 attn 方案：
+而斜率 $$a$$ 取决于使用哪种 attn 方案：
 
-| 方案 | $C_{kv}$（seq=4096） | 斜率 $a=C_{kv}/BW$ |
+| 方案 | $$C_{kv}$$（seq=4096） | 斜率 $$a=C_{kv}/BW$$ |
 | --- | --- | --- |
 | MHA | 2 GB | 2.604 ms |
 | GQA-8 | 512 MB | 0.667 ms |
 | MQA | 64 MB | 0.083 ms |
 
-只要 Batch Size 够大，计算时间总有可能追上搬运时间，前提是计算的斜率 $t_c$ 比搬运的斜率 $a$ 更陡。
+只要 Batch Size 够大，计算时间总有可能追上搬运时间，前提是计算的斜率 $$t_c$$ 比搬运的斜率 $$a$$ 更陡。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-08.png)
 
@@ -485,17 +489,17 @@ $$
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/260116-kvcache-09.png)
 
-对于 Llama-2-7B（$d_{\text{model}} = 4096$），每个 token 需要缓存 $2 \times 4096 = 8192$ 个 FP16 数值。
+对于 Llama-2-7B（$$d_{\text{model}} = 4096$$），每个 token 需要缓存 $$2 \times 4096 = 8192$$ 个 FP16 数值。
 
-MLA 的做法是：引入一个**低秩压缩矩阵** $W_{DKV}$，将原始的 K、V 投影到低维空间：
+MLA 的做法是：引入一个**低秩压缩矩阵** $$W_{DKV}$$，将原始的 K、V 投影到低维空间：
 
 $$
 c_t^{KV} = x_t \cdot W_{DKV}, \quad W_{DKV} \in \mathbb{R}^{d_{\text{model}} \times d_c}
 $$
 
-其中 $d_c \ll d_{\text{model}}$（例如 $d_c = 512$），这样每个 token 只需要缓存 $d_c$ 维的压缩表示 $c_t^{KV}$，而不是完整的 $2 \times d_{\text{model}}$ 维的 K、V。
+其中 $$d_c \ll d_{\text{model}}$$（例如 $$d_c = 512$$），这样每个 token 只需要缓存 $$d_c$$ 维的压缩表示 $$c_t^{KV}$$，而不是完整的 $$2 \times d_{\text{model}}$$ 维的 K、V。
 
-乍一看，这种做法似乎只是把问题推迟了：虽然缓存的是压缩后的 $c^{KV}$，但在计算 Attention 时不还是要把它还原回高维的 K、V 吗？
+乍一看，这种做法似乎只是把问题推迟了：虽然缓存的是压缩后的 $$c^{KV}$$，但在计算 Attention 时不还是要把它还原回高维的 K、V 吗？
 
 $$
 K = c^{KV} \cdot W_{UK}, \quad V = c^{KV} \cdot W_{UV}
@@ -517,10 +521,10 @@ $$
 \text{Score} = x_t \cdot (W_Q W_{UK}^T) \cdot (c^{KV})^T = x_t \cdot W_Q' \cdot (c^{KV})^T
 $$
 
-其中 $W_Q' = W_Q W_{UK}^T$ 可以在模型加载时**预先合并**，这样在推理时：
+其中 $$W_Q' = W_Q W_{UK}^T$$ 可以在模型加载时**预先合并**，这样在推理时：
 
-1. **缓存的是**：低维的 $c^{KV} \in \mathbb{R}^{d_c}$
-2. **计算时直接用**：$Q' \cdot (c^{KV})^T$，无需解压
+1. **缓存的是**：低维的 $$c^{KV} \in \mathbb{R}^{d_c}$$
+2. **计算时直接用**：$$Q' \cdot (c^{KV})^T$$，无需解压
 
 这样就实现了"只搬运低维数据，直接在压缩空间计算"，完全避免了解压开销。用一段最小代码可以直观看到"矩阵吸收"是怎么回事：
 
@@ -547,34 +551,34 @@ def absorbed(x_t, c_kv):
 # 两者数值等价，但 absorbed 只搬运/计算 d_c=512 维，而非 n_heads*d_head=4096 维
 ```
 
-以 Llama-2-7B 为例（$d_{\text{model}} = 4096$，$n_{\text{heads}} = 32$，$d_{\text{head}} = 128$），假设 MLA 的压缩维度 $d_c = 512$：
+以 Llama-2-7B 为例（$$d_{\text{model}} = 4096$$，$$n_{\text{heads}} = 32$$，$$d_{\text{head}} = 128$$），假设 MLA 的压缩维度 $$d_c = 512$$：
 
 | 方案 | 每 Token 缓存维度 | 单层 Cache（seq=4096） | 压缩比 |
 |------|------------------|----------------------|--------|
-| MHA | $2 \times 4096 = 8192$ | 64 MB | 1× |
-| GQA-8 | $2 \times 8 \times 128 = 2048$ | 16 MB | 4× |
-| MQA | $2 \times 128 = 256$ | 2 MB | 32× |
-| **MLA** | $512$ | **4 MB** | **16×** |
+| MHA | $$2 \times 4096 = 8192$$ | 64 MB | 1× |
+| GQA-8 | $$2 \times 8 \times 128 = 2048$$ | 16 MB | 4× |
+| MQA | $$2 \times 128 = 256$$ | 2 MB | 32× |
+| **MLA** | $$512$$ | **4 MB** | **16×** |
 
 MLA 的压缩比介于 GQA 和 MQA 之间，但关键优势在于：**几乎不损失模型质量**。
 
 
 MLA 的矩阵吸收技巧有一个前提：Q 和 K 的投影矩阵可以自由结合。但在使用 RoPE（旋转位置编码）的模型中，这个前提被打破了。
 
-RoPE 的旋转矩阵 $R_{\theta}$ 卡在 $W_Q$ 和 $W_{UK}$ 之间：
+RoPE 的旋转矩阵 $$R_{\theta}$$ 卡在 $$W_Q$$ 和 $$W_{UK}$$ 之间：
 
 $$
 \text{Score} = (x_t W_Q \cdot R_{\theta}) \cdot (c^{KV} W_{UK} \cdot R_{\theta})^T
 $$
 
-由于 $R_{\theta}$ 是位置相关的，无法预先合并到权重矩阵中，矩阵吸收失效。
+由于 $$R_{\theta}$$ 是位置相关的，无法预先合并到权重矩阵中，矩阵吸收失效。
 
 **DeepSeek 的解决方案：Decoupled RoPE**
 
 将 Q 和 K 拆分为两部分：
 
-1. **内容部分**（Content）：享受低秩压缩，维度为 $d_c$
-2. **位置部分**（Position）：独立存储 RoPE 编码，维度为 $d_{\text{rope}}$
+1. **内容部分**（Content）：享受低秩压缩，维度为 $$d_c$$
+2. **位置部分**（Position）：独立存储 RoPE 编码，维度为 $$d_{\text{rope}}$$
 
 $$
 Q = [Q_{\text{content}}, Q_{\text{rope}}], \quad K = [K_{\text{content}}, K_{\text{rope}}]
@@ -587,10 +591,10 @@ $$
 $$
 
 其中：
-- $c^{KV} \in \mathbb{R}^{d_c}$：压缩后的内容表示（如 512 维）
-- $k^{\text{rope}} \in \mathbb{R}^{d_{\text{rope}}}$：RoPE 位置编码（如 64 维）
+- $$c^{KV} \in \mathbb{R}^{d_c}$$：压缩后的内容表示（如 512 维）
+- $$k^{\text{rope}} \in \mathbb{R}^{d_{\text{rope}}}$$：RoPE 位置编码（如 64 维）
 
-这样只增加了约 12.5% 的存储开销（$64 / 512$），但保留了 RoPE 的位置建模能力。
+这样只增加了约 12.5% 的存储开销（$$64 / 512$$），但保留了 RoPE 的位置建模能力。
 
 
 MLA 的另一个重要意义在于：通过减少访存量，有可能将 Decode 阶段从 **Memory Bound 翻转为 Compute Bound**。
@@ -607,8 +611,8 @@ $$
 \text{翻转条件：} n_{\text{heads}} > \frac{\text{Peak Compute} \times 2}{4 \times \text{Bandwidth}} \approx 101
 $$
 
-- **Llama-2-7B**（$n_{\text{heads}} = 32$）：即使用 MLA，仍然是 Memory Bound
-- **DeepSeek-V2**（$n_{\text{heads}} = 128$）：成功翻转为 Compute Bound
+- **Llama-2-7B**（$$n_{\text{heads}} = 32$$）：即使用 MLA，仍然是 Memory Bound
+- **DeepSeek-V2**（$$n_{\text{heads}} = 128$$）：成功翻转为 Compute Bound
 
 这也解释了为什么 DeepSeek-V2 特意设计了 128 个 head——**head 数量直接决定了能否实现瓶颈翻转**。
 

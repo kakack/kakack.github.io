@@ -134,13 +134,13 @@ $$
 y =\frac{x-E[x]}{\sqrt{Var[x]+\epsilon}}*\gamma+\beta \\ E[x] =\frac{1}{N}\sum^N_{i=1}x_i \\ Var[x] =\frac{1}{N}\sum^N_{i=1}(x_i-E[x])^2
 $$
 
-而RMSNorm则是LayerNorm的变体，省去了求均值过程，也没有了求偏置$\beta$，即：
+而RMSNorm则是LayerNorm的变体，省去了求均值过程，也没有了求偏置$$\beta$$，即：
 
 $$
 y =\frac{x}{\sqrt{Mean(x^2)+\epsilon}}*\gamma \\ Mean(x^2) =\frac{1}{N}\sum^N_{i=1}x^2_i
 $$
 
-其中$\beta$和$\gamma$为可学习参数
+其中$$\beta$$和$$\gamma$$为可学习参数
 
 ```python
 # RMSNorm
@@ -163,15 +163,15 @@ class RMSNorm(torch.nn.Module):
 
 在通用LLM中，为了强调各个token的位置信息被传入计算attention中，往往将每个token的位置信息以`position embedding`的形式被编码进实际的`input sequence idx`中。
 
-我们知道输入数据经过tokenization之后，会得到一组单词索引序列$\{w_0, w_1, w_2, ... w_n \}$，之后经过embedding处理后也就变成了$\{x_0, x_1, x_2, ... x_n \}$，embedding后的序列通过Linear层将输入数据$x_i$转换为对应的$q_i,k_i,v_i$，之后 便会对$q_i,k_i$两者做RoPE位置编码，之后便计算Attention。
+我们知道输入数据经过tokenization之后，会得到一组单词索引序列$$\{w_0, w_1, w_2, ... w_n \}$$，之后经过embedding处理后也就变成了$$\{x_0, x_1, x_2, ... x_n \}$$，embedding后的序列通过Linear层将输入数据$$x_i$$转换为对应的$$q_i,k_i,v_i$$，之后 便会对$$q_i,k_i$$两者做RoPE位置编码，之后便计算Attention。
 
-其中 $x_i$ 为第 $i$ 个单词所对应的 $d$ 维词嵌入向量 $\{x_{i_0}, x_{i_1}, x_{i_2}, ... , x_{i_{d-1}} \}$。
+其中 $$x_i$$ 为第 $$i$$ 个单词所对应的 $$d$$ 维词嵌入向量 $$\{x_{i_0}, x_{i_1}, x_{i_2}, ... , x_{i_{d-1}} \}$$。
 
 在标准的transformer中，通常是在整个网络进入Transformer Block之前做一个位置编码。
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_2.png)
 
-表达方式即$p_{i,2t}$表示第$i$个嵌入向量$x_i$的第$2t$，即偶数位个位置的位置编码：
+表达方式即$$p_{i,2t}$$表示第$$i$$个嵌入向量$$x_i$$的第$$2t$$，即偶数位个位置的位置编码：
 
 $$
 \begin{align}
@@ -185,22 +185,22 @@ $$
 
 #### 3.2.1 - RoPE的数学原理
 
-为了实现上述目的，通过下列运算给$q$和$k$添加了绝对位置信息：
+为了实现上述目的，通过下列运算给$$q$$和$$k$$添加了绝对位置信息：
 
 $$\hat{q}_m=f_q(x_m, m) \\ \hat{k}_n=f_k(x_n, n)$$
 
-也就说经过上述函数处理，使得$\hat{q}_m,\hat{k}_n$为带有位置$m,n$的绝对位置信息。之后Attention会对$\hat{q}_m,\hat{k}_n$进行内积运算，所以希望经过上述函数处理之后，$\hat{q}_m,\hat{k}_n$在进行内积时能带入$m-n$这个相对位置信息，即满足$<f_q(x_m, m), f_k(x_n, n)> = g(x_m, x_n, m - n)$。
+也就说经过上述函数处理，使得$$\hat{q}_m,\hat{k}_n$$为带有位置$$m,n$$的绝对位置信息。之后Attention会对$$\hat{q}_m,\hat{k}_n$$进行内积运算，所以希望经过上述函数处理之后，$$\hat{q}_m,\hat{k}_n$$在进行内积时能带入$$m-n$$这个相对位置信息，即满足$$<f_q(x_m, m), f_k(x_n, n)> = g(x_m, x_n, m - n)$$。
 
-其中$f_q(x_m, m)$和$f_k(x_n, n)$是待求解的函数，$<>$符号表示求内积操作，而对于$g(x_m, x_n, m - n)$，我们只需要其表达式中含有$(x_m, x_n, m - n)$即可，或者说$\hat{q}_m$和$\hat{k}_n$内积的值受到$(m-n)$的影响。
+其中$$f_q(x_m, m)$$和$$f_k(x_n, n)$$是待求解的函数，$$<>$$符号表示求内积操作，而对于$$g(x_m, x_n, m - n)$$，我们只需要其表达式中含有$$(x_m, x_n, m - n)$$即可，或者说$$\hat{q}_m$$和$$\hat{k}_n$$内积的值受到$$(m-n)$$的影响。
 
-关于$f()$的求解可以详见博文[Transformer升级之路：2、博采众长的旋转式位置编码](https://spaces.ac.cn/archives/8265/comment-page-1)以及RoPE论文原文[ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING](https://arxiv.org/pdf/2104.09864)，以及[一文看懂 LLaMA 中的旋转式位置编码（Rotary Position Embedding）
+关于$$f()$$的求解可以详见博文[Transformer升级之路：2、博采众长的旋转式位置编码](https://spaces.ac.cn/archives/8265/comment-page-1)以及RoPE论文原文[ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING](https://arxiv.org/pdf/2104.09864)，以及[一文看懂 LLaMA 中的旋转式位置编码（Rotary Position Embedding）
 ](https://zhuanlan.zhihu.com/p/642884818)，总之得到结果：
 
 $$
 f_q(x_m, m)=(W_qx_m)e^{im\theta} \\ f_k(x_n, n)=(W_kx_n)e^{in\theta}
 $$
 
-带入$g$可以得到：
+带入$$g$$可以得到：
 
 $$
 \begin{align} 
@@ -208,9 +208,9 @@ g(x_m, x_n, m - n) & = <f_q(x_m, m), f_k(x_n, n)> \nonumber \\ & = Re[(W_qx_m)(W
 \end{align}
 $$
 
-其中$Re$表示复数的实部，$(W_kx_n)^*$表示$(W_kx_n)$的共轭复数。也就是让$\hat{q}_m$和$\hat{k}_n$内积的值受到$(m-n)$的影响。根据欧拉公式$e^{ix}=\cos(x)+i\sin(x)$代入$f_q(x_m,m)$，有$f_q(x_m,m)=(W_qx_m)e^{im\theta}=(W_qx_m)[\cos(m\theta)+i\sin(m\theta)]$。
+其中$$Re$$表示复数的实部，$$(W_kx_n)^*$$表示$$(W_kx_n)$$的共轭复数。也就是让$$\hat{q}_m$$和$$\hat{k}_n$$内积的值受到$$(m-n)$$的影响。根据欧拉公式$$e^{ix}=\cos(x)+i\sin(x)$$代入$$f_q(x_m,m)$$，有$$f_q(x_m,m)=(W_qx_m)e^{im\theta}=(W_qx_m)[\cos(m\theta)+i\sin(m\theta)]$$。
 
-假设当前是2维平面即$d=2$，那么展开上述等式可以有：
+假设当前是2维平面即$$d=2$$，那么展开上述等式可以有：
 
 $$
 \begin{align}
@@ -218,7 +218,7 @@ $$
 \end{align}
 $$
 
-如果进一步将$(q^{(1)}_m, q^{(2)}_n)$这个向量用复数形式表示，即$(q^{(1)}_m+iq^{(2)}_n)$，代入后得到：
+如果进一步将$$(q^{(1)}_m, q^{(2)}_n)$$这个向量用复数形式表示，即$$(q^{(1)}_m+iq^{(2)}_n)$$，代入后得到：
 
 $$
 \begin{align}
@@ -242,15 +242,15 @@ $$
 
 $$f_k(x_n,n) = (\begin{array}{cc|r}\cos (n\theta) & -\sin (n\theta) \\ \sin (n\theta) & \cos (n\theta)\end{array})(\begin{array}{cc|r} k_n^{(1)} \\ k_n^{(2)}\end{array})$$
 
-其中，$\theta$是由位置$p$确定的旋转角度。在RoPe中，旋转角度$\theta$通常是位置$p$的函数，例如$\theta = \frac{p}{\sqrt d}$，$d$是维度。
+其中，$$\theta$$是由位置$$p$$确定的旋转角度。在RoPe中，旋转角度$$\theta$$通常是位置$$p$$的函数，例如$$\theta = \frac{p}{\sqrt d}$$，$$d$$是维度。
 
 #### 3.2.2 - 多维空间的拓展
 
-而对于多维词嵌入向量而言，即$d>2$的情况，同样可以通过，两两一组的方式来实现这种机制，即
+而对于多维词嵌入向量而言，即$$d>2$$的情况，同样可以通过，两两一组的方式来实现这种机制，即
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_3.png)
 
-这就是整个整个RoPE在位置编码时所作的工作，可以发现 $R_d_{\theta,m}$ 是一个稀疏矩阵，这样直接对$q,k$进行矩阵乘法的位置编码会很低效，所以可以通过以下方法来实现RoPE。
+这就是整个整个RoPE在位置编码时所作的工作，可以发现 $$R_{\theta,m}^{d}$$ 是一个稀疏矩阵，这样直接对$$q,k$$进行矩阵乘法的位置编码会很低效，所以可以通过以下方法来实现RoPE。
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_4.png)
 
@@ -367,11 +367,11 @@ In  [7]: 将进酒：人生得意需尽
 Out [7]: 将进酒：人生得意需尽欢
 ```
 
-而第四次的处理过程是用"将进酒：人生得" 来预测下一个"意"字，所以需要把"将进酒：人生得"进行token化后再进行Attention计算，即$Softmax(Q*K^T)*V$，如下图所示：
+而第四次的处理过程是用"将进酒：人生得" 来预测下一个"意"字，所以需要把"将进酒：人生得"进行token化后再进行Attention计算，即$$Softmax(Q*K^T)*V$$，如下图所示：
 
 ![img](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/240411_7.png)
 
-不难发现在第三次处理的时候，就已经把"将进酒：人生"所对应的Q,K,V进行过相关的运算，所以没必要在对他们进行Attention计算，这样就能节省大部分算力，由此K V Cache便是来解决这个问题的：通过将每次计算的K和V缓存下来，之后新的序列进来时只需要从KV Cache中读取之前的KV值即可，就不需要再去重复计算之前的KV了。此外，对于Q也不用将序列对应的所有$Q_i$都计算出来，只需要计算最新的$Q_{newtoken}$, (即此时句子长度为1), K V同理，所以我们用简易代码描述一下这个过程就是：
+不难发现在第三次处理的时候，就已经把"将进酒：人生"所对应的Q,K,V进行过相关的运算，所以没必要在对他们进行Attention计算，这样就能节省大部分算力，由此K V Cache便是来解决这个问题的：通过将每次计算的K和V缓存下来，之后新的序列进来时只需要从KV Cache中读取之前的KV值即可，就不需要再去重复计算之前的KV了。此外，对于Q也不用将序列对应的所有$$Q_i$$都计算出来，只需要计算最新的$$Q_{newtoken}$$, (即此时句子长度为1), K V同理，所以我们用简易代码描述一下这个过程就是：
 
 ```python
 def mha(x, c_attn, c_proj, n_head, kvcache=None):  # [n_seq, n_embd] -> [n_seq, n_embd]

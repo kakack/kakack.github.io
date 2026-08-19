@@ -66,30 +66,30 @@ CornerNet 的骨干网络采用了在姿态估计领域大放异彩的 **Hourgla
 
 #### Loss Function (损失函数)
 
-CornerNet 的总损失由三部分构成，并通过加权和进行组合： \(L = \alpha L_{det} + \beta L_{pull} + \gamma L_{push} + \delta L_{off}\)。其中 \(\alpha, \beta, \gamma, \delta\) 是各项损失的权重超参数。
+CornerNet 的总损失由三部分构成，并通过加权和进行组合： $$L = \alpha L_{det} + \beta L_{pull} + \gamma L_{push} + \delta L_{off}$$。其中 $$\alpha, \beta, \gamma, \delta$$ 是各项损失的权重超参数。
 
 ##### Focal Loss（热力图损失，改进版）
 
-网络输出的角点热力图维度为 \(\tilde{M}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times C}\)。对于每个真实角点，其在 GT 热力图上的标签并非简单的 0/1 二值分布，而是以该点为中心的一个高斯分布。这种“软标签”设计可以鼓励网络预测出靠近真实角点的位置。损失函数采用了 Focal Loss 的一个改进版本，该思想源自 RetinaNet，旨在解决正样本（角点）与负样本（背景）间的极端不平衡问题。
+网络输出的角点热力图维度为 $$\tilde{M}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times C}$$。对于每个真实角点，其在 GT 热力图上的标签并非简单的 0/1 二值分布，而是以该点为中心的一个高斯分布。这种“软标签”设计可以鼓励网络预测出靠近真实角点的位置。损失函数采用了 Focal Loss 的一个改进版本，该思想源自 RetinaNet，旨在解决正样本（角点）与负样本（背景）间的极端不平衡问题。
 
 $$L_{det}=\frac{-1}{N}\sum_{c=1}^{C}\sum_{i=1}^{H}\sum_{j=1}^{W}\left\{\begin{matrix} (1-p_{cij})^{\alpha} \log(p_{cij}) & \text{if } y_{cij}=1 \\ (1-y_{cij})^{\beta}(p_{cij})^{\alpha}\log(1-p_{cij}) & \text{Otherwise} \end{matrix}\right.$$
 
-其中，$y_{cij}=1$ 的位置是 GT 角点，而高斯半径内其他位置的 $y_{cij}$ 值则小于 1。$(1-y_{cij})^{\beta}$ 这一项是其核心改进，能够减小这些“次优位置”（即高斯核覆盖的、靠近真值的负样本）的惩罚权重，使网络更专注于学习那些远离真值的、困难的负样本。
+其中，$$y_{cij}=1$$ 的位置是 GT 角点，而高斯半径内其他位置的 $$y_{cij}$$ 值则小于 1。$$(1-y_{cij})^{\beta}$$ 这一项是其核心改进，能够减小这些“次优位置”（即高斯核覆盖的、靠近真值的负样本）的惩罚权重，使网络更专注于学习那些远离真值的、困难的负样本。
 
 ##### Embedding Loss (嵌入损失)
 
-嵌入损失分为 "pull" 和 "push" 两部分，用于训练角点配对的 embedding 向量 \(\tilde{E}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times1}\)。
+嵌入损失分为 "pull" 和 "push" 两部分，用于训练角点配对的 embedding 向量 $$\tilde{E}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times1}$$。
 
-- **Pull Loss (类内拉近损失)**: 使属于同一个物体的角点对 $(e_{t_k}, e_{b_k})$ 的 embedding 向量向它们的均值 $e_k$ 靠近，目的是让同类更紧凑。
+- **Pull Loss (类内拉近损失)**: 使属于同一个物体的角点对 $$(e_{t_k}, e_{b_k})$$ 的 embedding 向量向它们的均值 $$e_k$$ 靠近，目的是让同类更紧凑。
 $$L_{pull}=\frac{1}{N}\sum_{k=1}^{N}[(e_{t_k}-e_k)^2+(e_{b_k}-e_k)^2]$$
 
-- **Push Loss (类间推远损失)**: 使不同物体的角点对的 embedding 均值 $(e_k, e_j)$ 相互疏远，目的是让异类更分离。此处的距离通常用 L1 距离。
+- **Push Loss (类间推远损失)**: 使不同物体的角点对的 embedding 均值 $$(e_k, e_j)$$ 相互疏远，目的是让异类更分离。此处的距离通常用 L1 距离。
 $$L_{push}=\frac{1}{N(N-1)}\sum_{k=1}^{N}\sum_{j=1,j\neq k}^{N}\max(0, \triangle -|e_k-e_j|)$$
-其中 \(\triangle\) 是一个超参数，定义了不同物体 embedding 之间的最小间隔（margin）。
+其中 $$\triangle$$ 是一个超参数，定义了不同物体 embedding 之间的最小间隔（margin）。
 
 ##### Offsets Loss (偏移量损失)
 
-由于骨干网络进行了下采样（stride > 1），将预测结果从低分辨率热力图映射回原始图像时，会因取整操作产生量化误差，这对小物体尤其致命。因此，网络引入一个 offset 分支 \(\tilde{O}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times2}\) 来学习这个误差并进行补偿。该损失仅对存在真实角点的位置计算，并采用对离群点更鲁棒的 Smooth L1 Loss。
+由于骨干网络进行了下采样（stride > 1），将预测结果从低分辨率热力图映射回原始图像时，会因取整操作产生量化误差，这对小物体尤其致命。因此，网络引入一个 offset 分支 $$\tilde{O}\in\mathbb{R}^{\tfrac{W}{R}\times\tfrac{H}{R}\times2}$$ 来学习这个误差并进行补偿。该损失仅对存在真实角点的位置计算，并采用对离群点更鲁棒的 Smooth L1 Loss。
 
 $$L_{off}=\frac{1}{N}\sum_{k=1}^{N}{\text{SmoothL1Loss}}(o_k, \hat{o_k})$$
 
@@ -115,13 +115,13 @@ CenterNet 直接预测目标的中心点，并从此中心点回归该目标的�
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-4.png)
 
-训练时，每个 GT 框的中心点被投影到下采样后的特征图上 \(\tilde{p}=\left\lfloor p/R\right\rfloor\)，并围绕 \(\tilde{p}\) 渲染一个高斯核。高斯核的半径 \(\sigma_p\) 是一个与物体尺寸自适应的参数，其确定原则是：如果一个与 GT 框有特定 IoU（如0.7）的预测框，其中心点落在高斯半径内，那么这个点就被视为正样本。这个巧妙的设计保证了不同尺寸的物体都能有合适范围的正样本区域。
+训练时，每个 GT 框的中心点被投影到下采样后的特征图上 $$\tilde{p}=\left\lfloor p/R\right\rfloor$$，并围绕 $$\tilde{p}$$ 渲染一个高斯核。高斯核的半径 $$\sigma_p$$ 是一个与物体尺寸自适应的参数，其确定原则是：如果一个与 GT 框有特定 IoU（如0.7）的预测框，其中心点落在高斯半径内，那么这个点就被视为正样本。这个巧妙的设计保证了不同尺寸的物体都能有合适范围的正样本区域。
 
 $$Y_{xyc}=\exp(-\frac{(x-\tilde{p}_x)^2+(y-\tilde{p}_y)^2}{2\sigma ^2_p})$$
 
 ### Loss Function (损失函数)
 
-CenterNet 的总损失由三个部分构成，同样通过加权和进行组合：\(L_{det} = L_k + \lambda_{size}L_{size} + \lambda_{off}L_{off}\)，其中 \(\lambda_{size}\) 和 \(\lambda_{off}\) 是平衡各项任务的权重。
+CenterNet 的总损失由三个部分构成，同样通过加权和进行组合：$$L_{det} = L_k + \lambda_{size}L_{size} + \lambda_{off}L_{off}$$，其中 $$\lambda_{size}$$ 和 $$\lambda_{off}$$ 是平衡各项任务的权重。
 
 #### Center Points Loss Function（中心点热力图损失）
 
@@ -129,7 +129,7 @@ CenterNet 的总损失由三个部分构成，同样通过加权和进行组合�
 
 $$L_k=\frac{-1}{N}\sum_{xyc}\left\{\begin{matrix} (1-\hat{Y}_{xyc})^\alpha \log(\hat{Y}_{xyc}) & \text{if } Y_{xyc}=1 \\ (1-Y_{xyc})^{\beta}(\hat{Y}_{xyc})^{\alpha}\log(1-\hat{Y}_{xyc}) & \text{Otherwise} \end{matrix}\right.$$
 
-其中 $\alpha=2$ 和 $\beta=4$ 是论文中使用的超参数，$N$ 是图像中关键点的总数，用于归一化。
+其中 $$\alpha=2$$ 和 $$\beta=4$$ 是论文中使用的超参数，$$N$$ 是图像中关键点的总数，用于归一化。
 
 #### Offset Loss (偏移量损失)
 
@@ -139,7 +139,7 @@ $$L_{off}=\frac{1}{N}\sum_p |\hat{O}_{\tilde{p}}-(\frac{p}{R}-\tilde{p})|$$
 
 #### Size Loss (尺寸损失)
 
-网络在预测的中心点位置上，直接回归该物体的长和宽 $s_k=(x_2^{(k)}-x_1^{(k)}, y_2^{(k)}-y_1^{(k)})$。这假设了中心点的特征已经包含了推断物体尺寸所需的全部信息。同样采用 L1 损失。为增加训练稳定性，一些实现会回归尺寸的对数 `log(size)`。
+网络在预测的中心点位置上，直接回归该物体的长和宽 $$s_k=(x_2^{(k)}-x_1^{(k)}, y_2^{(k)}-y_1^{(k)})$$。这假设了中心点的特征已经包含了推断物体尺寸所需的全部信息。同样采用 L1 损失。为增加训练稳定性，一些实现会回归尺寸的对数 `log(size)`。
 
 $$L_{size}=\frac{1}{N}\sum_{k=1}^N |\hat{S}_{p_k}-s_k|$$
 
@@ -152,7 +152,7 @@ CenterNet 的推理过程非常简洁：
 
 $$(\hat{x}_i+\delta \hat{x}_i-\tfrac{\hat{w}_i}{2},\ \hat{y}_i+\delta \hat{y}_i-\tfrac{\hat{h}_i}{2},\ \hat{x}_i+\delta \hat{x}_i+\tfrac{\hat{w}_i}{2},\ \hat{y}_i+\delta \hat{y}_i+\tfrac{\hat{h}_i}{2})$$
 
-其中 $(\delta \hat{x}_i, \delta \hat{y}_i)$ 是预测的偏移量, $(\hat{w}_i, \hat{h}_i)$ 是回归的宽高。
+其中 $$(\delta \hat{x}_i, \delta \hat{y}_i)$$ 是预测的偏移量, $$(\hat{w}_i, \hat{h}_i)$$ 是回归的宽高。
 
 ![](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20220104-5.png)
 

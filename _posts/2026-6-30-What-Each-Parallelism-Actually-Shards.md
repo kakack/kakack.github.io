@@ -21,7 +21,7 @@ $$
 \text{logits} \in \mathbb{R}^{B \times S \times V}
 $$
 
-其中 $B$ 是 micro batch size，$S$ 是 sequence length，$V$ 是 vocabulary size。它不是参数，也不是梯度或优化器状态，而是当前 rank 在 forward / backward 中产生的激活类临时张量。因此，如果只是增加数据并行卡数、增加节点数，或者使用 ZeRO-3 分片参数，它仍然可能完整地出现在每张参与训练的 GPU 上。
+其中 $$B$$ 是 micro batch size，$$S$$ 是 sequence length，$$V$$ 是 vocabulary size。它不是参数，也不是梯度或优化器状态，而是当前 rank 在 forward / backward 中产生的激活类临时张量。因此，如果只是增加数据并行卡数、增加节点数，或者使用 ZeRO-3 分片参数，它仍然可能完整地出现在每张参与训练的 GPU 上。
 
 这篇文章想讨论的不是“怎么无脑省显存”，而是一个更实用的问题：**训练 OOM 到底发生在哪类内存上？它能不能被 ZeRO、DP、TP、SP 或加节点解决？**
 
@@ -60,7 +60,7 @@ $$
 O(B \times S \times H \times L)
 $$
 
-其中 $H$ 是 hidden size，$L$ 是层数。对于长序列训练，activation 往往比模型状态更早成为瓶颈。Gradient checkpointing 通过在 backward 时重算部分 forward，减少保存的 activation，是缓解这类 OOM 的常见手段。
+其中 $$H$$ 是 hidden size，$$L$$ 是层数。对于长序列训练，activation 往往比模型状态更早成为瓶颈。Gradient checkpointing 通过在 backward 时重算部分 forward，减少保存的 activation，是缓解这类 OOM 的常见手段。
 
 但 activation 是否能被并行切开，要看它落在哪个维度上。Tensor Parallelism 通常切 hidden / head / FFN 中间维度；Sequence Parallelism 则尝试切 sequence 维度上的 activation；Context Parallelism 更进一步面向超长上下文，把 attention 的上下文维度跨设备切分。
 
@@ -68,7 +68,7 @@ $$
 
 还有一类显存来自算子内部临时 buffer，例如 GEMM workspace、attention score、softmax buffer、mask buffer、通信 buffer 等。它们通常不长期存在，但峰值可能很高。OOM 往往发生在这些临时张量和 activation、logits 同时存在的瞬间。
 
-FlashAttention 这类 kernel 的价值就在于避免显式 materialize 巨大的 $S \times S$ attention matrix，将 attention 从显存密集型操作改造成更接近 IO-aware 的分块计算。
+FlashAttention 这类 kernel 的价值就在于避免显式 materialize 巨大的 $$S \times S$$ attention matrix，将 attention 从显存密集型操作改造成更接近 IO-aware 的分块计算。
 
 ### 1.4 Logits 与 loss backward
 
@@ -88,11 +88,11 @@ $$
 \text{logits}: [B, S, V]
 $$
 
-当 $S$ 很长、$V$ 很大时，`logits` 本身就可能非常夸张。假设：
+当 $$S$$ 很长、$$V$$ 很大时，`logits` 本身就可能非常夸张。假设：
 
-- micro batch size $B=1$
-- sequence length $S=128K$
-- vocab size $V=128K$
+- micro batch size $$B=1$$
+- sequence length $$S=128K$$
+- vocab size $$V=128K$$
 - dtype 为 BF16，即 2 bytes
 
 那么仅 logits 就接近：
@@ -101,7 +101,7 @@ $$
 1 \times 128K \times 128K \times 2 \approx 32\text{GB}
 $$
 
-而这还只是 forward 产生的 logits 张量本身。若代码像下面这样先把 logits 整体 `.float()`，会立刻再分配一份约 64 GiB 的 FP32 张量；未融合的 softmax / cross entropy 路径还可能保存或创建同形状的中间量。需要强调的是，**“logits 本体的 2～3 倍”不是所有框架都成立的定律**：融合 cross entropy、in-place 实现和自定义 backward 的峰值差别很大。可以确定的是，只要完整 $[B,S,V]$ 被 materialize，单个张量本身就已经足以 OOM，实际峰值必须用 profiler 或 allocator snapshot 测量。
+而这还只是 forward 产生的 logits 张量本身。若代码像下面这样先把 logits 整体 `.float()`，会立刻再分配一份约 64 GiB 的 FP32 张量；未融合的 softmax / cross entropy 路径还可能保存或创建同形状的中间量。需要强调的是，**“logits 本体的 2～3 倍”不是所有框架都成立的定律**：融合 cross entropy、in-place 实现和自定义 backward 的峰值差别很大。可以确定的是，只要完整 $$[B,S,V]$$ 被 materialize，单个张量本身就已经足以 OOM，实际峰值必须用 profiler 或 allocator snapshot 测量。
 
 这种 OOM 的直觉很反常：模型参数可能已经被 ZeRO-3 切得很好，attention 也可能使用了 FlashAttention，但最后一个 vocabulary projection 和 loss 仍然能把单卡显存打爆。它出现在计算图的最末端，体积却可能超过前面任意一层。
 
@@ -116,7 +116,7 @@ loss = F.cross_entropy(
 )
 ```
 
-`lm_head` 这一行就实打实地分配了 $[B,S,V]$，`.float()` 又复制了一份，backward 还要为它保留 autograd 所需的中间量。这几行代码本身没有任何 bug，但在长序列、大词表下，它们就是单卡 OOM 的直接来源。后文讨论的所有手段，本质上都是在改写这一小段逻辑。
+`lm_head` 这一行就实打实地分配了 $$[B,S,V]$$，`.float()` 又复制了一份，backward 还要为它保留 autograd 所需的中间量。这几行代码本身没有任何 bug，但在长序列、大词表下，它们就是单卡 OOM 的直接来源。后文讨论的所有手段，本质上都是在改写这一小段逻辑。
 
 ![训练显存由常驻模型状态和瞬时计算峰值共同构成](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260630-1.png)
 
@@ -142,7 +142,7 @@ Data Parallelism（DP）的核心是每张卡持有一份完整模型，处理�
 所以：
 
 - **如果 OOM 来自全局 batch 太大**：增加 DP 卡数并降低 per-GPU batch，可能有效；
-- **如果 OOM 来自单样本超长序列**：DP 基本无效，因为 $B$ 已经不能再降，$S$ 仍然完整地在每张卡上。
+- **如果 OOM 来自单样本超长序列**：DP 基本无效，因为 $$B$$ 已经不能再降，$$S$$ 仍然完整地在每张卡上。
 
 ### 2.2 ZeRO
 
@@ -162,7 +162,7 @@ ZeRO 的不同 stage 主要处理模型状态：
 - 当前 rank 的 cross entropy backward 中间量；
 - 算子 workspace。
 
-原因很简单：ZeRO 切的是模型状态，不是任意 forward 中间结果。ZeRO-3 可以让参数在计算前 all-gather、计算后释放，但如果某个算子本身需要产生 $[B,S,V]$ 的 logits，那么这个局部输出仍然会出现在执行该算子的设备上。
+原因很简单：ZeRO 切的是模型状态，不是任意 forward 中间结果。ZeRO-3 可以让参数在计算前 all-gather、计算后释放，但如果某个算子本身需要产生 $$[B,S,V]$$ 的 logits，那么这个局部输出仍然会出现在执行该算子的设备上。
 
 ---
 
@@ -186,7 +186,7 @@ $$
 [B,S,H] \times [H,V] \rightarrow [B,S,V]
 $$
 
-那么 TP 对 logits 峰值帮助有限。即使中间层被 tensor parallel 切开，最后完整的 $[B,S,V]$ 仍然可能落到某张卡或每张卡上。
+那么 TP 对 logits 峰值帮助有限。即使中间层被 tensor parallel 切开，最后完整的 $$[B,S,V]$$ 仍然可能落到某张卡或每张卡上。
 
 ### 3.2 Vocab Parallel LM Head：可以缓解 logits OOM
 
@@ -210,9 +210,9 @@ $$
 
 TP 并不是万能的。它通常不能解决：
 
-- 单个样本 sequence length 太长导致的 $S$ 维 activation 爆炸；
-- 未分块 cross entropy 造成的 $B \times S \times V$ 峰值；
-- attention 中显式 materialize 的 $S \times S$ scores；
+- 单个样本 sequence length 太长导致的 $$S$$ 维 activation 爆炸；
+- 未分块 cross entropy 造成的 $$B \times S \times V$$ 峰值；
+- attention 中显式 materialize 的 $$S \times S$$ scores；
 - 非 TP-aware 算子内部产生的完整中间张量。
 
 TP 只在计算图和算子实现都真正按 tensor 维度切分时才有效。否则它可能只是切了中间层参数，最后仍然在某些边界处 all-gather 回完整张量。
@@ -225,7 +225,7 @@ Sequence Parallelism（SP）和 Context Parallelism（CP）经常被放在一起
 
 ### 4.1 Sequence Parallelism
 
-SP 的目标是把 sequence 维度上的 activation 分散到不同 GPU 上，典型场景是和 TP 配合，减少 transformer layer 中不能被 TP 自然切分的 activation。例如 LayerNorm、Dropout、Residual 相关的中间状态，如果每张 TP rank 都保留完整 $[B,S,H]$，会造成显存浪费。SP 可以把它变成：
+SP 的目标是把 sequence 维度上的 activation 分散到不同 GPU 上，典型场景是和 TP 配合，减少 transformer layer 中不能被 TP 自然切分的 activation。例如 LayerNorm、Dropout、Residual 相关的中间状态，如果每张 TP rank 都保留完整 $$[B,S,H]$$，会造成显存浪费。SP 可以把它变成：
 
 $$
 [B,S,H] \rightarrow [B,\frac{S}{SP},H]
@@ -235,7 +235,7 @@ $$
 
 > 需要提醒的是，「Sequence Parallelism」在不同框架里指代并不完全相同。Megatron-LM 语境下的 SP 通常**和 TP 绑定**，专门用来切分 TP 无法自然分摊的那部分 activation（LayerNorm、Dropout、residual）；而 DeepSpeed-Ulysses 语境下的「序列并行」更接近本文 CP 一节讨论的、面向超长上下文的 attention 切分。看文档时先确认它到底切的是哪一段计算，再判断它能不能解决你的 OOM。
 
-但 SP 是否能解决 logits OOM，取决于最后的 LM Head 和 loss 是否也沿 sequence 维度分片。如果训练框架在 loss 前把 sequence gather 回完整 $S$，那么 logits 仍然会恢复成 $[B,S,V]$。如果能够保持 sequence-sharded hidden states，并分片计算 loss，则 logits 可以降为：
+但 SP 是否能解决 logits OOM，取决于最后的 LM Head 和 loss 是否也沿 sequence 维度分片。如果训练框架在 loss 前把 sequence gather 回完整 $$S$$，那么 logits 仍然会恢复成 $$[B,S,V]$$。如果能够保持 sequence-sharded hidden states，并分片计算 loss，则 logits 可以降为：
 
 $$
 [B,\frac{S}{SP},V]
@@ -262,14 +262,14 @@ $$
 所以 CP 更适合解决：
 
 - 超长上下文 attention 计算；
-- KV / activation 随 $S$ 增长造成的单卡压力；
+- KV / activation 随 $$S$$ 增长造成的单卡压力；
 - 单样本长序列无法靠 DP 拆分的问题。
 
-但 CP 本身不一定解决 logits OOM。因为 logits 的大头是 $S \times V$，不是 attention 的 $S \times S$。如果 loss 侧没有 sequence-sharded 或 chunked 实现，CP 之后仍然可能在输出层重新聚合成长序列 logits。
+但 CP 本身不一定解决 logits OOM。因为 logits 的大头是 $$S \times V$$，不是 attention 的 $$S \times S$$。如果 loss 侧没有 sequence-sharded 或 chunked 实现，CP 之后仍然可能在输出层重新聚合成长序列 logits。
 
 ![不同并行策略实际切分的维度](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260630-2.png)
 
-*图 2：判断策略是否有效时，不看 GPU 总数，而看它是否切中了峰值张量的致因维度：$B$、$S$、$H/V$、层深或模型状态。*
+*图 2：判断策略是否有效时，不看 GPU 总数，而看它是否切中了峰值张量的致因维度：$$B$$、$$S$$、$$H/V$$、层深或模型状态。*
 
 ---
 
@@ -293,9 +293,9 @@ $$
 
 典型无效场景：
 
-- $B=1$，已经无法继续降低 micro batch；
+- $$B=1$$，已经无法继续降低 micro batch；
 - 单条样本 sequence length 极长；
-- logits 在每个 rank 上都是完整 $[B,S,V]$；
+- logits 在每个 rank 上都是完整 $$[B,S,V]$$；
 - loss backward 需要完整 logits/probability buffer；
 - attention kernel 或 loss kernel 不是分布式实现。
 
@@ -312,13 +312,13 @@ $$
 | 参数太大 | weights | 有效 | 仅 DP 无效 | 有效 | 间接 | ZeRO-3、FSDP、TP、PP |
 | optimizer state 太大 | Adam states | 非常有效 | 仅 DP 无效 | 有效 | 无直接帮助 | ZeRO-1/2/3、8-bit optimizer |
 | 梯度太大 | gradients | 有效 | 仅 DP 无效 | 有效 | 间接 | ZeRO-2/3、FSDP |
-| activation 太大 | $B,S,H,L$ | 部分无效 | 降低 per-GPU batch 才有效 | 部分有效 | 有效 | checkpointing、SP、CP、降低 micro batch |
-| attention scores 太大 | $B,heads,S,S$ | 无效 | 通常无效 | 部分有效 | CP 有效 | FlashAttention、ring attention、CP |
-| logits 太大 | $B,S,V$ | 无效 | 通常无效 | vocab parallel 有效 | sequence-sharded loss 有效 | vocab-parallel CE、chunked CE |
+| activation 太大 | $$B,S,H,L$$ | 部分无效 | 降低 per-GPU batch 才有效 | 部分有效 | 有效 | checkpointing、SP、CP、降低 micro batch |
+| attention scores 太大 | $$B,heads,S,S$$ | 无效 | 通常无效 | 部分有效 | CP 有效 | FlashAttention、ring attention、CP |
+| logits 太大 | $$B,S,V$$ | 无效 | 通常无效 | vocab parallel 有效 | sequence-sharded loss 有效 | vocab-parallel CE、chunked CE |
 | loss backward buffer 太大 | probs / grad logits | 无效 | 通常无效 | 取决于 loss 实现 | 取决于 loss 实现 | fused CE、chunked CE、recompute logits |
 | 通信 buffer / workspace | temp buffer | 通常无效 | 通常无效 | 不确定 | 不确定 | 调 kernel、bucket size、算子实现 |
 
-这里最容易被误判的是 logits 和 loss。因为它们出现在模型最后，看起来只是一个普通输出，但尺寸是 $B \times S \times V$。当 $S$ 和 $V$ 同时很大时，它甚至可能比任意一层 activation 更大。
+这里最容易被误判的是 logits 和 loss。因为它们出现在模型最后，看起来只是一个普通输出，但尺寸是 $$B \times S \times V$$。当 $$S$$ 和 $$V$$ 同时很大时，它甚至可能比任意一层 activation 更大。
 
 ---
 
@@ -365,7 +365,7 @@ torch.cuda.memory._record_memory_history(max_entries=100_000)
 torch.cuda.memory._dump_snapshot("mem.pickle")   # 上传到 https://pytorch.org/memory_viz 查看
 ```
 
-如果峰值正好在 `lm_head` 之后、`backward` 之前那一段陡增，并且增量约等于 $B \times S \times V \times \text{dtype}$，那就基本坐实是 logits 而非模型状态的问题。
+如果峰值正好在 `lm_head` 之后、`backward` 之前那一段陡增，并且增量约等于 $$B \times S \times V \times \text{dtype}$$，那就基本坐实是 logits 而非模型状态的问题。
 
 ### 7.2 使用 vocab-parallel cross entropy
 
@@ -395,7 +395,7 @@ $$
 [B,S/SP,H] \rightarrow [B,S/SP,V]
 $$
 
-然后对 token-level loss 做 reduce。这样可以把 logits 沿 $S$ 维切开。
+然后对 token-level loss 做 reduce。这样可以把 logits 沿 $$S$$ 维切开。
 
 进一步结合 vocab parallel：
 
@@ -403,7 +403,7 @@ $$
 [B,S,V] \rightarrow [B,S/SP,V/TP]
 $$
 
-这对长序列尤其关键，因为 $S$ 是 OOM 的主要放大器。
+这对长序列尤其关键，因为 $$S$$ 是 OOM 的主要放大器。
 
 ### 7.4 Chunked cross entropy
 
@@ -413,12 +413,12 @@ $$
 [B,S,H] \rightarrow [B,C,H] \rightarrow [B,C,V]
 $$
 
-每次只计算长度为 $C$ 的 logits 和 loss，累积 token loss。为了 backward 正确，通常有两类实现：
+每次只计算长度为 $$C$$ 的 logits 和 loss，累积 token loss。为了 backward 正确，通常有两类实现：
 
 - 保存较少中间量，在 backward 中重算 logits；
 - 使用 fused / custom autograd function，把 forward 和 backward 的 buffer 控制在 chunk 内。
 
-这会增加计算量或实现复杂度，但能把 logits 峰值从 $O(BSV)$ 降到 $O(BCV)$。
+这会增加计算量或实现复杂度，但能把 logits 峰值从 $$O(BSV)$$ 降到 $$O(BCV)$$。
 
 这里有个**容易写错的关键点**：把各 chunk 的 loss 累加成一个标量、最后统一 `.backward()`，会让各 chunk 的 logits 计算图一直存活，峰值不一定下降；但在同一份 transformer 输出上循环调用 `loss.backward()` 也不是通用修复——这些 chunk 共享上游计算图，第一次 backward 后图会被释放，后续 backward 可能直接报错；使用 `retain_graph=True` 又会保留上游图，抵消一部分收益。
 
@@ -439,19 +439,19 @@ loss = linear_cross_entropy(
 loss.backward()
 ```
 
-这类实现把 linear projection、log-sum-exp、目标 token 读取和 backward 融合或分块，在算子内部维护正确的 autograd 语义。Liger-Kernel 的 fused linear cross entropy 采用 chunking，Cut Cross-Entropy 则只显式计算目标 token 的 logit、在线归约其余 vocabulary 的 log-sum-exp，从而避免在全局显存中保存完整 $[B,S,V]$。实际使用仍应检查模型支持范围、精度模式和 distributed / vocab-parallel 兼容性。
+这类实现把 linear projection、log-sum-exp、目标 token 读取和 backward 融合或分块，在算子内部维护正确的 autograd 语义。Liger-Kernel 的 fused linear cross entropy 采用 chunking，Cut Cross-Entropy 则只显式计算目标 token 的 logit、在线归约其余 vocabulary 的 log-sum-exp，从而避免在全局显存中保存完整 $$[B,S,V]$$。实际使用仍应检查模型支持范围、精度模式和 distributed / vocab-parallel 兼容性。
 
 ### 7.5 降低 micro batch 或做梯度累积
 
-如果 $B>1$，降低 micro batch size 是最直接的办法：
+如果 $$B>1$$，降低 micro batch size 是最直接的办法：
 
 $$
 O(B \times S \times V)
 $$
 
-中的 $B$ 线性下降。为了保持全局 batch size，可以增加 gradient accumulation steps。
+中的 $$B$$ 线性下降。为了保持全局 batch size，可以增加 gradient accumulation steps。
 
-但如果已经是 $B=1$，这个方向就走到头了。此时必须切 $S$、切 $V$，或者改变 loss 计算方式。
+但如果已经是 $$B=1$$，这个方向就走到头了。此时必须切 $$S$$、切 $$V$$，或者改变 loss 计算方式。
 
 ### 7.6 避免不必要的完整 logits 返回
 
@@ -493,12 +493,12 @@ $$
 
 第一类是**模型状态型 OOM**：参数、梯度、optimizer states 太大。这类问题适合用 ZeRO、FSDP、TP、PP 和更多 shard 来解决。
 
-第二类是**局部计算型 OOM**：activation、attention scores、logits、loss backward buffer、workspace 太大。这类问题必须看具体张量形状。对于长序列训练尤其要警惕 $S^2$ 的 attention 相关张量和 $S \times V$ 的 logits / loss 相关张量。
+第二类是**局部计算型 OOM**：activation、attention scores、logits、loss backward buffer、workspace 太大。这类问题必须看具体张量形状。对于长序列训练尤其要警惕 $$S^2$$ 的 attention 相关张量和 $$S \times V$$ 的 logits / loss 相关张量。
 
 开头提到的长序列 logits OOM，本质上属于第二类。它不会因为 ZeRO-3 或增加 DP 节点自然消失。真正有效的方向是：
 
-- 用 vocab-parallel LM Head 和 cross entropy 切 $V$；
-- 用 sequence-sharded loss 或 CP/SP 切 $S$；
+- 用 vocab-parallel LM Head 和 cross entropy 切 $$V$$；
+- 用 sequence-sharded loss 或 CP/SP 切 $$S$$；
 - 用 chunked / fused cross entropy 控制 logits 峰值；
 - 降低 micro batch，并用 gradient accumulation 保持全局 batch；
 - 避免训练 step 返回或保存完整 logits。

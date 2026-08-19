@@ -251,11 +251,11 @@ DCLM 的一个关键结果是：用 OpenHermes 2.5 与高分 ELI5 等指令式�
 | 精确子串 | suffix array 等 | 找跨文档长片段 | 全局内存/IO 成本高 |
 | 语义重复 | embedding + ANN/聚类 | 能找改写近义样本 | 成本高、易损多样性，边界难解释 |
 
-MinHash 把文档表示为归一化 n-gram/shingle 集合，用多个随机 hash 的最小值近似 Jaccard。若签名被切成 \(b\) 个 band、每 band \(r\) 行，Jaccard 为 \(s\) 的文档成为候选对的概率为：
+MinHash 把文档表示为归一化 n-gram/shingle 集合，用多个随机 hash 的最小值近似 Jaccard。若签名被切成 $$b$$ 个 band、每 band $$r$$ 行，Jaccard 为 $$s$$ 的文档成为候选对的概率为：
 
-\[
+$$
 P(\text{candidate}) = 1 - (1-s^r)^b
-\]
+$$
 
 FineWeb 采用 5-gram、112 个 hash、14×8 band 的配置，并最终选择每个 crawl snapshot 内独立去重：其全局按时间去重实验只留下约 4T token，而且早期 crawl 的残余质量更差。这个结果说明代表保留策略与数据时间分布会改变训练效果，不是「全局越彻底越好」。另一方面，长周期训练会更缺 unique token；Nemotron-CC 因此组合 exact、全局 MinHash 和 substring dedup。两种目标不同，不能互相推出矛盾结论。
 

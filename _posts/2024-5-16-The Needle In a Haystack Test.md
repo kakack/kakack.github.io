@@ -134,21 +134,21 @@ pinned: false
 
 - 论文：Training With "Paraphrasing the Original Text" Improves Long-Context Performance（2023年12月）
 
-这篇论文提出了一个叫检索相关度（retrieval relevance）的指标，一个token（或者n-gram）$x$ 的相关度 $R(x)$定义如下：
+这篇论文提出了一个叫检索相关度（retrieval relevance）的指标，一个token（或者n-gram）$$x$$ 的相关度 $$R(x)$$定义如下：
 
 $$
 R(x)=\frac{n'}{n}log\frac{N}{N'+1}
 $$
 
-这个指标跟TF-IDF很像，其中$n'$表示$x$在gold-chunk中的频率，而$n$是gold-chunk中的总tokens数目；$N$表示整个上下文中的chunk数目，$N'$是包含$x$的chunk数量。
+这个指标跟TF-IDF很像，其中$$n'$$表示$$x$$在gold-chunk中的频率，而$$n$$是gold-chunk中的总tokens数目；$$N$$表示整个上下文中的chunk数目，$$N'$$是包含$$x$$的chunk数量。
 
-基于token $x$的检索相关度$R(x)$，定义训练样本$S$的检索相关度如下：
+基于token $$x$$的检索相关度$$R(x)$$，定义训练样本$$S$$的检索相关度如下：
 
 $$
 \mathcal{R}(S)=\frac{1}{|S_a|}\sum_{x\in S_a}R(x)
 $$
 
-其中$S_a$表示$S$的答案部分。通过$\mathcal{R}(S)$这个指标可以反映出一个训练样本对模型提高检索能力的贡献。$\mathcal{R}(S)$越高，这个样本对提高模型检索能力的贡献越大。
+其中$$S_a$$表示$$S$$的答案部分。通过$$\mathcal{R}(S)$$这个指标可以反映出一个训练样本对模型提高检索能力的贡献。$$\mathcal{R}(S)$$越高，这个样本对提高模型检索能力的贡献越大。
 
 ### PoSE
 
