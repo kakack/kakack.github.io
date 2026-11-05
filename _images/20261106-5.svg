@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1140" role="img" aria-labelledby="title desc">
+  <title id="title">Loss spike：先看信号，再决定动哪一个旋钮</title>
+  <desc id="desc">从是否自行恢复、重放是否复现，到 embedding 梯度、attention logit、log Z 和不确定 NaN，各自对应不同处理。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#D97757;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font:700 36px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .head{font:700 22px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .on{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .small{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .sd{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .axis{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowO" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#D97757" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="1140"/>
+  <text class="title" x="52" y="58">Loss spike：先看信号，再决定动哪一个旋钮</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <rect class="orange" x="52" y="112" width="280" height="88" rx="22"/>
+  <text class="on" x="192" y="150">Loss 突然跳起</text>
+  <text class="sd" x="192" y="176">先别改五个超参</text>
+
+  <rect class="blue" x="390" y="112" width="1358" height="88" rx="22"/>
+  <text class="on" x="1069" y="146">同时记下：grad norm、embedding grad、max attention logit、log Z、batch 指纹</text>
+  <text class="sd" x="1069" y="174">没有这五项，后面的分支只是猜测</text>
+
+  <path class="flow" d="M192 200V250" marker-end="url(#arrow)"/>
+  <path class="flow" d="M390 156H332"/>
+
+  <g>
+    <polygon points="192,250 332,318 192,386 52,318" class="green"/>
+    <text class="on" x="192" y="312">自行恢复？</text>
+    <text class="sd" x="192" y="338">范数仍有界</text>
+    <rect class="ivory" x="390" y="274" width="520" height="88" rx="18"/>
+    <text class="label" x="650" y="312">是：只记录，不改配方</text>
+    <text class="small" x="650" y="340">一次尖峰不是一次事故</text>
+    <path class="flow" d="M332 318H390" marker-end="url(#arrow)"/>
+  </g>
+
+  <path class="flow" d="M192 386V470" marker-end="url(#arrow)"/>
+  <text class="axis" x="210" y="440">否</text>
+
+  <polygon points="300,470 470,548 300,626 130,548" class="green"/>
+  <text class="on" x="300" y="542">重放仍复现？</text>
+  <text class="sd" x="300" y="568">换更早 checkpoint</text>
+
+  <rect class="ivory" x="530" y="430" width="560" height="100" rx="18"/>
+  <text class="label" x="810" y="468">否：状态和这批数据撞在一起</text>
+  <text class="small" x="810" y="496">回滚约 100 step，跳过 200–500 个 batch</text>
+  <text class="small" x="810" y="520">PaLM 的做法。不证明数据是干净的</text>
+  <path class="flow" d="M430 500H530" marker-end="url(#arrow)"/>
+  <text class="axis" x="478" y="490">否</text>
+
+  <rect class="orange" x="530" y="680" width="640" height="88" rx="18"/>
+  <text class="on" x="850" y="716">是：多个状态下同一批数据都炸</text>
+  <text class="sd" x="850" y="744">用 manifest 隔离文档，而不是只跳过 step</text>
+  <path class="flow" d="M300 626V680" marker-end="url(#arrow)"/>
+  <text class="axis" x="248" y="658">是</text>
+
+  <text class="head" x="52" y="820">若跳变还带着下面这些领先信号，处理要跟着信号走</text>
+
+  <rect class="ivory" x="52" y="860" width="400" height="150" rx="20"/>
+  <text class="label" x="252" y="908">Embedding grad 先爆</text>
+  <text class="small" x="252" y="940">GLM-130B：梯度缩到 0.1</text>
+  <text class="small" x="252" y="968">前向值不变，只缩小更新</text>
+  <text class="small" x="252" y="996">或给 embedding 单独更小的 LR</text>
+
+  <rect class="ivory" x="476" y="860" width="420" height="150" rx="20"/>
+  <text class="label" x="686" y="908">Attention logit 先爆</text>
+  <text class="small" x="686" y="940">softmax 改 FP32</text>
+  <text class="small" x="686" y="968">QK-Norm，或 tanh softcap</text>
+  <text class="small" x="686" y="996">1/√d 仍保留，它不再单独够用</text>
+
+  <rect class="ivory" x="920" y="860" width="400" height="150" rx="20"/>
+  <text class="label" x="1120" y="908">输出 log Z 漂移</text>
+  <text class="small" x="1120" y="940">PaLM：z-loss = 1e-4 · (log Z)²</text>
+  <text class="small" x="1120" y="968">压的是 LM head，不是 attention</text>
+  <text class="small" x="1120" y="996">系数不是普适常数</text>
+
+  <rect class="blue" x="1344" y="860" width="404" height="150" rx="20"/>
+  <text class="on" x="1546" y="908">换一组机器就不复现</text>
+  <text class="sd" x="1546" y="940">先查 FP8 溢出、集合通信</text>
+  <text class="sd" x="1546" y="968">和坏文档不是同一类问题</text>
+  <text class="sd" x="1546" y="996">不要用跳 batch 掩盖它</text>
+
+  <text class="note" x="52" y="1052">梯度裁剪和降低学习率能把尖峰按住，但不会告诉你尖峰来自数据、attention 尺度还是精度。它们是围栏，放在诊断之后。</text>
+  <text class="note" x="52" y="1086">checkpoint 间隔必须短于回滚窗口。只存每 1000 step 一份，就做不到回退约 100 step。</text>
+  <text class="note" x="52" y="1120">Llama 3 405B 与 DeepSeek-V3 的正式运行都报告没有被迫回滚。这张图是异常路径，不是默认配方。</text>
+</svg>

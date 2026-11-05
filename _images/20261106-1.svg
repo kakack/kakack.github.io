@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 820" role="img" aria-labelledby="title desc">
+  <title id="title">一个 step：前向是数据，反向是梯度</title>
+  <desc id="desc">token 经 embedding、Transformer 和 LM head 得到交叉熵；橙色虚线把梯度送回优化器。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#D97757;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font:700 36px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .head{font:700 22px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .on{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .small{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .sd{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .axis{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowO" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#D97757" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="820"/>
+  <text class="title" x="52" y="58">一个 step：前向是数据，反向是梯度</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <rect class="ivory" x="52" y="104" width="26" height="26" rx="6"/>
+  <rect class="orange" x="210" y="104" width="26" height="26" rx="6"/>
+  <rect class="blue" x="360" y="104" width="26" height="26" rx="6"/>
+  <path class="flow" d="M620 117H690" marker-end="url(#arrow)"/>
+  <path class="grad" d="M860 117H930" marker-end="url(#arrowO)"/>
+  <text class="note" x="88" y="124">处理</text>
+  <text class="note" x="246" y="124">起止</text>
+  <text class="note" x="396" y="124">张量或参数</text>
+  <text class="note" x="704" y="124">前向</text>
+  <text class="note" x="944" y="124">梯度</text>
+
+  <path class="flow" d="M230 292H268" marker-end="url(#arrow)"/>
+  <path class="flow" d="M468 292H506" marker-end="url(#arrow)"/>
+  <path class="flow" d="M806 292H844" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1044 292H1082" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1282 292H1320" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1540 292H1578" marker-end="url(#arrow)"/>
+
+  <rect class="orange" x="52" y="242" width="178" height="100" rx="22"/>
+  <rect class="blue" x="268" y="242" width="200" height="100" rx="20"/>
+  <rect class="ivory" x="506" y="224" width="300" height="136" rx="24"/>
+  <rect class="ivory" x="844" y="242" width="200" height="100" rx="22"/>
+  <rect class="blue" x="1082" y="242" width="200" height="100" rx="20"/>
+  <rect class="orange" x="1320" y="242" width="220" height="100" rx="22"/>
+  <rect class="blue" x="1578" y="242" width="170" height="100" rx="22"/>
+
+  <text class="on" x="141" y="286">Token ids</text>
+  <text class="sd" x="141" y="314">packed batch</text>
+  <text class="on" x="368" y="286">Embedding</text>
+  <text class="sd" x="368" y="314">查表，可训练</text>
+  <text class="label" x="656" y="274">Block × L</text>
+  <text class="small" x="656" y="304">Attention + FFN / MoE</text>
+  <text class="small" x="656" y="330">残差回到主干</text>
+  <text class="label" x="944" y="286">LM Head</text>
+  <text class="small" x="944" y="314">H 投影到 V</text>
+  <text class="on" x="1182" y="286">Logits</text>
+  <text class="sd" x="1182" y="314">[B, S, V]</text>
+  <text class="on" x="1430" y="286">交叉熵</text>
+  <text class="sd" x="1430" y="314">有效 token 上平均</text>
+  <text class="on" x="1663" y="286">Loss</text>
+  <text class="sd" x="1663" y="314">一个标量</text>
+
+  <path class="grad" d="M1663 342C1663 430 141 430 141 520" marker-end="url(#arrowO)"/>
+  <path class="grad" d="M1430 342C1430 470 656 470 656 508" marker-end="url(#arrowO)"/>
+
+  <rect class="ivory" x="52" y="520" width="250" height="108" rx="22"/>
+  <rect class="green" x="360" y="520" width="300" height="108" rx="22"/>
+  <rect class="blue" x="718" y="520" width="300" height="108" rx="22"/>
+  <rect class="ivory" x="1076" y="520" width="300" height="108" rx="22" stroke-dasharray="10 8"/>
+  <rect class="ivory" x="1434" y="520" width="314" height="108" rx="22"/>
+
+  <text class="label" x="177" y="564">dL / dlogits</text>
+  <text class="small" x="177" y="592">softmax(z) − y</text>
+  <text class="on" x="510" y="564">穿过每一层</text>
+  <text class="sd" x="510" y="592">或重算 activation</text>
+  <text class="on" x="868" y="564">参数梯度</text>
+  <text class="sd" x="868" y="592">clip、累加、通信</text>
+  <text class="label" x="1226" y="564">AdamW</text>
+  <text class="small" x="1226" y="592">动量在 FP32 状态</text>
+  <text class="label" x="1591" y="564">写回权重</text>
+  <text class="small" x="1591" y="592">下一步用新参数</text>
+
+  <path class="flow" d="M302 574H360" marker-end="url(#arrow)"/>
+  <path class="flow" d="M660 574H718" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1018 574H1076" marker-end="url(#arrowO)"/>
+  <path class="flow" d="M1376 574H1434" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="690">虚线边框表示优化器状态常驻，但不属于前向计算图。Batch 指纹也不在图里；查 loss spike 时仍要用它指回文档。</text>
+  <text class="note" x="52" y="724">1/√d、MoE 路由和精度格式都发生在中间的 block 内。本系列其他图里虚线表示反馈；这张图的橙色虚线专门表示梯度。</text>
+  <text class="note" x="52" y="758">并行把哪些张量切开，见《并行策略到底在切什么》。这张图只回答：梯度从哪来、写回哪里。</text>
+</svg>

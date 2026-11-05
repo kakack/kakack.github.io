@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 860" role="img" aria-labelledby="title desc">
+  <title id="title">Dense 与 MoE：差在每个 token 更新谁</title>
+  <desc id="desc">Dense 的每个 token 经过整块 FFN。MoE 只激活少数专家；bias 只影响路由，不乘进专家输出。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#D97757;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font:700 36px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .head{font:700 22px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .on{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .small{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .sd{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .axis{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowO" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#D97757" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="860"/>
+  <text class="title" x="52" y="58">Dense 与 MoE：差在每个 token 更新谁</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <rect class="panel" x="52" y="108" width="820" height="620" rx="28"/>
+  <rect class="panel" x="928" y="108" width="820" height="620" rx="28"/>
+  <text class="head" x="84" y="158">Dense：整块 FFN 都参与</text>
+  <text class="head" x="960" y="158">MoE：路由决定这一步的梯度落点</text>
+
+  <rect class="blue" x="300" y="200" width="280" height="84" rx="20"/>
+  <text class="on" x="440" y="236">每个 token</text>
+  <text class="sd" x="440" y="262">没有选择</text>
+  <path class="flow" d="M440 284V340" marker-end="url(#arrow)"/>
+  <rect class="ivory" x="180" y="340" width="520" height="120" rx="22"/>
+  <text class="label" x="440" y="388">一整块 FFN</text>
+  <text class="small" x="440" y="420">这一步的 MLP 参数都会看到梯度</text>
+  <path class="flow" d="M440 460V516" marker-end="url(#arrow)"/>
+  <rect class="orange" x="250" y="516" width="380" height="84" rx="20"/>
+  <text class="on" x="440" y="552">激活参数 = 总参数</text>
+  <text class="sd" x="440" y="578">算力和显存随宽度一起涨</text>
+
+  <rect class="blue" x="1178" y="186" width="280" height="72" rx="18"/>
+  <text class="on" x="1318" y="230">每个 token</text>
+  <path class="flow" d="M1318 258V300" marker-end="url(#arrow)"/>
+  <polygon points="1318,300 1458,370 1318,440 1178,370" class="green"/>
+  <text class="on" x="1318" y="364">Router</text>
+  <text class="sd" x="1318" y="390">Top-8 / 256</text>
+
+  <rect class="ivory" x="980" y="478" width="200" height="86" rx="16"/>
+  <rect class="blue" x="1210" y="478" width="230" height="86" rx="16"/>
+  <rect class="ivory" x="1470" y="478" width="230" height="86" rx="16" stroke-dasharray="9 8"/>
+  <text class="label" x="1080" y="514">未选中</text>
+  <text class="small" x="1080" y="540">这一 step 无梯度</text>
+  <text class="on" x="1325" y="514">选中的 8 个</text>
+  <text class="sd" x="1325" y="540">收到该 token 的梯度</text>
+  <text class="label" x="1585" y="514">共享专家</text>
+  <text class="small" x="1585" y="540">每个 token 都过</text>
+  <path class="flow" d="M1288 440L1325 478" marker-end="url(#arrow)"/>
+  <path class="dash" d="M1360 430L1560 478"/>
+
+  <rect class="orange" x="1000" y="582" width="680" height="110" rx="20"/>
+  <text class="on" x="1340" y="622">bias 只参加 Top-k，不乘进输出</text>
+  <text class="sd" x="1340" y="652">过载专家的 bias 减小，门控值仍用原分数</text>
+  <text class="sd" x="1340" y="676">另有一条很弱的序列均衡损失，α = 1e-4</text>
+
+  <text class="note" x="52" y="770">数字是 DeepSeek-V3：除前三层外，每层 1 个共享专家 + 256 个路由专家，每 token 激活 8 个，且最多送到 4 个节点。</text>
+  <text class="note" x="52" y="804">负载均衡若做成强辅助损失，会和语言模型损失抢梯度。bias 更新在优化器之外，按步调，不把均衡项直接加进 loss。</text>
+  <text class="note" x="52" y="838">虚线边框是每个 token 都经过的共享专家，不是可选阶段。</text>
+</svg>

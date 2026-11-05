@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 760" role="img" aria-labelledby="title desc">
+  <title id="title">学习率日程决定衰减何时开始</title>
+  <desc id="desc">Llama 3 405B 用长余弦；DeepSeek-V3 先保持常数学习率，再余弦下降，最后两级更低平台。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#D97757;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font:700 36px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .head{font:700 22px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .on{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .small{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .sd{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .axis{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowO" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#D97757" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="760"/>
+  <text class="title" x="52" y="58">学习率日程决定衰减何时开始</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <rect class="panel" x="52" y="112" width="1696" height="250" rx="26"/>
+  <text class="head" x="84" y="158">Llama 3 405B：warmup 之后，整段余弦</text>
+  <path class="ink" d="M140 300H1660" stroke-width="3"/>
+  <path class="ink" d="M140 300V176" stroke-width="3"/>
+  <path class="grad" d="M160 286L250 196C560 202 1040 236 1640 286" marker-end="url(#arrowO)"/>
+  <circle cx="250" cy="196" r="7" fill="#D97757" stroke="#141413" stroke-width="2.5"/>
+  <text class="small" x="360" y="188">峰值 8e-5</text>
+  <text class="axis" x="160" y="328">0</text>
+  <text class="small" x="250" y="328">8,000 step</text>
+  <text class="small" x="900" y="328">余弦覆盖 1,200,000 step</text>
+  <text class="small" x="1500" y="328">收到 8e-7</text>
+
+  <rect class="panel" x="52" y="392" width="1696" height="280" rx="26"/>
+  <text class="head" x="84" y="438">DeepSeek-V3：常数平台，再衰减，最后两级更低平台</text>
+  <path class="ink" d="M140 590H1660" stroke-width="3"/>
+  <path class="ink" d="M140 590V470" stroke-width="3"/>
+  <path class="flow" d="M160 572L210 500H820C1040 500 1160 530 1320 566H1460V586H1640"/>
+  <text class="small" x="500" y="488">2.2e-4 保持到 10T token</text>
+  <text class="small" x="1080" y="540">其后 4.3T：余弦降到 2.2e-5</text>
+  <text class="small" x="1390" y="554">333B</text>
+  <text class="small" x="1560" y="612">最后 167B：7.3e-6</text>
+  <text class="axis" x="160" y="628">前 2,000 step warmup</text>
+  <text class="note" x="84" y="700">形状是示意，数字来自技术报告。常数段的用途是：还没承诺衰减之前，可以按同一学习率继续加 token。</text>
+</svg>

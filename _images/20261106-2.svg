@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 760" role="img" aria-labelledby="title desc">
+  <title id="title">同一笔 FLOPs，可以买参数，也可以买 token</title>
+  <desc id="desc">IsoFLOP 曲线最低点是 compute-optimal；更小的模型训练更久，是在用训练算力换推理成本。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#D97757;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font:700 36px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .head{font:700 22px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .on{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .small{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .sd{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .axis{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowO" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#D97757" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="760"/>
+  <text class="title" x="52" y="58">同一笔 FLOPs，可以买参数，也可以买 token</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <rect class="panel" x="52" y="108" width="828" height="500" rx="28"/>
+  <rect class="panel" x="920" y="108" width="828" height="500" rx="28"/>
+  <text class="head" x="84" y="156">Compute-optimal：停在最低点</text>
+  <text class="head" x="952" y="156">Inference-optimal：故意离开最低点</text>
+
+  <path class="ink" d="M130 470H760" stroke-width="3"/>
+  <path class="ink" d="M130 470V210" stroke-width="3"/>
+  <text class="axis" x="680" y="496">模型更大</text>
+  <text class="axis" x="146" y="204">loss</text>
+  <path class="flow" d="M170 230C260 236 340 392 455 418C575 442 660 250 770 220"/>
+  <circle cx="455" cy="418" r="11" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <text class="small" x="455" y="392">最低点</text>
+
+  <rect class="orange" x="110" y="520" width="300" height="64" rx="16"/>
+  <text class="on" x="260" y="558">预算固定：算 N 和 D 的搭配</text>
+  <text class="note" x="430" y="548">Llama 3 的 405B</text>
+  <text class="note" x="430" y="574">落在自己预算的最低点附近</text>
+
+  <path class="ink" d="M998 470H1628" stroke-width="3"/>
+  <path class="ink" d="M998 470V210" stroke-width="3"/>
+  <text class="axis" x="1500" y="496">模型更大</text>
+  <text class="axis" x="1014" y="204">loss</text>
+  <path class="flow" d="M1048 230C1140 236 1220 392 1335 418C1455 442 1540 250 1650 220"/>
+  <circle cx="1335" cy="418" r="8" fill="#FAF9F5" stroke="#141413" stroke-width="3"/>
+  <circle cx="1168" cy="300" r="11" fill="#788C5D" stroke="#141413" stroke-width="3"/>
+  <text class="small" x="1335" y="392">同预算最低点</text>
+  <text class="small" x="1168" y="274">更小 N，更多 D</text>
+
+  <rect class="green" x="978" y="520" width="340" height="64" rx="16"/>
+  <text class="on" x="1148" y="558">8B / 70B：训练换推理</text>
+  <text class="note" x="1340" y="548">不是没按 scaling law 做</text>
+  <text class="note" x="1340" y="574">目标改成了部署成本</text>
+
+  <text class="note" x="52" y="680">曲线是示意图，不是实测点。Chinchilla 的约 20 token/参数只描述那次拟合；数据变了，最低点会移动。</text>
+  <text class="note" x="52" y="714">Llama 3 还看到：预算越大，最低点附近越平，旗舰尺寸对小幅的参数/token 对调并不敏感。</text>
+</svg>
