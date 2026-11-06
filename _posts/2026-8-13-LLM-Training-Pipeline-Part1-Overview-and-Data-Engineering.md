@@ -58,7 +58,7 @@ pinned: false
 
 ### 2.1 Pretrain：规模化的下一个 token 预测
 
-自回归预训练在上下文 $$x_{<t}$$ 下预测 $$x_t$$，最小化 token 级负对数似然。Scaling Laws 用小规模实验估计参数量、有效数据量与算力之间的关系；[Chinchilla](https://arxiv.org/abs/2203.15556) 给出 compute-optimal 视角，后来的超量训练与数据受限研究则说明：最优点还取决于推理预算、数据质量和可重复数据量。
+自回归预训练在上下文 $$x_{\lt t}$$ 下预测 $$x_t$$，最小化 token 级负对数似然。Scaling Laws 用小规模实验估计参数量、有效数据量与算力之间的关系；[Chinchilla](https://arxiv.org/abs/2203.15556) 给出 compute-optimal 视角，后来的超量训练与数据受限研究则说明：最优点还取决于推理预算、数据质量和可重复数据量。
 
 架构上常见 Dense（如 [Llama 3](https://arxiv.org/abs/2407.21783)）和 MoE（如 DeepSeek-V3）两条路线；注意力实现包括 MHA、GQA 和 MLA。第二篇会把单个 training step 的 data/gradient flow、LR schedule、BF16/FP8 与 loss spike 诊断放在同一张图里。案例数字也会明确 tokenizer 口径：Llama 3 405B 报告约 15.6T 训练 token；DeepSeek-V3 报告 14.8T token。
 

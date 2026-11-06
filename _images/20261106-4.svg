@@ -10,22 +10,22 @@
       .green{fill:#788C5D;stroke:#141413;stroke-width:5}
       .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
       .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
-      .grad{fill:none;stroke:#D97757;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
       .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
-      .title{font:700 36px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .head{font:700 22px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .label{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .on{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .small{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .sd{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .axis{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
     </style>
     <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
       <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
     <marker id="arrowO" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
-      <path d="M2 2L14 8L2 14" fill="none" stroke="#D97757" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
   </defs>
   <rect class="bg" width="1800" height="860"/>
@@ -57,16 +57,16 @@
   <text class="sd" x="1318" y="390">Top-8 / 256</text>
 
   <rect class="ivory" x="980" y="478" width="200" height="86" rx="16"/>
-  <rect class="blue" x="1210" y="478" width="230" height="86" rx="16"/>
-  <rect class="ivory" x="1470" y="478" width="230" height="86" rx="16" stroke-dasharray="9 8"/>
+  <rect class="ivory" x="1210" y="478" width="230" height="86" rx="16"/>
+  <rect class="ivory" x="1470" y="478" width="230" height="86" rx="16"/>
   <text class="label" x="1080" y="514">未选中</text>
   <text class="small" x="1080" y="540">这一 step 无梯度</text>
-  <text class="on" x="1325" y="514">选中的 8 个</text>
-  <text class="sd" x="1325" y="540">收到该 token 的梯度</text>
+  <text class="label" x="1325" y="514">选中的 8 个</text>
+  <text class="small" x="1325" y="540">收到该 token 的梯度</text>
   <text class="label" x="1585" y="514">共享专家</text>
   <text class="small" x="1585" y="540">每个 token 都过</text>
   <path class="flow" d="M1288 440L1325 478" marker-end="url(#arrow)"/>
-  <path class="dash" d="M1360 430L1560 478"/>
+  <path class="flow" d="M1458 224C1612 252 1612 380 1590 470" marker-end="url(#arrow)"/>
 
   <rect class="orange" x="1000" y="582" width="680" height="110" rx="20"/>
   <text class="on" x="1340" y="622">bias 只参加 Top-k，不乘进输出</text>
@@ -75,5 +75,5 @@
 
   <text class="note" x="52" y="770">数字是 DeepSeek-V3：除前三层外，每层 1 个共享专家 + 256 个路由专家，每 token 激活 8 个，且最多送到 4 个节点。</text>
   <text class="note" x="52" y="804">负载均衡若做成强辅助损失，会和语言模型损失抢梯度。bias 更新在优化器之外，按步调，不把均衡项直接加进 loss。</text>
-  <text class="note" x="52" y="838">虚线边框是每个 token 都经过的共享专家，不是可选阶段。</text>
+  <text class="note" x="52" y="838">共享专家不走 Router，每个 token 都经过；谁收到梯度写在节点文字里，不用颜色或虚线区分。</text>
 </svg>

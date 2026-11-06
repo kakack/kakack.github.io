@@ -10,22 +10,22 @@
       .green{fill:#788C5D;stroke:#141413;stroke-width:5}
       .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
       .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
-      .grad{fill:none;stroke:#D97757;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:4;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
       .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
-      .title{font:700 36px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .head{font:700 22px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .label{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .on{font:600 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .small{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .sd{font:500 15px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .axis{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
     </style>
     <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
       <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
     <marker id="arrowO" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
-      <path d="M2 2L14 8L2 14" fill="none" stroke="#D97757" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
   </defs>
   <rect class="bg" width="1800" height="1140"/>
@@ -93,11 +93,11 @@
   <text class="small" x="1120" y="968">压的是 LM head，不是 attention</text>
   <text class="small" x="1120" y="996">系数不是普适常数</text>
 
-  <rect class="blue" x="1344" y="860" width="404" height="150" rx="20"/>
-  <text class="on" x="1546" y="908">换一组机器就不复现</text>
-  <text class="sd" x="1546" y="940">先查 FP8 溢出、集合通信</text>
-  <text class="sd" x="1546" y="968">和坏文档不是同一类问题</text>
-  <text class="sd" x="1546" y="996">不要用跳 batch 掩盖它</text>
+  <rect class="ivory" x="1344" y="860" width="404" height="150" rx="20"/>
+  <text class="label" x="1546" y="908">换一组机器就不复现</text>
+  <text class="small" x="1546" y="940">先查 FP8 溢出、集合通信</text>
+  <text class="small" x="1546" y="968">和坏文档不是同一类问题</text>
+  <text class="small" x="1546" y="996">不要用跳 batch 掩盖它</text>
 
   <text class="note" x="52" y="1052">梯度裁剪和降低学习率能把尖峰按住，但不会告诉你尖峰来自数据、attention 尺度还是精度。它们是围栏，放在诊断之后。</text>
   <text class="note" x="52" y="1086">checkpoint 间隔必须短于回滚窗口。只存每 1000 step 一份，就做不到回退约 100 step。</text>
