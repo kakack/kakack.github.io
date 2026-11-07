@@ -10,7 +10,7 @@ hero_intro: Engineer, researcher, traveler, husband, and father. This site is wh
 about_preview: My technical writing traces every step of learning and building through school and industry; my travel and life essays capture the places and moments worth revisiting over time.
 avatar: /assets/brand/monogram.svg
 favicon: /assets/brand/favicon.svg
-social_image: https://kakack.github.io/assets/brand/logo.png
+social_image: https://kakack.github.io/assets/brand/social.png
 navigation:
   - name: Home
     url: /

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/brand/logo.png" width="120" alt="logo" />
+  <img src="assets/brand/logo.svg" width="120" alt="logo" />
 
   <h1>Rhythmic Epistles</h1>
 
