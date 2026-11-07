@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">同布局对照:同一个 S_r 跑出两种效率,初版假说被证伪</title>
+  <desc id="desc">三条 PP2/CP16 的 256K 运行,S_r 相同,MFU 25.54%/32.00%/35.09%;两点拟合对 128K 样本外预测 27.1% vs 实测 27.45%。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}
+      .ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .axis-line{fill:none;stroke:#141413;stroke-width:3;stroke-linecap:round}
+      .gridline{fill:none;stroke:#141413;stroke-width:1.2;stroke-dasharray:4 8;opacity:.45}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#141413;text-anchor:middle}
+      .headw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#FAF9F5;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413;text-anchor:middle}
+      .sw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:middle}
+      .axisr{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:end}
+      .strike{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:19px;fill:#141413;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="58">一条同布局对照,推翻我自己的初版假说</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <!-- LEFT: three same-layout runs -->
+  <rect class="ivory" x="52" y="110" width="880" height="560" rx="22"/>
+  <text class="head" x="492" y="158">三条 256K 运行:布局与 S_r 完全相同</text>
+  <text class="small" x="492" y="188">PP2 / CP16 · 全参 · GBS 128 · S_r = 16384,只动系统配置</text>
+
+  <!-- axes: y 0-40% -> 220..580, 1%=9px -->
+  <path class="axis-line" d="M170 580L880 580"/>
+  <path class="axis-line" d="M170 580L170 220"/>
+  <path class="gridline" d="M170 490L880 490"/>
+  <path class="gridline" d="M170 400L880 400"/>
+  <path class="gridline" d="M170 310L880 310"/>
+  <text class="axisr" x="160" y="585">0%</text>
+  <text class="axisr" x="160" y="495">10%</text>
+  <text class="axisr" x="160" y="405">20%</text>
+  <text class="axisr" x="160" y="315">30%</text>
+
+  <rect class="orange" x="230" y="350.1" width="150" height="229.9" rx="12"/>
+  <text class="on" x="305" y="396">25.54%</text>
+  <text class="axis" x="305" y="612">主表(异常点)</text>
+  <text class="small" x="305" y="640">294.12 s</text>
+
+  <rect class="blue" x="440" y="292" width="150" height="288" rx="12"/>
+  <text class="on" x="515" y="340">32.00%</text>
+  <text class="axis" x="515" y="612">中间配置</text>
+  <text class="small" x="515" y="640">234.77 s</text>
+
+  <rect class="green" x="650" y="264.2" width="150" height="315.8" rx="12"/>
+  <text class="on" x="725" y="312">35.09%</text>
+  <text class="axis" x="725" y="612">调优后</text>
+  <text class="small" x="725" y="640">214.09 s</text>
+
+  <path class="dash" d="M305 338C420 260 610 244 720 252"/>
+  <text class="label" x="512" y="236">同一个 S_r,差 9.5 个百分点</text>
+
+  <!-- RIGHT: hypothesis + fit -->
+  <rect class="ivory" x="988" y="110" width="760" height="560" rx="22"/>
+  <text class="head" x="1368" y="158">假说的命运</text>
+
+  <rect class="orange" x="1028" y="190" width="680" height="120" rx="16"/>
+  <text class="headw" x="1368" y="232">初版假说:e_a 由 S_r 单调决定</text>
+  <text class="sw" x="1368" y="262">三方程解三参数,拟合误差为零——但那只是代数恒等</text>
+  <text class="sw" x="1368" y="288">同一个 S_r 出现两种效率 → 被左图直接证伪</text>
+  <path class="ink" d="M1130 226L1606 226" stroke-width="5"/>
+
+  <path class="flow" d="M1368 314L1368 352" marker-end="url(#arrow)"/>
+
+  <rect class="green" x="1028" y="356" width="680" height="150" rx="16"/>
+  <text class="headw" x="1368" y="398">修正图景:常数效率 + 局部配置异常点</text>
+  <text class="sw" x="1368" y="428">用两个正常点拟合:e_w ≈ 11.9%,e_a ≈ 61.2%</text>
+  <text class="sw" x="1368" y="454">样本外预测 128K:27.1% —— 实测 27.45%,跨布局吻合</text>
+  <text class="sw" x="1368" y="480">25.54% 是特定配置踩进局部退化区,调优即收回 80 s/步</text>
+
+  <rect class="ivory" x="1028" y="536" width="680" height="110" rx="16" stroke-dasharray="10 8"/>
+  <text class="label" x="1368" y="572">嫌疑收敛:Indexer 打分占系数 a 近九成,</text>
+  <text class="label" x="1368" y="600">算术强度仅 128 FLOP/B(拐点约 281)——访存受限,</text>
+  <text class="label" x="1368" y="628">对 CPU 线程绑定 / 分块粒度 / offload 同步敏感</text>
+
+  <text class="note" x="52" y="716">通信账独立佐证:压缩 KV 下单跳 Ring 传输约 1 MiB(约 21 µs),对应计算约 1.1 ms——计算比通信大 50 倍,</text>
+  <text class="note" x="52" y="746">「Ring 通信暴露」从物理量级上就站不住。三参数模型完美拟合三个点,仍然可以是错的;样本外预测才算数。</text>
+</svg>

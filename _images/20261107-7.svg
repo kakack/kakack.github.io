@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 880" role="img" aria-labelledby="title desc">
+  <title id="title">三次正确性事故的隐蔽性谱系与五道验收门</title>
+  <desc id="desc">左:三次事故按隐蔽程度排列;右:训练、保存、恢复、导出、评测五道独立验收门。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}
+      .ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#141413;text-anchor:middle}
+      .headw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:20px;fill:#FAF9F5}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15.5px;fill:#141413}
+      .smallc{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15.5px;fill:#141413;text-anchor:middle}
+      .sw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5}
+      .swc{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .gate{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:19px;fill:#141413;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="880"/>
+  <text class="title" x="52" y="58">loss 正常下降,不代表模型没坏</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <!-- LEFT: spectrum -->
+  <rect class="ivory" x="52" y="110" width="1020" height="600" rx="22"/>
+  <text class="head" x="562" y="158">三次事故:隐蔽性递增的谱系</text>
+
+  <!-- spectrum axis -->
+  <path class="flow" d="M132 206L132 650" marker-end="url(#arrow)"/>
+  <text class="small" x="92" y="230" transform="rotate(-90 102 400)" text-anchor="middle"></text>
+  <text class="smallc" x="112" y="690">隐蔽性 ↑</text>
+
+  <!-- incident 2 (lowest) -->
+  <rect class="blue" x="192" y="196" width="840" height="140" rx="16"/>
+  <text class="headw" x="222" y="234">② checkpoint 参数组错位 · 会报错,但离根因很远</text>
+  <text class="sw" x="222" y="264">分布式优化器按 grad-buffer 顺序记映射,却按「先 fp32 后 bf16」装参数组;</text>
+  <text class="sw" x="222" y="290">映射只在存档路径被用到 → 训练 288 步全程正常,首次存盘才断言挂掉。</text>
+  <text class="sw" x="222" y="316">报错点与根因隔了整条保存链路,排查成本极高。</text>
+
+  <!-- incident 1 (middle) -->
+  <rect class="orange" x="192" y="356" width="840" height="140" rx="16"/>
+  <text class="headw" x="222" y="394">① 混合 dtype 梯度裁剪损坏 · 不报错,要主动对账</text>
+  <text class="sw" x="222" y="424">框架把混合 dtype 梯度列表塞进同一次 multi_tensor 调用,kernel 按首个张量</text>
+  <text class="sw" x="222" y="450">的 dtype 解释全部缓冲区:梯度范数错报;裁剪一旦触发,bf16 梯度被按 fp32</text>
+  <text class="sw" x="222" y="476">字节布局重写——梯度与 Adam 动量直接损坏。诊断靠均匀/混合列表对账。</text>
+
+  <!-- incident 3 (highest) -->
+  <rect class="green" x="192" y="516" width="840" height="166" rx="16"/>
+  <text class="headw" x="222" y="554">③ 专家表静默二次分片 · 三层伪装,只有评测能抓</text>
+  <text class="sw" x="222" y="584">EP 本地专家表未注册进 ignored_params,FSDP2 沿 dim0 又切一刀;</text>
+  <text class="sw" x="222" y="610">DTensor 报全局形状、恰与 EP 本地形状一致 → 形状校验全绿;loss 正常下降;</text>
+  <text class="sw" x="222" y="636">只有不装 EP 的评估路径暴露失配。修复前后评测 0.827 → 0.972。</text>
+  <text class="sw" x="222" y="662">唯一防线:对「本地存储行数」做显式断言。</text>
+
+  <!-- RIGHT: five gates -->
+  <rect class="ivory" x="1128" y="110" width="620" height="600" rx="22"/>
+  <text class="head" x="1438" y="158">五道独立验收门</text>
+
+  <rect class="ivory" x="1188" y="190" width="500" height="64" rx="14" stroke-width="4"/>
+  <text class="gate" x="1438" y="218">1 训练门</text>
+  <text class="smallc" x="1438" y="242">连续多步无 OOM / NaN / hang</text>
+  <path class="flow" d="M1438 254L1438 276" marker-end="url(#arrow)"/>
+
+  <rect class="ivory" x="1188" y="280" width="500" height="64" rx="14" stroke-width="4"/>
+  <text class="gate" x="1438" y="308">2 保存门</text>
+  <text class="smallc" x="1438" y="332">权重、优化器状态、RNG 完整落盘</text>
+  <path class="flow" d="M1438 344L1438 366" marker-end="url(#arrow)"/>
+
+  <rect class="ivory" x="1188" y="370" width="500" height="64" rx="14" stroke-width="4"/>
+  <text class="gate" x="1438" y="398">3 恢复门</text>
+  <text class="smallc" x="1438" y="422">续训后 iteration / loss / 游标衔接</text>
+  <path class="flow" d="M1438 434L1438 456" marker-end="url(#arrow)"/>
+
+  <rect class="ivory" x="1188" y="460" width="500" height="64" rx="14" stroke-width="4"/>
+  <text class="gate" x="1438" y="488">4 导出门</text>
+  <text class="smallc" x="1438" y="512">转推理格式无缺失、无分片错位</text>
+  <path class="flow" d="M1438 524L1438 546" marker-end="url(#arrow)"/>
+
+  <rect class="orange" x="1188" y="550" width="500" height="92" rx="14"/>
+  <text class="gate" x="1438" y="584" fill="#FAF9F5">5 评测门 —— 唯一验收终点</text>
+  <text class="swc" x="1438" y="610">短任务防退化 + 长程基准 + Base 对比</text>
+  <text class="swc" x="1438" y="632">事故③:前四道全绿,这里才暴露</text>
+
+  <text class="note" x="52" y="756">共同规律:三次事故没有一次出在标准组件的常规路径上,全部出在新架构 × 混合精度 × offload × 多维并行两两交叉的地带。</text>
+  <text class="note" x="52" y="786">纪律:同形状张量的分片/重排必须绑定逻辑 ID 并辅以内容级断言——256 个专家矩阵形状完全一致,形状校验不构成任何保护。</text>
+  <text class="note" x="52" y="816">凡动过并行切分、混合精度归约、offload 或 checkpoint 转换,一律以第五道门作为唯一验收终点。</text>
+</svg>

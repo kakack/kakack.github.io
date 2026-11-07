@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 820" role="img" aria-labelledby="title desc">
+  <title id="title">MFU 随序列长度非单调,注意力算力占比 f 单调上升</title>
+  <desc id="desc">左:三档 MFU 柱状图,512K 最高、256K 垫底;右:f 从 30.8% 涨到 64.0%。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}
+      .ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .axis-line{fill:none;stroke:#141413;stroke-width:3;stroke-linecap:round}
+      .gridline{fill:none;stroke:#141413;stroke-width:1.2;stroke-dasharray:4 8;opacity:.45}
+      .fcurve{fill:none;stroke:#D97757;stroke-width:6;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#141413;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:19px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413;text-anchor:middle}
+      .sw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:middle}
+      .axisr{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:end}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="820"/>
+  <text class="title" x="52" y="58">MFU 关于序列长度并不单调</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <!-- LEFT: MFU bars -->
+  <rect class="ivory" x="52" y="110" width="820" height="560" rx="22"/>
+  <text class="head" x="462" y="158">实测 MFU(口径 A,不计重算)</text>
+
+  <!-- axes: plot area x 150-800, y 220-580, scale 50% -> 360px -->
+  <path class="axis-line" d="M150 580L810 580"/>
+  <path class="axis-line" d="M150 580L150 210"/>
+  <path class="gridline" d="M150 436L810 436"/>
+  <path class="gridline" d="M150 292L810 292"/>
+  <text class="axisr" x="140" y="585">0%</text>
+  <text class="axisr" x="140" y="441">20%</text>
+  <text class="axisr" x="140" y="297">40%</text>
+
+  <!-- bars: 1% = 7.2px -->
+  <rect class="blue" x="210" y="382.4" width="140" height="197.6" rx="12"/>
+  <text class="on" x="280" y="430">27.45%</text>
+  <text class="axis" x="280" y="612">128K · PP4/CP4</text>
+
+  <rect class="orange" x="430" y="396.1" width="140" height="183.9" rx="12"/>
+  <text class="on" x="500" y="440">25.54%</text>
+  <text class="axis" x="500" y="612">256K · PP2/CP16</text>
+  <text class="small" x="500" y="640">夹在中间,反而垫底</text>
+
+  <rect class="green" x="650" y="267.3" width="140" height="312.7" rx="12"/>
+  <text class="on" x="720" y="320">43.43%</text>
+  <text class="axis" x="720" y="612">512K · PP2/CP16</text>
+  <text class="small" x="720" y="640">单步最慢,利用率最高</text>
+
+  <!-- RIGHT: f curve -->
+  <rect class="ivory" x="928" y="110" width="820" height="560" rx="22"/>
+  <text class="head" x="1338" y="158">注意力算力占比 f = aL / (6N + aL)</text>
+
+  <!-- axes: x 1030-1680 (128K,256K,512K at 1130/1355/1580), y 580 bottom; 1%=5.5px -->
+  <path class="axis-line" d="M1030 580L1690 580"/>
+  <path class="axis-line" d="M1030 580L1030 210"/>
+  <path class="gridline" d="M1030 470L1690 470"/>
+  <path class="gridline" d="M1030 360L1690 360"/>
+  <path class="gridline" d="M1030 250L1690 250"/>
+  <text class="axisr" x="1020" y="585">0%</text>
+  <text class="axisr" x="1020" y="475">20%</text>
+  <text class="axisr" x="1020" y="365">40%</text>
+  <text class="axisr" x="1020" y="255">60%</text>
+
+  <!-- f values: 30.8 -> y=410.6; 47.1 -> y=320.95; 64.0 -> y=228 -->
+  <path class="fcurve" d="M1130 410.6C1240 370 1280 345 1355 321C1440 293 1500 258 1580 228"/>
+  <circle cx="1130" cy="410.6" r="13" fill="#6A9BCC" stroke="#141413" stroke-width="4"/>
+  <circle cx="1355" cy="320.95" r="13" fill="#D97757" stroke="#141413" stroke-width="4"/>
+  <circle cx="1580" cy="228" r="13" fill="#788C5D" stroke="#141413" stroke-width="4"/>
+  <text class="label" x="1130" y="380">30.8%</text>
+  <text class="label" x="1355" y="292">47.1%</text>
+  <text class="label" x="1580" y="200">64.0%</text>
+  <text class="axis" x="1130" y="612">128K</text>
+  <text class="axis" x="1355" y="612">256K</text>
+  <text class="axis" x="1580" y="612">512K</text>
+
+  <text class="small" x="1338" y="650">e_w ≈ 11.9%(权重项)· e_a ≈ 61.2%(注意力项)</text>
+
+  <text class="note" x="52" y="716">512K 的 MFU 最高是结构红利:高效率的注意力计算(e_a ≈ 61%)占比涨到 64%,拉高加权平均。</text>
+  <text class="note" x="52" y="746">但 f 解释不了 256K 的塌陷——按占比它应落在两者之间。答案在下一张图:那是一个配置异常点,不是规律。</text>
+  <text class="note" x="52" y="776">归一化耗时同样说明问题:每 1K token 耗时 128K / 256K / 512K = 6.25 / 8.77 / 7.58 ms,真正慢的是 256K。</text>
+</svg>

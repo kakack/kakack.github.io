@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900" role="img" aria-labelledby="title desc">
+  <title id="title">四维打分张量的二次方爆炸与 index chunk 分块解法</title>
+  <desc id="desc">左:einsum 归约前实例化 [b,s,64,L/4],随 s·L 二次方增长;右:沿 query 维分块,峰值降为 O(c·L)。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}
+      .ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .orangeL{fill:#E8A58B;stroke:#141413;stroke-width:4}
+      .blueL{fill:#A8C4DE;stroke:#141413;stroke-width:4}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:23px;fill:#141413;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:19px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:19px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413;text-anchor:middle}
+      .sw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .mono{font-family:'SF Mono',Menlo,Consolas,monospace;font-weight:600;font-size:17px;fill:#141413;text-anchor:middle}
+      .monow{font-family:'SF Mono',Menlo,Consolas,monospace;font-weight:600;font-size:17px;fill:#FAF9F5;text-anchor:middle}
+      .big{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:28px;fill:#FAF9F5;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="900"/>
+  <text class="title" x="52" y="58">Indexer 的病根:归约前的四维张量 Z</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <!-- LEFT: naive -->
+  <rect class="ivory" x="52" y="110" width="820" height="620" rx="22"/>
+  <text class="head" x="462" y="158">不分块:一次性实例化</text>
+
+  <rect class="blue" x="112" y="196" width="280" height="64" rx="14"/>
+  <text class="on" x="252" y="222">q [b, s, 64, 128]</text>
+  <text class="sw" x="252" y="246">本地 query,CP 切分</text>
+  <rect class="blue" x="482" y="196" width="280" height="64" rx="14"/>
+  <text class="on" x="622" y="222">k_index [b, L/4, 128]</text>
+  <text class="sw" x="622" y="246">AllGather 拼齐,仅 32 MiB</text>
+
+  <path class="flow" d="M252 264L420 330" marker-end="url(#arrow)"/>
+  <path class="flow" d="M622 264L474 330" marker-end="url(#arrow)"/>
+  <text class="mono" x="447" y="312">einsum("bshd,btd-&gt;bsht")</text>
+
+  <!-- big tensor -->
+  <rect class="orange" x="132" y="340" width="660" height="150" rx="16"/>
+  <text class="big" x="462" y="398">Z [b, s, 64, L/4]</text>
+  <text class="sw" x="462" y="430">元素量 = 16·b·s·L,随 s·L 二次方增长</text>
+  <text class="sw" x="462" y="458">512K / CP16 下单层 FP32 要 1,024 GiB</text>
+
+  <path class="flow" d="M462 494L462 540" marker-end="url(#arrow)"/>
+  <rect class="ivory" x="262" y="544" width="400" height="58" rx="14"/>
+  <text class="label" x="462" y="580">sum(dim=2) → topk(512)</text>
+
+  <rect class="orangeL" x="112" y="634" width="700" height="66" rx="14"/>
+  <text class="label" x="462" y="662">反向更糟:三路梯度把四维工作区按 FP32 物化多份</text>
+  <text class="small" x="462" y="686">32K 下实测单次申请约 700 GiB —— 任何单卡都装不下</text>
+
+  <!-- RIGHT: chunked -->
+  <rect class="ivory" x="928" y="110" width="820" height="620" rx="22"/>
+  <text class="head" x="1338" y="158">index chunk:沿 query 维切块</text>
+
+  <rect class="blue" x="988" y="196" width="300" height="64" rx="14"/>
+  <text class="on" x="1138" y="222">q_chunk [b, c, 64, 128]</text>
+  <text class="sw" x="1138" y="246">c ≪ s,共 s/c 块</text>
+  <rect class="blue" x="1368" y="196" width="300" height="64" rx="14"/>
+  <text class="on" x="1518" y="222">k_index [b, L/4, 128]</text>
+  <text class="sw" x="1518" y="246">全量保留,打分口径不变</text>
+
+  <path class="flow" d="M1138 264L1290 330" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1518 264L1386 330" marker-end="url(#arrow)"/>
+
+  <!-- small tensors loop -->
+  <rect class="green" x="1058" y="340" width="560 " height="110" rx="16"/>
+  <text class="on" x="1338" y="384">Z_m [b, c, 64, L/4] 算完即弃</text>
+  <text class="sw" x="1338" y="414">c=1024 时 FP32 仅 32 GiB,BF16 16 GiB</text>
+  <path class="dash" d="M1618 395C1680 395 1680 310 1618 300C1560 292 1500 296 1470 300"/>
+  <text class="small" x="1680" y="470">循环 s/c 次</text>
+
+  <path class="flow" d="M1338 454L1338 500" marker-end="url(#arrow)"/>
+  <rect class="ivory" x="1138" y="504" width="400" height="58" rx="14"/>
+  <text class="label" x="1338" y="540">该块 topk → 释放工作区</text>
+
+  <rect class="green" x="988" y="634" width="700" height="66" rx="14"/>
+  <text class="on" x="1338" y="662">反向按块重算:当场重算 Z_m、求梯度、累加 d_k(32 MiB)</text>
+  <text class="sw" x="1338" y="686">峰值 O(s·L) → O(c·L);代价约整网算力的 5%</text>
+
+  <text class="note" x="52" y="780">前向数学结果与全量计算完全等价:不同 query 位置的打分、ReLU、求和与 topk 彼此独立,天然可分块。</text>
+  <text class="note" x="52" y="810">规模自洽检验:4K → 32K 时 s 与 L 各放大 8 倍,乘积放大 64 倍;700 GiB ÷ 64 ≈ 11 GiB,解释了官方配置为何 4K 相安无事。</text>
+  <text class="note" x="52" y="840">终局是把 ReLU、加权、求和融进 GEMM 寄存器累加循环(如社区后来开源的融合 kernel),连 HBM 读写都省掉。</text>
+</svg>

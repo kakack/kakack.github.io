@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">32 卡并行拓扑:TP1 / PP2 / CP16 / EP8</title>
+  <desc id="desc">4 节点各 8 卡;EP=8 锁在机内 NVLink 域,CP=16 跨机切序列,PP=2 两段流水。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}
+      .ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4}
+      .node{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:16px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:middle}
+      .sw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .gpu{font-family:Poppins,sans-serif;font-weight:600;font-size:13px;fill:#FAF9F5;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="58">512K recipe:TP1 · PP2 · CP16 · EP8,GBS 128 / MBS 1</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <!-- PP stage labels -->
+  <rect class="blue" x="52" y="112" width="828" height="44" rx="12"/>
+  <text class="on" x="466" y="140">PP Stage 0(前 21 层)· CP rank 0–7</text>
+  <rect class="blue" x="920" y="112" width="828" height="44" rx="12"/>
+  <text class="on" x="1334" y="140">PP Stage 1(后 22 层)· CP rank 8–15</text>
+
+  <!-- node 1 -->
+  <rect class="node" x="52" y="180" width="400" height="300" rx="20"/>
+  <text class="head" x="252" y="222">节点 1</text>
+  <rect class="green" x="84" y="244" width="336" height="150" rx="14"/>
+  <text class="on" x="252" y="276">EP = 8 · NVLink 全互联域</text>
+  <g>
+    <rect class="orange" x="100" y="296" width="70" height="36" rx="8"/><text class="gpu" x="135" y="319">G0</text>
+    <rect class="orange" x="180" y="296" width="70" height="36" rx="8"/><text class="gpu" x="215" y="319">G1</text>
+    <rect class="orange" x="260" y="296" width="70" height="36" rx="8"/><text class="gpu" x="295" y="319">G2</text>
+    <rect class="orange" x="340" y="296" width="64" height="36" rx="8"/><text class="gpu" x="372" y="319">G3</text>
+    <rect class="orange" x="100" y="344" width="70" height="36" rx="8"/><text class="gpu" x="135" y="367">G4</text>
+    <rect class="orange" x="180" y="344" width="70" height="36" rx="8"/><text class="gpu" x="215" y="367">G5</text>
+    <rect class="orange" x="260" y="344" width="70" height="36" rx="8"/><text class="gpu" x="295" y="367">G6</text>
+    <rect class="orange" x="340" y="344" width="64" height="36" rx="8"/><text class="gpu" x="372" y="367">G7</text>
+  </g>
+  <text class="small" x="252" y="428">MoE All-to-All 不出节点</text>
+  <text class="small" x="252" y="454">(含 recompute 多跑的那一次)</text>
+
+  <!-- node 2 -->
+  <rect class="node" x="480" y="180" width="400" height="300" rx="20"/>
+  <text class="head" x="680" y="222">节点 2</text>
+  <rect class="green" x="512" y="244" width="336" height="150" rx="14"/>
+  <text class="on" x="680" y="276">EP = 8 · NVLink 全互联域</text>
+  <g>
+    <rect class="orange" x="528" y="296" width="70" height="36" rx="8"/><text class="gpu" x="563" y="319">G8</text>
+    <rect class="orange" x="608" y="296" width="70" height="36" rx="8"/><text class="gpu" x="643" y="319">G9</text>
+    <rect class="orange" x="688" y="296" width="70" height="36" rx="8"/><text class="gpu" x="723" y="319">G10</text>
+    <rect class="orange" x="768" y="296" width="64" height="36" rx="8"/><text class="gpu" x="800" y="319">G11</text>
+    <rect class="orange" x="528" y="344" width="70" height="36" rx="8"/><text class="gpu" x="563" y="367">G12</text>
+    <rect class="orange" x="608" y="344" width="70" height="36" rx="8"/><text class="gpu" x="643" y="367">G13</text>
+    <rect class="orange" x="688" y="344" width="70" height="36" rx="8"/><text class="gpu" x="723" y="367">G14</text>
+    <rect class="orange" x="768" y="344" width="64" height="36" rx="8"/><text class="gpu" x="800" y="367">G15</text>
+  </g>
+  <text class="small" x="680" y="428">每卡本地序列 S_r = L / 16</text>
+  <text class="small" x="680" y="454">512K 下 = 32,768 token</text>
+
+  <!-- node 3 -->
+  <rect class="node" x="920" y="180" width="400" height="300" rx="20"/>
+  <text class="head" x="1120" y="222">节点 3</text>
+  <rect class="green" x="952" y="244" width="336" height="150" rx="14"/>
+  <text class="on" x="1120" y="276">EP = 8 · NVLink 全互联域</text>
+  <g>
+    <rect class="orange" x="968" y="296" width="70" height="36" rx="8"/><text class="gpu" x="1003" y="319">G16</text>
+    <rect class="orange" x="1048" y="296" width="70" height="36" rx="8"/><text class="gpu" x="1083" y="319">G17</text>
+    <rect class="orange" x="1128" y="296" width="70" height="36" rx="8"/><text class="gpu" x="1163" y="319">G18</text>
+    <rect class="orange" x="1208" y="296" width="64" height="36" rx="8"/><text class="gpu" x="1240" y="319">G19</text>
+    <rect class="orange" x="968" y="344" width="70" height="36" rx="8"/><text class="gpu" x="1003" y="367">G20</text>
+    <rect class="orange" x="1048" y="344" width="70" height="36" rx="8"/><text class="gpu" x="1083" y="367">G21</text>
+    <rect class="orange" x="1128" y="344" width="70" height="36" rx="8"/><text class="gpu" x="1163" y="367">G22</text>
+    <rect class="orange" x="1208" y="344" width="64" height="36" rx="8"/><text class="gpu" x="1240" y="367">G23</text>
+  </g>
+  <text class="small" x="1120" y="428">优化器 FP32 状态</text>
+  <text class="small" x="1120" y="454">常驻各节点 CPU DRAM</text>
+
+  <!-- node 4 -->
+  <rect class="node" x="1348" y="180" width="400" height="300" rx="20"/>
+  <text class="head" x="1548" y="222">节点 4</text>
+  <rect class="green" x="1380" y="244" width="336" height="150" rx="14"/>
+  <text class="on" x="1548" y="276">EP = 8 · NVLink 全互联域</text>
+  <g>
+    <rect class="orange" x="1396" y="296" width="70" height="36" rx="8"/><text class="gpu" x="1431" y="319">G24</text>
+    <rect class="orange" x="1476" y="296" width="70" height="36" rx="8"/><text class="gpu" x="1511" y="319">G25</text>
+    <rect class="orange" x="1556" y="296" width="70" height="36" rx="8"/><text class="gpu" x="1591" y="319">G26</text>
+    <rect class="orange" x="1636" y="296" width="64" height="36" rx="8"/><text class="gpu" x="1668" y="319">G27</text>
+    <rect class="orange" x="1396" y="344" width="70" height="36" rx="8"/><text class="gpu" x="1431" y="367">G28</text>
+    <rect class="orange" x="1476" y="344" width="70" height="36" rx="8"/><text class="gpu" x="1511" y="367">G29</text>
+    <rect class="orange" x="1556" y="344" width="70" height="36" rx="8"/><text class="gpu" x="1591" y="367">G30</text>
+    <rect class="orange" x="1636" y="344" width="64" height="36" rx="8"/><text class="gpu" x="1668" y="367">G31</text>
+  </g>
+  <text class="small" x="1548" y="428">网卡混布:IB 为主、个别以太</text>
+  <text class="small" x="1548" y="454">NCCL 绑定需逐卡核对</text>
+
+  <!-- CP ring -->
+  <path class="dash" d="M252 500C252 540 680 556 900 556C1120 556 1548 540 1548 500"/>
+  <text class="label" x="900" y="548">CP = 16 Ring:跨机传输的是高倍压缩 KV(单跳约 1 MiB,约 21 µs ≪ 1.1 ms 计算)</text>
+
+  <!-- PP arrow -->
+  <path class="flow" d="M884 134L916 134" marker-end="url(#arrow)"/>
+
+  <!-- why band -->
+  <rect class="ivory" x="52" y="590" width="1696" height="146" rx="22"/>
+  <text class="label" x="330" y="634">为什么 TP = 1</text>
+  <text class="small" x="330" y="664">避开每层同步的激活通信</text>
+  <text class="small" x="330" y="690">(正比 S_r × H,长序列下藏不住)</text>
+  <text class="label" x="900" y="634">为什么 EP = 8</text>
+  <text class="small" x="900" y="664">单机恰好 8 卡全互联</text>
+  <text class="small" x="900" y="690">All-to-All 不跨机走 IB</text>
+  <text class="label" x="1460" y="634">为什么 PP = 2 / CP = 16</text>
+  <text class="small" x="1460" y="664">offload 省出显存才压得浅:</text>
+  <text class="small" x="1460" y="690">128 微批下 1F1B 气泡仅约 0.8%</text>
+
+  <text class="note" x="52" y="786">1 × 2 × 16 = 32:并行度是按效率选出来的,不再是被显存逼出来的——这正是三把刀换回的自由度。</text>
+</svg>

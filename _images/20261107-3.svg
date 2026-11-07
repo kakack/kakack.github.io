@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 860" role="img" aria-labelledby="title desc">
+  <title id="title">三把刀:三类显存问题对应三个层级的手段</title>
+  <desc id="desc">index chunk 砍算子尖峰,full recompute 砍层间激活,optimizer offload 砍静态底座。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}
+      .ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#141413;text-anchor:middle}
+      .headw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#FAF9F5;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15.5px;fill:#141413;text-anchor:middle}
+      .sw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15.5px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="860"/>
+  <text class="title" x="52" y="58">三把刀:每把砍掉一类显存</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <!-- knife 1 -->
+  <rect class="ivory" x="52" y="120" width="540 " height="420" rx="22"/>
+  <rect class="orange" x="92" y="156" width="460" height="60" rx="14"/>
+  <text class="headw" x="322" y="194">① index chunk · 算子级</text>
+  <text class="head" x="322" y="262">砍:瞬时工作区尖峰</text>
+  <!-- bar: before/after -->
+  <rect class="orange" x="132" y="300" width="130" height="160" rx="10"/>
+  <text class="sw" x="197" y="368">1,024</text>
+  <text class="sw" x="197" y="392">GiB</text>
+  <rect class="green" x="332" y="435" width="130" height="25" rx="8"/>
+  <path class="flow" d="M272 380L322 430" marker-end="url(#arrow)"/>
+  <text class="small" x="397" y="420">32 GiB (c=1024)</text>
+  <text class="axis" x="197" y="486">单层 FP32 四维张量</text>
+  <text class="axis" x="397" y="486">分块后</text>
+  <text class="small" x="322" y="522">代价:反向重算 Indexer,约 +5% 算力</text>
+
+  <!-- knife 2 -->
+  <rect class="ivory" x="630" y="120" width="540" height="420" rx="22"/>
+  <rect class="blue" x="670" y="156" width="460" height="60" rx="14"/>
+  <text class="headw" x="900" y="194">② full recompute · 层级</text>
+  <text class="head" x="900" y="262">砍:层间驻留激活</text>
+  <rect class="blue" x="710" y="300" width="130" height="160" rx="10"/>
+  <text class="sw" x="775" y="368">150–300</text>
+  <text class="sw" x="775" y="392">GB</text>
+  <rect class="green" x="910" y="447" width="130" height="13" rx="6"/>
+  <path class="flow" d="M850 380L900 435" marker-end="url(#arrow)"/>
+  <text class="small" x="975" y="430">约 5.5 GiB</text>
+  <text class="axis" x="775" y="486">单卡 22 层完整激活</text>
+  <text class="axis" x="975" y="486">每层只存 256 MiB 入口</text>
+  <text class="small" x="900" y="522">代价:总算力 +33%,MFU 上限锁死 75%</text>
+
+  <!-- knife 3 -->
+  <rect class="ivory" x="1208" y="120" width="540" height="420" rx="22"/>
+  <rect class="green" x="1248" y="156" width="460" height="60" rx="14"/>
+  <text class="headw" x="1478" y="194">③ optimizer offload · 状态级</text>
+  <text class="head" x="1478" y="262">砍:静态显存底座</text>
+  <rect class="green" x="1288" y="300" width="130" height="160" rx="10"/>
+  <text class="sw" x="1353" y="368">145–217</text>
+  <text class="sw" x="1353" y="392">GB</text>
+  <rect class="ivory" x="1488" y="300" width="180" height="160" rx="10" stroke-dasharray="10 8"/>
+  <text class="label" x="1578" y="368">搬到 CPU</text>
+  <text class="small" x="1578" y="394">DRAM 常驻</text>
+  <path class="flow" d="M1418 380L1484 380" marker-end="url(#arrow)"/>
+  <text class="axis" x="1353" y="486">每卡 FP32 优化器状态</text>
+  <text class="axis" x="1578" y="486">PCIe 每 128 微批走一次</text>
+  <text class="small" x="1478" y="522">代价:摊薄后近零;开 overlap 反而快 2 s</text>
+
+  <!-- bottom insight -->
+  <rect class="orange" x="52" y="590" width="1696" height="110" rx="22"/>
+  <text class="headw" x="900" y="636">offload 的真正价值不是省了几秒,而是释放显存后换回的布局自由度</text>
+  <text class="sw" x="900" y="672">优化器状态出让显存后,流水线才能从 PP4 压浅到 PP2(1F1B 气泡约 4.5% → 0.8%),CP 才能按效率而非按「装不装得下」来选</text>
+
+  <text class="note" x="52" y="752">三把刀分别作用在算子内部、Transformer 层间、优化器状态三个层级,互不替代:</text>
+  <text class="note" x="52" y="782">少任何一把,512K 都收不进 4 节点 32 卡。</text>
+</svg>

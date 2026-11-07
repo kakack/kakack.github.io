@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 800" role="img" aria-labelledby="title desc">
+  <title id="title">三阶段演进:从 H800 32K 到 B300 512K</title>
+  <desc id="desc">三个阶段:H800 摸索、B300 平移、B300 结构性改造,MFU 从不到 10% 到 43.43%。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}
+      .ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:23px;fill:#141413;text-anchor:middle}
+      .headw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:23px;fill:#FAF9F5;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:19px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:19px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413;text-anchor:middle}
+      .sw{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .big{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#FAF9F5;text-anchor:middle}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="800"/>
+  <text class="title" x="52" y="58">三个阶段:显存门、效率坑、结构性改造</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <!-- stage 1 -->
+  <rect class="ivory" x="52" y="130" width="500" height="340" rx="22"/>
+  <text class="head" x="302" y="178">阶段一:H800 摸索</text>
+  <text class="small" x="302" y="208">4K → 稳定 32K</text>
+  <rect class="orange" x="92" y="236" width="420" height="76" rx="14"/>
+  <text class="on" x="302" y="268">撞墙:index backward</text>
+  <text class="sw" x="302" y="296">单次申请约 700 GiB OOM</text>
+  <text class="small" x="302" y="348">应急:堆大 CP / DP、加节点</text>
+  <text class="small" x="302" y="376">+ full recompute 把序列切小</text>
+  <text class="small" x="302" y="424">单卡 81,559 MiB,勉强过门</text>
+
+  <!-- stage 2 -->
+  <rect class="ivory" x="650" y="130" width="500" height="340" rx="22"/>
+  <text class="head" x="900" y="178">阶段二:平移到 B300</text>
+  <text class="small" x="900" y="208">单卡显存 80 GB → 275 GB</text>
+  <rect class="blue" x="690" y="236" width="420" height="76" rx="14"/>
+  <text class="on" x="900" y="268">老路平移,效率塌了</text>
+  <text class="sw" x="900" y="296">初版 MFU 不到 10%</text>
+  <text class="small" x="900" y="348">v2 的 32K 基线:</text>
+  <text class="small" x="900" y="376">20.11 s / step,MFU 13.7%</text>
+  <text class="small" x="900" y="424">并行度被显存逼着开,不是选出来的</text>
+
+  <!-- stage 3 -->
+  <rect class="ivory" x="1248" y="130" width="500" height="340" rx="22"/>
+  <text class="head" x="1498" y="178">阶段三:结构性改造 v3</text>
+  <text class="small" x="1498" y="208">128K → 256K → 512K</text>
+  <rect class="green" x="1288" y="236" width="420" height="76" rx="14"/>
+  <text class="on" x="1498" y="268">index chunk 分块重算</text>
+  <text class="sw" x="1498" y="296">+ optimizer offload + recipe 重排</text>
+  <text class="small" x="1498" y="348">32K–512K 全段收进</text>
+  <text class="small" x="1498" y="376">4 节点 32 张 B300</text>
+  <text class="small" x="1498" y="424">PP 压浅到 2,CP 按效率选</text>
+
+  <path class="flow" d="M552 300L646 300" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1150 300L1244 300" marker-end="url(#arrow)"/>
+
+  <!-- result band -->
+  <rect class="orange" x="52" y="540" width="1696" height="120" rx="22"/>
+  <text class="big" x="420" y="612">512K MFU 43.43%</text>
+  <text class="sw" x="420" y="642">口径 B(计重算)57.91%</text>
+  <text class="sw" x="1210" y="588">三次独立运行互证:43.43% / 44.29% / 44.39%</text>
+  <text class="sw" x="1210" y="618">步时落在 497–509 s 窄带,波动约 ±1 个百分点</text>
+  <text class="sw" x="1210" y="648">v2 → v3:非注意力有效效率约 8.4% → 约 11.9%–12.7%</text>
+
+  <text class="note" x="52" y="716">大显存只是必要条件:能跑通取决于算子工作区、重计算、offload、并行切分与 checkpoint 链路同时对齐;</text>
+  <text class="note" x="52" y="746">能跑快取决于并行 recipe 的设计——靠继续加节点替代不了它。</text>
+</svg>
