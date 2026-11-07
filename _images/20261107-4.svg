@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
-  <title id="title">32 卡并行拓扑:TP1 / PP2 / CP16 / EP8</title>
-  <desc id="desc">4 节点各 8 卡;EP=8 锁在机内 NVLink 域,CP=16 跨机切序列,PP=2 两段流水。</desc>
+  <title id="title">32 卡并行拓扑：TP1 / PP2 / CP16 / EP8</title>
+  <desc id="desc">4 节点各 8 卡；EP=8 锁在机内 NVLink 域，CP=16 跨机切序列，PP=2 两段流水。</desc>
   <defs>
     <style>
       .bg{fill:#FAF9F5}
@@ -26,14 +26,14 @@
     </marker>
   </defs>
   <rect class="bg" width="1800" height="840"/>
-  <text class="title" x="52" y="58">512K recipe:TP1 · PP2 · CP16 · EP8,GBS 128 / MBS 1</text>
+  <text class="title" x="52" y="58">512K recipe：TP1 · PP2 · CP16 · EP8，GBS 128 / MBS 1</text>
   <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
 
   <!-- PP stage labels -->
   <rect class="blue" x="52" y="112" width="828" height="44" rx="12"/>
-  <text class="on" x="466" y="140">PP Stage 0(前 21 层)· CP rank 0–7</text>
+  <text class="on" x="466" y="140">PP Stage 0（前 21 层）· CP rank 0–7</text>
   <rect class="blue" x="920" y="112" width="828" height="44" rx="12"/>
-  <text class="on" x="1334" y="140">PP Stage 1(后 22 层)· CP rank 8–15</text>
+  <text class="on" x="1334" y="140">PP Stage 1（后 22 层）· CP rank 8–15</text>
 
   <!-- node 1 -->
   <rect class="node" x="52" y="180" width="400" height="300" rx="20"/>
@@ -51,7 +51,7 @@
     <rect class="orange" x="340" y="344" width="64" height="36" rx="8"/><text class="gpu" x="372" y="367">G7</text>
   </g>
   <text class="small" x="252" y="428">MoE All-to-All 不出节点</text>
-  <text class="small" x="252" y="454">(含 recompute 多跑的那一次)</text>
+  <text class="small" x="252" y="454">（含 recompute 多跑的那一次）</text>
 
   <!-- node 2 -->
   <rect class="node" x="480" y="180" width="400" height="300" rx="20"/>
@@ -104,12 +104,12 @@
     <rect class="orange" x="1556" y="344" width="70" height="36" rx="8"/><text class="gpu" x="1591" y="367">G30</text>
     <rect class="orange" x="1636" y="344" width="64" height="36" rx="8"/><text class="gpu" x="1668" y="367">G31</text>
   </g>
-  <text class="small" x="1548" y="428">网卡混布:IB 为主、个别以太</text>
+  <text class="small" x="1548" y="428">网卡混布：IB 为主、个别以太</text>
   <text class="small" x="1548" y="454">NCCL 绑定需逐卡核对</text>
 
   <!-- CP ring -->
   <path class="dash" d="M252 500C252 540 680 556 900 556C1120 556 1548 540 1548 500"/>
-  <text class="label" x="900" y="548">CP = 16 Ring:跨机传输的是高倍压缩 KV(单跳约 1 MiB,约 21 µs ≪ 1.1 ms 计算)</text>
+  <text class="label" x="900" y="548">CP = 16 Ring：跨机传输的是高倍压缩 KV（单跳约 1 MiB，约 21 µs ≪ 1.1 ms 计算）</text>
 
   <!-- PP arrow -->
   <path class="flow" d="M884 134L916 134" marker-end="url(#arrow)"/>
@@ -118,13 +118,13 @@
   <rect class="ivory" x="52" y="590" width="1696" height="146" rx="22"/>
   <text class="label" x="330" y="634">为什么 TP = 1</text>
   <text class="small" x="330" y="664">避开每层同步的激活通信</text>
-  <text class="small" x="330" y="690">(正比 S_r × H,长序列下藏不住)</text>
+  <text class="small" x="330" y="690">（正比 S_r × H，长序列下藏不住）</text>
   <text class="label" x="900" y="634">为什么 EP = 8</text>
   <text class="small" x="900" y="664">单机恰好 8 卡全互联</text>
   <text class="small" x="900" y="690">All-to-All 不跨机走 IB</text>
   <text class="label" x="1460" y="634">为什么 PP = 2 / CP = 16</text>
-  <text class="small" x="1460" y="664">offload 省出显存才压得浅:</text>
+  <text class="small" x="1460" y="664">offload 省出显存才压得浅：</text>
   <text class="small" x="1460" y="690">128 微批下 1F1B 气泡仅约 0.8%</text>
 
-  <text class="note" x="52" y="786">1 × 2 × 16 = 32:并行度是按效率选出来的,不再是被显存逼出来的——这正是三把刀换回的自由度。</text>
+  <text class="note" x="52" y="786">1 × 2 × 16 = 32：并行度是按效率选出来的，不再是被显存逼出来的——这正是三把刀换回的自由度。</text>
 </svg>

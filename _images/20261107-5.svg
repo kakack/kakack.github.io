@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 820" role="img" aria-labelledby="title desc">
-  <title id="title">MFU 随序列长度非单调,注意力算力占比 f 单调上升</title>
-  <desc id="desc">左:三档 MFU 柱状图,512K 最高、256K 垫底;右:f 从 30.8% 涨到 64.0%。</desc>
+  <title id="title">MFU 随序列长度非单调，注意力算力占比 f 单调上升</title>
+  <desc id="desc">左：三档 MFU 柱状图，512K 最高、256K 垫底；右：f 从 30.8% 涨到 64.0%。</desc>
   <defs>
     <style>
       .bg{fill:#FAF9F5}
@@ -27,12 +27,12 @@
     </marker>
   </defs>
   <rect class="bg" width="1800" height="820"/>
-  <text class="title" x="52" y="58">MFU 关于序列长度并不单调</text>
+  <text class="title" x="52" y="58">MFU 随序列长度并不单调</text>
   <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
 
   <!-- LEFT: MFU bars -->
   <rect class="ivory" x="52" y="110" width="820" height="560" rx="22"/>
-  <text class="head" x="462" y="158">实测 MFU(口径 A,不计重算)</text>
+  <text class="head" x="462" y="158">实测 MFU（口径 A，不计重算）</text>
 
   <!-- axes: plot area x 150-800, y 220-580, scale 50% -> 360px -->
   <path class="axis-line" d="M150 580L810 580"/>
@@ -51,12 +51,12 @@
   <rect class="orange" x="430" y="396.1" width="140" height="183.9" rx="12"/>
   <text class="on" x="500" y="440">25.54%</text>
   <text class="axis" x="500" y="612">256K · PP2/CP16</text>
-  <text class="small" x="500" y="640">夹在中间,反而垫底</text>
+  <text class="small" x="500" y="640">夹在中间，反而垫底</text>
 
   <rect class="green" x="650" y="267.3" width="140" height="312.7" rx="12"/>
   <text class="on" x="720" y="320">43.43%</text>
   <text class="axis" x="720" y="612">512K · PP2/CP16</text>
-  <text class="small" x="720" y="640">单步最慢,利用率最高</text>
+  <text class="small" x="720" y="640">单步最慢，利用率最高</text>
 
   <!-- RIGHT: f curve -->
   <rect class="ivory" x="928" y="110" width="820" height="560" rx="22"/>
@@ -85,9 +85,9 @@
   <text class="axis" x="1355" y="612">256K</text>
   <text class="axis" x="1580" y="612">512K</text>
 
-  <text class="small" x="1338" y="650">e_w ≈ 11.9%(权重项)· e_a ≈ 61.2%(注意力项)</text>
+  <text class="small" x="1338" y="650">e_w ≈ 11.9%（权重项）· e_a ≈ 61.2%（注意力项）</text>
 
-  <text class="note" x="52" y="716">512K 的 MFU 最高是结构红利:高效率的注意力计算(e_a ≈ 61%)占比涨到 64%,拉高加权平均。</text>
-  <text class="note" x="52" y="746">但 f 解释不了 256K 的塌陷——按占比它应落在两者之间。答案在下一张图:那是一个配置异常点,不是规律。</text>
-  <text class="note" x="52" y="776">归一化耗时同样说明问题:每 1K token 耗时 128K / 256K / 512K = 6.25 / 8.77 / 7.58 ms,真正慢的是 256K。</text>
+  <text class="note" x="52" y="716">512K 的 MFU 最高是结构红利：高效率的注意力计算（e_a ≈ 61%）占比涨到 64%，拉高加权平均。</text>
+  <text class="note" x="52" y="746">但 f 解释不了 256K 的塌陷——按占比它应落在两者之间。答案在下一张图：那是一个配置异常点，不是规律。</text>
+  <text class="note" x="52" y="776">归一化耗时同样说明问题：每 1K token 耗时 128K / 256K / 512K = 6.25 / 8.77 / 7.58 ms，真正慢的是 256K。</text>
 </svg>
