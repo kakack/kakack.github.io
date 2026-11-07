@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/logo.png" width="120" alt="logo" />
+  <img src="assets/brand/logo.png" width="120" alt="logo" />
 
   <h1>Rhythmic Epistles</h1>
 
