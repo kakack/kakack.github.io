@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 960" role="img" aria-labelledby="title desc">
+  <title id="title">同一条时间线：上轴学习率，下轴数据配比</title>
+  <desc id="desc">学习率进入衰减的时刻与高质量数据升配的时刻重合；平台上的虚线分支是短衰减探针。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="960"/>
+  <text class="title" x="52" y="58">同一条时间线：上轴学习率，下轴数据配比</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <rect class="panel" x="52" y="108" width="1696" height="330" rx="26"/>
+  <text class="head" x="84" y="154">学习率</text>
+  <path class="ink" d="M140 390H1660" stroke-width="3"/>
+  <path class="ink" d="M140 390V190" stroke-width="3"/>
+  <path class="flow" d="M160 376L220 220H1100C1260 220 1380 300 1560 372"/>
+  <path class="dash" d="M560 220C600 268 620 320 628 372"/>
+  <path class="dash" d="M800 220C840 268 860 320 868 372"/>
+  <text class="small" x="190" y="416">warmup</text>
+  <text class="small" x="660" y="200">常数平台：探针实验在这里分支</text>
+  <text class="small" x="748" y="340">短衰减探针（虚线，可选）</text>
+  <text class="small" x="1340" y="280">衰减：正式升配在这里</text>
+
+  <rect class="panel" x="52" y="478" width="1696" height="330" rx="26"/>
+  <text class="head" x="84" y="524">高质量 / 领域数据的采样权重</text>
+  <path class="ink" d="M140 760H1660" stroke-width="3"/>
+  <path class="ink" d="M140 760V560" stroke-width="3"/>
+  <path class="flow" d="M160 744H1100V620H1560"/>
+  <circle cx="1100" cy="620" r="9" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <text class="small" x="620" y="724">默认 mix 里的自然占比</text>
+  <text class="small" x="1340" y="600">升配：候选数据权重抬高</text>
+  <text class="axis" x="1500" y="786">token</text>
+
+  <path class="dash" d="M1100 226V740" stroke-width="4"/>
+  <text class="label" x="1100" y="464">同一时刻</text>
+
+  <text class="note" x="52" y="860">曲线和配比都是示意。衰减的起点与升配的时刻重合：这段 loss 的下降里，学习率和数据各自做了多少功，单看曲线分不出。</text>
+  <text class="note" x="52" y="894">平台上的虚线分支是 MiniCPM 式短衰减探针与 OLMo 2 的 microanneal：从同一平台 checkpoint 出发，衰减几十 B token 就能比数据。</text>
+  <text class="note" x="52" y="928">正式运行只有一次衰减；想在衰减段归因数据，协议见图 2。</text>
+</svg>

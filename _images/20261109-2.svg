@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900" role="img" aria-labelledby="title desc">
+  <title id="title">退火当探针：同日程、同 token，只换数据</title>
+  <desc id="desc">从 50% 进度的 8B checkpoint 分出实验组与对照组，各自 40B token 线性衰减到 0，唯一差别是数据。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="900"/>
+  <text class="title" x="52" y="58">退火当探针：同日程、同 token，只换数据</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <rect class="blue" x="52" y="150" width="340" height="110" rx="22"/>
+  <text class="on" x="222" y="196">8B checkpoint</text>
+  <text class="sd" x="222" y="226">训练进度 50%</text>
+
+  <path class="flow" d="M392 180C480 130 560 130 640 158" marker-end="url(#arrow)"/>
+  <path class="flow" d="M392 240C480 290 560 290 640 262" marker-end="url(#arrow)"/>
+
+  <rect class="ivory" x="640" y="104" width="520" height="110" rx="22"/>
+  <text class="label" x="900" y="146">实验组：30% 候选 + 70% 默认 mix</text>
+  <text class="small" x="900" y="178">40B token，学习率线性降到 0</text>
+
+  <rect class="ivory" x="640" y="248" width="520" height="110" rx="22"/>
+  <text class="label" x="900" y="290">对照组：100% 默认 mix</text>
+  <text class="small" x="900" y="322">同样 40B token，同一条日程</text>
+
+  <path class="flow" d="M1160 159H1250" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1160 303H1250" marker-end="url(#arrow)"/>
+
+  <polygon points="1430,120 1610,231 1430,342 1250,231" class="green"/>
+  <text class="on" x="1430" y="218">冻结评测集</text>
+  <text class="sd" x="1430" y="246">差值 = 数据的功</text>
+
+  <path class="flow" d="M1430 342V420" marker-end="url(#arrow)"/>
+  <rect class="orange" x="1180" y="420" width="500" height="100" rx="22"/>
+  <text class="on" x="1430" y="462">进不进正式 mix 的证据</text>
+  <text class="sd" x="1430" y="490">记入 manifest，可回退</text>
+
+  <rect class="ivory" x="52" y="420" width="1020" height="208" rx="22" stroke-dasharray="10 8"/>
+  <text class="label" x="562" y="470">同一协议的常设版本：OLMo 2 microanneal</text>
+  <text class="small" x="562" y="506">候选数据入 Dolmino 混合之前，先过小规模退火实验这道关卡</text>
+  <text class="small" x="562" y="538">再加一层：同配比、不同数据顺序多跑几次，权重平均（souping）</text>
+  <text class="small" x="562" y="570">前提是第一篇的确定性 shuffle——顺序不可复现，souping 就控制不住自变量</text>
+
+  <text class="note" x="52" y="700">40B token、30% 权重、50% 进度，都来自 Llama 3 技术报告；日程、token 数、初始化全部相同，唯一的自变量是数据。</text>
+  <text class="note" x="52" y="736">结论随规模变：同一协议下 8B 在 GSM8k/MATH 升 24.0%/6.4%，405B 上提升可忽略。探针选数据，目标尺度复核。</text>
+  <text class="note" x="52" y="772">退火数据离 benchmark 越近，冻结评测集与去污染越是前提：Llama 3 用的是 GSM8k/MATH 训练切分，评估在验证集。</text>
+</svg>

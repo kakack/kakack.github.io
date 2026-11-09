@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900" role="img" aria-labelledby="title desc">
+  <title id="title">长上下文：分阶段升级，每一步都有 gate</title>
+  <desc id="desc">Llama 3 六个阶段从 8K 到 128K，DeepSeek-V3 用 YaRN 两阶段从 4K 到 128K；每次升级都要通过短任务不回退与 NIAH 达标两道检查。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:5}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:36px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:22px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:20px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:15px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="900"/>
+  <text class="title" x="52" y="58">长上下文：分阶段升级，每一步都有 gate</text>
+  <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
+
+  <rect class="panel" x="52" y="108" width="1696" height="300" rx="26"/>
+  <text class="head" x="84" y="154">Llama 3 405B：8K 起步，六个阶段到 128K，约 800B token</text>
+  <path class="ink" d="M140 360H1660" stroke-width="3"/>
+  <path class="flow" d="M160 344H330V318H540V292H750V266H960V240H1170V214H1400"/>
+  <text class="small" x="240" y="332">8K</text>
+  <text class="small" x="430" y="306">阶段逐级抬高</text>
+  <text class="small" x="1300" y="202">128K</text>
+  <polygon points="540,318 572,286 604,318 572,350" class="green"/>
+  <polygon points="960,240 992,208 1024,240 992,272" class="green"/>
+  <text class="small" x="572" y="390">gate</text>
+  <text class="small" x="992" y="390">gate</text>
+  <text class="axis" x="1560" y="388">token</text>
+
+  <rect class="panel" x="52" y="448" width="1696" height="250" rx="26"/>
+  <text class="head" x="84" y="494">DeepSeek-V3：YaRN 两阶段，4K → 32K → 128K，各 1000 step</text>
+  <path class="ink" d="M140 650H1660" stroke-width="3"/>
+  <path class="flow" d="M160 634H560V584H1020V534H1480"/>
+  <text class="small" x="340" y="622">4K（预训练）</text>
+  <text class="small" x="790" y="572">32K，batch 1920</text>
+  <text class="small" x="1250" y="522">128K，batch 480</text>
+  <text class="small" x="1600" y="522">LR 7.3e-6</text>
+  <polygon points="560,584 592,552 624,584 592,616" class="green"/>
+  <polygon points="1020,534 1052,502 1084,534 1052,566" class="green"/>
+
+  <text class="note" x="52" y="760">台阶是示意；阶段数、step、batch、学习率来自各自技术报告。绿色菱形是升级 gate：短任务不回退，且当前长度 NIAH 真达标。</text>
+  <text class="note" x="52" y="796">数据原料是第一篇留下的整篇长文档；长文档升采样会同时拉偏来源配比，按来源标签复查，不要只看长度这一个变量。</text>
+  <text class="note" x="52" y="832">NIAH 是 gate，不是终点：RULER 式多任务评测显示不少模型在标称长度之前就退化。宣称 128K 和在 128K 可用是两回事。</text>
+</svg>
