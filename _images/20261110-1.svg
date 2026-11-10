@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 860" role="img" aria-labelledby="title desc">
+  <title id="title">一条多轮样本上的四种 loss mask</title>
+  <desc id="desc">同一条 system、user、assistant 样本，在四种 mask 下哪些 span 进入 loss。虚线从参与 loss 的位置回到参数。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .loss{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .mask{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:8 7}
+      .asset{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:16px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:13px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .row{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="860"/>
+  <text class="title" x="52" y="56">同一条样本，四种 loss mask</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <rect class="loss" x="52" y="100" width="22" height="22" rx="5"/>
+  <rect class="mask" x="220" y="100" width="22" height="22" rx="5"/>
+  <path class="grad" d="M520 111H590" marker-end="url(#arrow)"/>
+  <text class="note" x="84" y="118">参与 loss</text>
+  <text class="note" x="252" y="118">被 mask</text>
+  <text class="note" x="604" y="118">梯度回到参数</text>
+
+  <g class="small">
+    <text x="430" y="168">system</text>
+    <text x="690" y="168">user</text>
+    <text x="950" y="168">assistant</text>
+    <text x="1210" y="168">user</text>
+    <text x="1470" y="168">assistant</text>
+  </g>
+<text class="row" x="36" y="266">全序列</text>
+<rect class="loss" x="300" y="230" width="230" height="64" rx="16"/>
+<text class="on" x="415.0" y="268">loss</text>
+<rect class="loss" x="560" y="230" width="230" height="64" rx="16"/>
+<text class="on" x="675.0" y="268">loss</text>
+<rect class="loss" x="820" y="230" width="230" height="64" rx="16"/>
+<text class="on" x="935.0" y="268">loss</text>
+<rect class="loss" x="1080" y="230" width="230" height="64" rx="16"/>
+<text class="on" x="1195.0" y="268">loss</text>
+<rect class="loss" x="1340" y="230" width="230" height="64" rx="16"/>
+<text class="on" x="1455.0" y="268">loss</text>
+<text class="row" x="36" y="396">只训 completion</text>
+<rect class="mask" x="300" y="360" width="230" height="64" rx="16"/>
+<text class="label" x="415.0" y="398">在 prompt</text>
+<rect class="mask" x="560" y="360" width="230" height="64" rx="16"/>
+<text class="label" x="675.0" y="398">在 prompt</text>
+<rect class="mask" x="820" y="360" width="230" height="64" rx="16"/>
+<text class="label" x="935.0" y="398">旧回答也在 prompt</text>
+<rect class="mask" x="1080" y="360" width="230" height="64" rx="16"/>
+<text class="label" x="1195.0" y="398">在 prompt</text>
+<rect class="loss" x="1340" y="360" width="230" height="64" rx="16"/>
+<text class="on" x="1455.0" y="398">completion</text>
+<text class="row" x="36" y="526">每轮 assistant</text>
+<rect class="mask" x="300" y="490" width="230" height="64" rx="16"/>
+<text class="label" x="415.0" y="528">mask</text>
+<rect class="mask" x="560" y="490" width="230" height="64" rx="16"/>
+<text class="label" x="675.0" y="528">mask</text>
+<rect class="loss" x="820" y="490" width="230" height="64" rx="16"/>
+<text class="on" x="935.0" y="528">loss</text>
+<rect class="mask" x="1080" y="490" width="230" height="64" rx="16"/>
+<text class="label" x="1195.0" y="528">mask</text>
+<rect class="loss" x="1340" y="490" width="230" height="64" rx="16"/>
+<text class="on" x="1455.0" y="528">loss</text>
+<text class="row" x="36" y="656">只训最后一轮</text>
+<rect class="mask" x="300" y="620" width="230" height="64" rx="16"/>
+<text class="label" x="415.0" y="658">mask</text>
+<rect class="mask" x="560" y="620" width="230" height="64" rx="16"/>
+<text class="label" x="675.0" y="658">mask</text>
+<rect class="mask" x="820" y="620" width="230" height="64" rx="16"/>
+<text class="label" x="935.0" y="658">target 被涂掉</text>
+<rect class="mask" x="1080" y="620" width="230" height="64" rx="16"/>
+<text class="label" x="1195.0" y="658">mask</text>
+<rect class="loss" x="1340" y="620" width="230" height="64" rx="16"/>
+<text class="on" x="1455.0" y="658">最后一轮</text>
+
+  <path class="grad" d="M1572 360C1680 360 1680 792 1220 792" marker-end="url(#arrow)"/>
+  <rect class="asset" x="860" y="760" width="360" height="64" rx="18"/>
+  <text class="on" x="1040" y="798">参数：只从 loss span 收到梯度</text>
+  <text class="note" x="52" y="848">completion 与「只训最后一轮」颜色可以一样。差别在旧回答是 prompt 的一部分，还是编码成 target 之后被涂掉。</text>
+
+</svg>
