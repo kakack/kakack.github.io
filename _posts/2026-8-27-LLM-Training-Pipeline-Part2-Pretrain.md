@@ -3,7 +3,7 @@
 layout: post
 tags: [LLM, NLP, Training]
 title: 大模型是怎么炼成的（二）：预训练的目标、配方与 Loss Spike
-date: 2026-11-6
+date: 2026-8-27
 author: Kyrie Chen
 comments: true
 toc: true

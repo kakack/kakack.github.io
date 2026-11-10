@@ -3,7 +3,7 @@
 layout: post
 tags: [LLM, NLP, Training]
 title: 大模型是怎么炼成的（三）：Mid-training 的数据升配、领域续训与长上下文
-date: 2026-11-9
+date: 2026-9-18
 author: Kyrie Chen
 comments: true
 toc: true

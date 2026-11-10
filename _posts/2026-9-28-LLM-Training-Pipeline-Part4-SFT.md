@@ -3,7 +3,7 @@
 layout: post
 tags: [LLM, NLP, Training]
 title: 大模型是怎么炼成的（四）：SFT 的边界是 loss 铺在哪些 token 上
-date: 2026-11-10
+date: 2026-9-28
 author: Kyrie Chen
 comments: true
 toc: true

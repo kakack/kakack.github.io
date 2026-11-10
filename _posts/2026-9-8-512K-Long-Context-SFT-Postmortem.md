@@ -3,7 +3,7 @@
 layout: post
 tags: [LLM, NLP, AI Infra, Training]
 title: 512K 上下文的全参 SFT：显存、MFU，以及 loss 说明不了的事
-date: 2026-11-7
+date: 2026-9-8
 author: Kyrie Chen
 comments: true
 toc: true
