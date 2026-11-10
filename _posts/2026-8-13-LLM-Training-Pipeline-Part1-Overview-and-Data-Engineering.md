@@ -159,6 +159,8 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 
 下面十四个模块不是必须线性执行的固定配方，而是一次开训评审需要回答的十四类问题。具体拓扑取决于处理成本、政策边界和数据依赖；重要的是每项决策都有版本、证据和可回退路径。
 
+只有一小时的话，先读 4.1、4.7、4.8 和 4.12：目标与评测契约、质量评分、去重、配比。其余几节是这些决策的输入和约束。FineWeb 的 token 账和 GPU 小时集中在第五节，这里只写方法。
+
 ### 4.1 目标、数据契约与冻结评测集
 
 先写清目标模型的语言、领域、上下文长度、token 预算、许可边界和评测集，再下载数据。否则「高质量」无从定义，配比优化也会把噪声当信号。
@@ -208,7 +210,7 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 | 多抽取器 union/路由 | 增加覆盖，结构页面可择优 | 去重、质量归因与成本更复杂 | 内容异质、强调 code/table 的管线 |
 | 模型解析器 | 能识别语义块并转 Markdown | GPU/推理成本、模型偏差 | 高价值 STEM 或结构化页面 |
 
-[Nemotron-CC](https://arxiv.org/abs/2412.02595)报告其 jusText 配置比 trafilatura 获得约 57.5% 更多被分类为高质量的 token，选择的是高召回路线。相反 FineWeb 选择更保守的 trafilatura。[Beyond a Single Extractor](https://arxiv.org/abs/2602.19548)进一步发现，多抽取器结果取 union 可让 DCLM-Baseline 的 token yield 最多提高 71%，且标准任务不降；表格和代码任务对抽取器差异尤其敏感。[AICC](https://arxiv.org/abs/2511.16397)则用 0.6B 模型做 HTML 序列标注和 Markdown 恢复，在其 62B-token 对照中相对 trafilatura 版本平均提升 1.08 个百分点。这些数字都依赖各自管线，不能直接横比。
+[Nemotron-CC](https://arxiv.org/abs/2412.02595)报告其 jusText 配置比 trafilatura 获得约 57.5% 更多被分类为高质量的 token，选择的是高召回路线。相反 FineWeb 选择更保守的 trafilatura。[Beyond a Single Extractor](https://arxiv.org/abs/2602.19548)进一步发现，多抽取器结果取 union 可让 DCLM-Baseline 的 token yield 最多提高 71%，且标准任务不降；表格和代码任务对抽取器差异尤其敏感。[AICC](https://arxiv.org/abs/2511.16397)则用 0.6B 模型做 HTML 序列标注和 Markdown 恢复，在其约 62B-token 对照中相对 trafilatura 版本平均高 1.08 个百分点。
 
 PDF 应先检测 born-digital 还是扫描件：优先版面感知文本解析，失败再 OCR；恢复双栏阅读顺序、标题层级、公式、表格与参考文献，并保留页码/bounding box 方便追溯。代码则按仓库而非孤立文件处理：识别语言与依赖，过滤 vendor、minified、generated、二进制和数据文件，扫描 secret，并以 repository/commit 为切分与去重单位。[The Stack v2](https://arxiv.org/abs/2402.19173)基于 Software Heritage 的持久标识与多种仓库附属内容，是这条分支的重要参考。
 
@@ -224,7 +226,7 @@ fastText `lid.176` 速度快，适合大规模第一层；CLD3/pycld2 可作独�
 - 语言之后再跑语言特定的停用词、标点、字符比例和质量模型；
 - 同时预测 domain/doc type（论坛、论文、教程、商品页、代码文档），为后续规则和混合提供条件。
 
-FineWeb 英文管线使用 fastText 分数 0.65 作为其阈值，这是案例，不是默认值。公式密集、短文本与 code-switching 应单独抽样画混淆矩阵，再定语言级阈值。
+FineWeb 英文管线的 fastText 阈值是 0.65（见第五节）。公式密集、短文本与 code-switching 应单独抽样画混淆矩阵，再定语言级阈值。
 
 ### 4.6 便宜规则：负责明显坏，不负责定义所有好
 
@@ -240,7 +242,7 @@ FineWeb 英文管线使用 fastText 分数 0.65 作为其阈值，这是案例�
 
 C4、Gopher/MassiveText 和 Dolma 提供了成熟规则集，但不能原样复制。[C4 的后续审计](https://arxiv.org/abs/2104.08758)显示，blocklist 过滤会不成比例地移除关于少数群体的文本；英语句末标点规则用于中文、代码或表格也会大规模误杀。规则必须输出 `reason_code` 与原始数值，按语言、来源、时间、domain 分层看 retention rate，并人工抽查边界样本。
 
-FineWeb 的公开消融是一个好例子：其三条 custom filter 合用约移除 22% token，而不是 7%；团队通过训练小模型比较了 token 损失与能力收益。启发式规则的最佳角色是高精度拒绝和特征生产，不是单独承担全部质量判断。
+FineWeb 没有照搬 C4 的句末标点规则：那一条单独就会删掉约 30% token。他们改用分布差异挑出的三条规则，删除比例的拆分见第五节。启发式规则的角色是高精度拒绝和特征生产，不是单独承担全部质量判断。
 
 ### 4.7 学习式质量评分：先定义 rubric，再选模型
 
@@ -256,7 +258,7 @@ FineWeb 的公开消融是一个好例子：其三条 custom filter 合用约移
 | 多分类器集成 | 提高覆盖，减少单一品味 | 校准和冲突处理更复杂 | Nemotron-CC 分桶 |
 | LLM 直接评分/成对比较 | rubric 灵活，可解释 | 贵、位置/长度/模型偏差 | 标注种子、灰区复核 |
 
-DCLM 的一个关键结果是：用 OpenHermes 2.5 与高分 ELI5 等指令式文本作正例、随机网页作负例训练 fastText，比传统「像 Wikipedia」正例更适合它的评测目标；该 baseline 用 7B 模型训练 2.6T token，报告 64% 的 5-shot MMLU。[FineWeb-Edu](https://huggingface.co/spaces/HuggingFaceFW/blogpost-fineweb-v1)由 Llama-3-70B-Instruct 对 46 万样本给 0～5 教育价值分，再训练分类器；对 15T FineWeb 打分约用 6,000 H100 GPU 小时，阈值 3 产生论文版约 1.3T token 的高教育性子集。
+DCLM 的一个关键结果是：用 OpenHermes 2.5 与高分 ELI5 等指令式文本作正例、随机网页作负例训练 fastText，比传统「像 Wikipedia」正例更适合它的评测目标。FineWeb-Edu 的方法是先让 teacher 模型按 0～5 的教育价值 rubric 打种子，再训一个便宜分类器去扫全量；标注量、打分成本和留下的 token 数见第五节。
 
 [QuRating](https://arxiv.org/abs/2402.09739)把写作、专业知识、事实信息、教育价值分开，以 LLM pairwise judgment 训练 QuRater 并标注 260B 语料；其结果表明质量与多样性要同时优化，按连续 score 软采样可能优于硬阈值。
 
@@ -375,7 +377,7 @@ Tokenizer 后还不是训练数据。需要决定：
 
 ### 5.1 FineWeb / FineWeb-Edu：消融优先的高精度路线
 
-FineWeb 论文版处理 96 个 Common Crawl snapshots：WARC 经 trafilatura 抽取，成人 URL、fastText 英语阈值及 MassiveText 风格规则形成约 36T GPT-2 token 的基础池；每个 snapshot 独立 MinHash 去重，再加入筛选后的 C4/custom filters，形成最初约 15T token 的 FineWeb。FineWeb-Edu 用 46 万 teacher 标注训练教育性分类器，阈值 3 的版本约 1.3T token。
+FineWeb 论文版处理 96 个 Common Crawl snapshots：WARC 经 trafilatura 抽取，成人 URL、fastText 英语阈值 0.65 及 MassiveText 风格规则形成约 36T GPT-2 token 的基础池；每个 snapshot 独立 MinHash 去重，再加入筛选后的 C4/custom filters，形成最初约 15T token 的 FineWeb。三条 custom filter 合用大约删掉 22% token。三个百分比是各自单独作用于全量时的删除率，加起来是 26.34%，同时施加时文档有重叠，所以合用少于三者之和：句末标点比例 ≤ 0.12 的文档（10.14%）、重复行字符占比 ≥ 0.1 的文档（12.47%）、短于 30 字符的行占比 ≥ 0.67 的文档（3.73%）。被放弃的 C4 句末标点规则单独删掉约 30%。论文里另外一个约 7%，指的是去掉这条句末标点规则之后、其余 C4 规则合在一起的删除率，不是这三条 custom filter 的另一个版本。FineWeb-Edu 由 Llama-3-70B-Instruct 给约 46 万样本打 0～5 分，再训练分类器；对 15T FineWeb 打分约用 6,000 H100 GPU 小时，阈值 3 的论文版约 1.3T token。
 
 更重要的是实验方法：团队训练 192 个 crawl 对照模型，仅 crawl-time 分析就超过 60,000 H100 GPU 小时；公开博客同时给出每一步的模型 checkpoint 和评估。这个案例证明「造数据集」包含大量训练实验，不能只比较规则数量。
 
@@ -426,7 +428,7 @@ OLMo 3 / Dolma 3 则展示了完整开放的数据生命周期：不同来源各
 7. **审计污染与 judge**：先去污染，尽量用可复现 scorer，LLM-as-a-judge 要做顺序/长度/风格校准；
 8. **保留失败样本**：比较被保留和被丢弃的 stratified sample，检查分类器究竟学到了什么捷径。
 
-FineWeb 官方博客修正了一个常见误传：在逐 Common Crawl 快照的那组分析中，团队训练的是 **192 个模型、合计超过 6 万 H100 GPU 小时**，而不是「70 多个模型、约 8 万小时」。过滤器实验另有其他模型；不同统计范围会产生不同总数，所以写作时必须指明是哪组实验。小模型消融提供的是目标条件下的证据，不是绝对真理；proxy 排名可能随尺度、LR 和评测任务翻转。
+FineWeb 论文报的是全程消融合计：70 多个模型、估计 8 万 H100 GPU 小时。官方博客里逐 Common Crawl snapshot 的那一组是 **192 个模型、超过 6 万 H100 GPU 小时**。两个口径都是官方数字，统计范围不同，混用才会得出「论文写错了」或「博客纠正了论文」。proxy 排名可能随尺度、LR 和评测任务翻转。
 
 ---
 
@@ -434,22 +436,14 @@ FineWeb 官方博客修正了一个常见误传：在逐 Common Crawl 快照的�
 
 把本篇看成一次正式训练前的开训评审：总图先说明后续阶段需要什么，数据系统再把这些要求落实为可追踪、可验证、可重复生产的训练资产。准备完成时，团队交付的不只是「一个语料库」，还包括目标与预算、冻结评测集、数据契约、tokenizer、mixture、训练分片和完整证据链。
 
-在第一次正式 Pretrain 前，一条足够完整的检查清单是：
+在第一次正式 Pretrain 前，需要留下的是六项决策和它们的证据，而不是把第四节再默写一遍：
 
-1. 明确目标、权利政策和冻结评测集；
-2. 建不可变 raw lake、stable ID、provenance 与删除谱系；
-3. 做完整性检查、Unicode/URL 规范化；
-4. 按 HTML、PDF/OCR、代码和 curated source 专用抽取；
-5. 文档+片段级语言、领域和类型路由；
-6. 便宜高精度规则过滤并保留 reason codes；
-7. 多维学习式质量评分，级联而非一刀切；
-8. URL→exact→段落→MinHash→子串→可选语义的分层去重，建簇后选代表；
-9. 分开处理隐私、安全、毒性、许可和退出；
-10. 对所有来源及每轮合成数据反复去污染；
-11. 对生成、改写、翻译和任务化数据保留 lineage，并重新验证；
-12. 用受约束的代理实验优化 mixture/curriculum/effective epochs；
-13. 在代表性混合上训练与审计 tokenizer；
-14. 正确 packing、边界 mask、确定性 shuffle 与分片，并通过完整性、分布、隐私、污染、吞吐和可重放 QA gate 后发布 manifest/data card。
+1. **评测先于下载。** 目标、权利边界和冻结评测集写在抓取之前；holdout 按来源、时间和重复簇切开。
+2. **原文和决定分开存。** raw lake 不可变，分数、reason code 和删除决定放可版本化 sidecar。改阈值只重算选择。
+3. **过滤器要同时报删了多少、留下什么。** 规则、分类器和去重都输出原因标签。FineWeb 三条 custom filter 合用约删 22% token；被放弃的 C4 句末标点规则单独约删 30%。
+4. **配比用实验定，并在目标尺度复核。** 代理模型可以筛选，不能代替目标 checkpoint 上的 annealing。Llama 3 的 50/25/17/8 只属于那一次训练。
+5. **tokenizer 冻结后再算账。** token 预算、长度阈值和污染 n-gram 都用这份词表重算；packing 同时处理边界 mask 和跨文档注意力。
+6. **发布的是 manifest。** 它要能重放 sample order，也要能把一次 loss spike 指回具体批次。
 
 最值得带走的不是某个阈值，而是三个原则：**原始内容与决策标签分离；按成本级联但按依赖排 DAG；任何“最佳配方”都要用自己的目标、数据池与尺度重新消融。**
 

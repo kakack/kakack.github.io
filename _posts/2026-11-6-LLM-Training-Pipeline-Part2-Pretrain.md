@@ -47,6 +47,8 @@ $$
 
 其中 $$\mathcal{T}$$ 是参与 loss 的位置。预训练里通常是几乎全部 token；packing 时文档边界是否断开，第一篇已经要求在样本格式里定死，这里不能再临时改。PaLM 明确不用 label smoothing，loss 就是平均对数概率，外加后面会讲的 z-loss。
 
+这个平均的分母会直接改变第六节的诊断信号。token-mean 按有效 token 数平均；sequence-mean 先在每条序列里平均，再在 batch 上平均，短序列里每个 token 的梯度更大。梯度累积时，不要对每个 micro-batch 先做 mean 再把 loss 相加，否则有效 token 少的那一份会被放大。正确的写法是把各 micro-batch 的 token loss 之和累加起来，最后除以全局有效 token 数。日志里的 grad norm 必须和这个归一口径记在一起，否则尖峰可能只是分母变了。
+
 反向路径比前向更容易被讲丢。交叉熵对 logit 的梯度是 $$\mathrm{softmax}(z) - y$$，它先穿过 LM head，再穿过每一层的 attention 和 FFN（或 MoE 专家），最后到达 embedding。AdamW 用这份梯度更新的是优化器状态里的动量和方差，再写回权重。因此常驻显存里有三份不同的东西：计算用的低精度权重、FP32 master weight、Adam 的两个矩。图 1 里 AdamW 用虚线框，是因为它不在前向计算图上，但每一步都在。
 
 Activation checkpointing 不改变这个箭头的方向，只把「保存下来的激活」换成「反向时重算」。它省的是激活显存，不省参数，也不省 logits。logits 为什么会单独把卡打满，仍然是上一篇并行文章的问题。
@@ -68,7 +70,7 @@ Llama 3 没有直接套 20 这个数。他们在 $$6\times 10^{18}$$ 到 $$10^{2
 1. 预算越大，最低点附近越平。旗舰尺寸对「参数和 token 对调一小截」不敏感，所以他们最终选了 405B，对应训练预算 $$3.8\times 10^{25}$$ FLOPs、15.6T token。报告把这个尺寸称为**在他们自己的 scaling law 下近似 compute-optimal**。
 2. 8B 和 70B 被故意训过这个最低点。同样的推理预算下，更小的模型多吃 token，部署更便宜。这不是「没按 scaling law」，而是目标从「这笔训练 FLOPs 的最低 loss」换成了「上线之后每个 token 的成本」。
 
-按 Chinchilla 的 20 token/参数，405B 配 15.6T（约 38 token/参数）会显得 token 偏多。和 Llama 3 自己的结论放在一起并不矛盾：最低点跟数据和拟合走，不跟 2022 年的一个比值走。
+按 Chinchilla 的 20 token/参数，405B 配 15.6T（约 38 token/参数）会显得 token 偏多。和 Llama 3 自己的结论放在一起并不矛盾：最低点跟数据和拟合走，不跟 2022 年的一个比值走。这些拟合里的「参数量」默认是每个 token 都参与更新的 dense 参数。MoE 的总参数和激活参数是两笔账：DeepSeek-V3 的 671B 不能直接拿去和 Chinchilla 的 20 token/参数比，训练算力更接近每个 token 激活的约 37B。把哪一个数放进拟合，必须写在坐标轴上。
 
 Scaling law 直接预测的是验证 loss，不是 benchmark。Llama 3 又做了第二步：先把正确选项的负对数似然和训练 FLOPs 关联起来，再用 sigmoid 把似然映射成准确率。这套外推跨了大约四个数量级，在 ARC-Challenge 上只是略低估了旗舰模型。它能用来选尺寸和数据配比，不能代替第一篇那种受控的数据消融。
 
@@ -76,13 +78,15 @@ Scaling law 直接预测的是验证 loss，不是 benchmark。Llama 3 又做了
 
 ## 三、架构里，真正改训练的是「梯度落到谁身上」
 
-预训练的主干在 2024–2025 年已经相当收敛：Pre-Norm、RMSNorm、RoPE、SwiGLU、注意力分数除以 $$\sqrt{d}$$。这些选择影响稳定性，但它们不改变「每个 token 更新整块 FFN」这件事。Dense 和 MoE 改变的是这件事。
+预训练的主干在 Llama 3 和 DeepSeek-V3 这一代很接近：Pre-Norm、RMSNorm、RoPE、SwiGLU、注意力分数除以 $$\sqrt{d}$$。注意力后来又分开了，第三篇只处理其中和序列长度有关的部分。这些选择影响稳定性，但它们不改变「每个 token 更新整块 FFN」这件事。Dense 和 MoE 改变的是这件事。
 
 ![Dense 与 MoE 的梯度落点](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-4.png)
 
 *图 3：Dense 的 MLP 参数每个 token 都会看到梯度。MoE 只有被路由命中的专家收到该 token 的梯度；共享专家不走 Router，每个 token 都经过。谁收到梯度写在节点文字里，颜色仍按系列图例使用。*
 
 DeepSeek-V3 的配置可以当作一张具体的对照，而不是「MoE 大概长这样」：61 层、隐藏维度 7168；**前三层仍是普通 FFN**，其余层是 MoE；每层 1 个共享专家 + 256 个路由专家，每个 token 激活 8 个路由专家，并且最多被送到 4 个节点。总参数 671B，每个 token 激活约 37B。算力和激活显存跟的是 37B，通信和专家并行跟的是 256 路路由。
+
+Switch 和 GShard 用 capacity factor 把超出专家容量的 token 丢掉。DeepSeek-V3 的报告里没有这个因子，也没有 token dropping：每个 token 仍然走完 top-8，再加共享专家。最多 4 个节点是路由约束，用来限制跨节点通信，不是把算不完的 token 从 loss 里拿掉。
 
 负载均衡是第二个目标，会和语言模型损失抢梯度。辅助损失太大，专家利用更匀，但语言建模变差。DeepSeek-V3 的做法是把均衡移出 loss 的主项：
 
@@ -109,7 +113,7 @@ DeepSeek-V3 更接近 [MiniCPM](https://arxiv.org/abs/2404.06395) 推广的 warm
 
 常数平台的工程含义是：还没承诺衰减之前，可以按同一学习率继续加 token，再决定何时进入 decay。衰减一旦开始，loss 的下降里就混进了学习率本身。第三篇会把高质量数据的升配放在这个窗口附近讨论；这里先记住实验约束——**不固定 token 数、日程和初始化，就不能把退火期的涨点归因于「低学习率更容易记住好数据」。**
 
-Llama 3 405B 那一段没有重复 $$\beta$$、weight decay 和 clip。不要从 Llama 2 或从 DeepSeek 把这些数抄过去当作 Llama 3 的事实。DeepSeek 把 $$\beta_{2}$$ 写成 0.95 而不是 0.999，是有稳定性动机的：二阶矩忘得更快，梯度突然变大时，步长不会被很久以前的小梯度继续放大。这是预防，不是 spike 已经发生后的诊断。
+Llama 3 405B 那一段没有重复 $$\beta$$、weight decay 和 clip。不要从 Llama 2 或从 DeepSeek 把这些数抄过去当作 Llama 3 的事实。DeepSeek 把 $$\beta_{2}$$ 写成 0.95 而不是 0.999，是有稳定性动机的：二阶矩忘得更快，梯度突然变大时，步长不会被很久以前的小梯度继续放大。这是预防，不是 spike 已经发生后的诊断。它也不是此后唯一的优化器。2025 年的 [Kimi K2](https://arxiv.org/abs/2507.20534) 用 MuonClip（Muon + QK-Clip）压住注意力 logit，并报告预训练 15.5T token 期间没有 loss spike。AdamW 仍是下面这张表里两家的选择。
 
 | | Llama 3 405B | DeepSeek-V3 |
 |---|---|---|
@@ -125,7 +129,7 @@ Llama 3 405B 那一段没有重复 $$\beta$$、weight decay 和 clip。不要从
 
 ## 五、精度：降的是 GEMM，不是所有算子
 
-默认配方仍是 BF16 计算、FP32 master weight 和 Adam 状态。BF16 的指数位和 FP32 一样宽，attention 分数不容易像 FP16 那样直接溢出。GLM-130B 当年的很多 spike，首先是 FP16 范围问题，换 BF16 会消失一批，但不会消失全部。
+默认配方仍是 BF16 计算、FP32 master weight 和 Adam 状态。BF16 的指数位和 FP32 一样宽，attention 分数不容易像 FP16 那样直接溢出。GLM-130B 的 spike 发生在 FP16 栈上，报告没有做 BF16 对照。指数位同宽，所以换 BF16 有可能消掉其中一批溢出；这是从数值格式推出来的，不是那份报告的结论，也覆盖不了范数本身在漂的情况。
 
 DeepSeek-V3 的 FP8 不是「整个模型用 FP8 训练」。三个 GEMM——前向、激活梯度、权重梯度——用 FP8 输入，累加再抬回更高精度。激活按 1×128 分块缩放，权重按 128×128 分块缩放，用来避免一个离群值把整块的 scale 撑爆。以下部分保持原来的 BF16 或 FP32：**embedding、输出头、MoE 门控、Norm、attention**。master weight、权重梯度和优化器状态也保持更高精度。
 
@@ -179,9 +183,15 @@ $$
 
 ```python
 def qk_norm_scores(q, k, eps=1e-6):
-    # q, k: [..., heads, d]。先归一化，再做原来的 1/sqrt(d)
-    q = q * torch.rsqrt(q.pow(2).mean(dim=-1, keepdim=True) + eps)
-    k = k * torch.rsqrt(k.pow(2).mean(dim=-1, keepdim=True) + eps)
+    # 放在点积之前。这里写成 RoPE 之前：先把向量拉回单位量级，再旋转。
+    # RoPE 是正交变换，不带逐通道缩放时，先旋转再归一化在精确算术下与此可交换；
+    # 带逐通道缩放时两种顺序得到的 q、k 不同。无论哪种，平方和都要在 FP32 里算。
+    def rms(x):
+        x = x.float()
+        return x * torch.rsqrt(x.pow(2).mean(dim=-1, keepdim=True) + eps)
+
+    q, k = rms(q), rms(k)
+    # 分数和 softmax 都留在 fp32。写回激活时再 cast 回 bf16。
     return (q @ k.transpose(-2, -1)) * (q.size(-1) ** -0.5)
 ```
 
@@ -221,7 +231,7 @@ Llama 3 405B 是 Dense、BF16、长余弦、batch 和序列长度一起加。报
 
 DeepSeek-V3 是 MoE、FP8 GEMM、常数学习率平台、bias 式负载均衡，再加上 MTP 这条额外损失。敏感算子留在高精度，均衡项几乎不进主 loss。报告的稳定性结论是：**没有不可恢复的 spike，也没有回滚**。预训练 2.664M H800 GPU 小时这个数对应 14.8T token 的预训练本身；第一篇引用的 2.788M 还包含上下文扩展和后训练。不要把两个账本加成一次。
 
-两次运行都稳定，不表示第六节的分支过时。PaLM 和 GLM 写的是更大的模型第一次碰到表示范围和状态耦合时实际发生过的事。今天的配方把其中几条收进了默认结构（BF16、$$\beta_{2}=0.95$$、Norm 和缩放、弱均衡），所以正式曲线更平。平的曲线仍然需要那五项日志：否则下一次不可恢复的跳变，你分不清该回滚、该隔离文档，还是该查 FP8。
+两次运行都稳定，只说明这两份 2024 年的配方在它们自己的运行里没有被迫回滚。不能从这里推出「BF16、早期小 batch、长余弦」就是后来的默认答案：Kimi K2 换成了 MuonClip（Muon + QK-Clip），因为 Muon 更容易把注意力 logit 打爆。PaLM 和 GLM 写的是更大的模型第一次碰到表示范围和状态耦合时实际发生过的事。第六节的五项日志仍然要留：否则下一次不可恢复的跳变，你分不清该回滚、该隔离文档、该查 FP8，还是该查优化器把 logit 推高了。
 
 ---
 
@@ -252,3 +262,4 @@ DeepSeek-V3 是 MoE、FP8 GEMM、常数学习率平台、bias 式负载均衡，
 - [Gemma 2](https://arxiv.org/abs/2408.00118)（attention / logit soft-cap）
 - [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
 - [OLMo 2](https://arxiv.org/abs/2501.00656)（公开配方中的 QK-Norm 与 z-loss）
+- [Kimi K2](https://arxiv.org/abs/2507.20534)（MuonClip / QK-Clip）
