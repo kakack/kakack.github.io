@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 680" role="img" aria-labelledby="title desc">
+  <title id="title">蒸馏两条路径，评估回到数据</title>
+  <desc id="desc">黑盒用 teacher 样本做 SFT。白盒对齐教师分布。评估的虚线回到数据和配方。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:8 7}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round}
+      .title{font:700 34px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .on{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .label{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .small{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .sd{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .head{font:700 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="680"/>
+  <text class="title" x="52" y="56">蒸馏两条路径，评估回到数据</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  
+  <rect class="blue" x="80" y="180" width="260" height="120" rx="20"/>
+  <text class="on" x="210" y="230">Teacher</text><text class="sd" x="210" y="260">冻结</text>
+  <rect class="ivory" x="480" y="150" width="380" height="90" rx="18"/>
+  <text class="label" x="670" y="202">黑盒：采样，再做 SFT</text>
+  <rect class="ivory" x="480" y="270" width="380" height="90" rx="18"/>
+  <text class="label" x="670" y="322">白盒：对齐教师分布</text>
+  <rect class="orange" x="1000" y="190" width="280" height="130" rx="20"/>
+  <text class="on" x="1140" y="244">Student</text><text class="sd" x="1140" y="274">可训练</text>
+  <path class="flow" d="M340 210H480" marker-end="url(#arrow)"/>
+  <path class="flow" d="M340 270H480" marker-end="url(#arrow)"/>
+  <path class="flow" d="M860 195H1000" marker-end="url(#arrow)"/>
+  <path class="flow" d="M860 315H1000" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1140 320C1140 400 670 430 670 360" marker-end="url(#arrow)"/>
+  <rect class="green" x="480" y="500" width="800" height="100" rx="18"/>
+  <text class="on" x="880" y="542">评估不合成一个总分</text>
+  <text class="sd" x="880" y="572">失败要能指回 manifest</text>
+  <path class="grad" d="M480 560C200 640 40 420 80 240" marker-end="url(#arrow)"/>
+  <text class="note" x="52" y="650">实线是主流程，虚线表示反馈（梯度）。回到白盒那一格的是蒸馏梯度；绕回 Teacher 的是评估对数据和配方的反馈。</text>
+
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 560" role="img" aria-labelledby="title desc">
+  <title id="title">一条 agent 轨迹上的奖励</title>
+  <desc id="desc">模型调用工具、读观察、在任务结束时得到奖励。梯度回到参与决策的 token。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:8 7}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round}
+      .title{font:700 34px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .label{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .on{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .small{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
+      .sd{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
+      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .head{font:700 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="560"/>
+  <text class="title" x="52" y="56">一条 agent 轨迹上的奖励</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  
+  <rect class="orange" x="52" y="180" width="220" height="100" rx="18"/>
+  <rect class="ivory" x="360" y="180" width="220" height="100" rx="18"/>
+  <rect class="blue" x="668" y="180" width="220" height="100" rx="18"/>
+  <rect class="ivory" x="976" y="180" width="220" height="100" rx="18"/>
+  <rect class="green" x="1284" y="180" width="260" height="100" rx="18"/>
+  <text class="on" x="162" y="225">模型</text><text class="sd" x="162" y="252">可训练</text>
+  <text class="label" x="470" y="225">工具调用</text><text class="small" x="470" y="252">动作</text>
+  <text class="on" x="778" y="225">观察</text><text class="sd" x="778" y="252">环境返回</text>
+  <text class="label" x="1086" y="225">再决策</text><text class="small" x="1086" y="252">多轮</text>
+  <text class="on" x="1414" y="225">终端奖励</text><text class="sd" x="1414" y="252">任务结束</text>
+  <path class="flow" d="M272 230H360" marker-end="url(#arrow)"/>
+  <path class="flow" d="M580 230H668" marker-end="url(#arrow)"/>
+  <path class="flow" d="M888 230H976" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1196 230H1284" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1414 280C1414 420 162 420 162 280" marker-end="url(#arrow)"/>
+  <text class="note" x="52" y="500">实线是主流程，虚线是反馈（梯度）。观察默认不进 loss，除非它本身是要学习的模型输出。schema 版本必须和评测一致。</text>
+
+</svg>
