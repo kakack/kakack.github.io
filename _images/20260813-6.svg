@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 760" role="img" aria-labelledby="title desc">
+  <title id="title">开训前数据消融：受控代理实验与多尺度复核闭环</title>
+  <desc id="desc">从注册数据假设、单因素受控对照、小规模 proxy 初筛、目标 checkpoint 短退火复核到多维切片审计，通过后写回版本化 sidecar 与正式 mixture，未通过则抽检正负样本回流重审。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round}
+      .feedback{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="760"/>
+  <text class="title" x="52" y="56">数据决策的受控代理实验：从假设注册到跨尺度复核</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Top Row: 5 sequential stages -->
+  <rect class="orange" x="52" y="160" width="276" height="164" rx="20"/>
+  <text class="on" x="190" y="212">1. 注册数据假设</text>
+  <text class="sd" x="190" y="246">例：新解析器保护公式</text>
+  <text class="sd" x="190" y="274">明确目标能力与预期代价</text>
+
+  <rect class="ivory" x="382" y="160" width="292" height="164" rx="20"/>
+  <text class="label" x="528" y="212">2. 锁死单因素对照</text>
+  <text class="small" x="528" y="246">同 raw 池、冻结 Tokenizer</text>
+  <text class="small" x="528" y="274">同架构、同 token 预算、多 seed</text>
+
+  <rect class="ivory" x="728" y="160" width="292" height="164" rx="20"/>
+  <text class="label" x="874" y="212">3. 多尺度 Proxy 初筛</text>
+  <text class="small" x="874" y="246">同时报留存率、unique token</text>
+  <text class="small" x="874" y="274">与 CPU/GPU 处理小时成本</text>
+
+  <rect class="ivory" x="1074" y="160" width="302" height="164" rx="20"/>
+  <text class="label" x="1225" y="212">4. 目标尺度短退火复核</text>
+  <text class="small" x="1225" y="246">在较大 Checkpoint 上续训验证</text>
+  <text class="small" x="1225" y="274">看完整学习曲线，防排名翻转</text>
+
+  <rect class="green" x="1430" y="160" width="318" height="164" rx="20"/>
+  <text class="on" x="1589" y="212">5. 切片与污染审计</text>
+  <text class="sd" x="1589" y="246">语言 / 领域 / 长度 / 负向指标</text>
+  <text class="sd" x="1589" y="274">去污染与 Judge 顺序校准通过？</text>
+
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M328 242H382"/>
+    <path d="M674 242H728"/>
+    <path d="M1020 242H1074"/>
+    <path d="M1376 242H1430"/>
+  </g>
+
+  <!-- Bottom Row: Pass -> Sidecar Asset; Fail -> Stratified Inspection -> Feedback -->
+  <rect class="blue" x="1150" y="458" width="598" height="148" rx="22"/>
+  <text class="on" x="1449" y="508">写回版本化 Sidecar 与正式训练 Mixture</text>
+  <text class="sd" x="1449" y="542">原始文档湖保持只读不可变；固化分类器版本、阈值与 reason code</text>
+  <text class="sd" x="1449" y="570">连同 Dataset Card 与精确留存账本进入开训清单</text>
+
+  <rect class="ivory" x="382" y="458" width="590" height="148" rx="22"/>
+  <text class="label" x="677" y="508">分层抽检「被保留 vs 被丢弃」样本</text>
+  <text class="small" x="677" y="542">定位分类器是否学到表面格式捷径、误删少数语言或引入偏差</text>
+  <text class="small" x="677" y="570">修正正例定义（DCLM 经验）或退回调整规则阈值</text>
+
+  <!-- Pass solid arrow -->
+  <path class="flow" d="M1640 324V458" marker-end="url(#arrow)"/>
+  <text class="small" x="1692" y="396">收益覆盖成本</text>
+
+  <!-- Fail dashed feedback -->
+  <path class="feedback" d="M1500 324C1500 398 1120 398 972 496" marker-end="url(#arrow)"/>
+  <text class="small" x="1225" y="384">出现负向回退或尺度翻转</text>
+  <path class="feedback" d="M382 532H190C156 532 156 488 156 324" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="708">实线是验证通过并落盘的主流程，虚线是未过关时的抽检与假设修正回流。小模型 proxy 只能做初筛，关键配比必须在目标尺度复核。</text>
+</svg>

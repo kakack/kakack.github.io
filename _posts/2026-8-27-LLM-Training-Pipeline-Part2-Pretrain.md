@@ -11,7 +11,7 @@ pinned: false
 
 ---
 
-第一篇把训练开始之前的事做完了：目标、冻结评测集、数据版本、tokenizer 和 packed batch 都已经能指回具体文档。从这一步起，优化器才第一次看到 token。
+第一篇交过来的输入已经定死：冻结的 tokenizer、定好配比的 mixture 与训练/验证切片、写死序列边界的 packed sequence、可重放的 sample order，以及能指回具体批次和文档的 manifest。从这一步起，优化器才第一次看到 token。
 
 预训练在做的事很窄。给定上下文 $$x_{\lt t}$$，模型输出词表上的分布，训练最小化下一个 token 的负对数似然。它不负责「变成助手」，也不负责证明某个架构先进。本篇要回答的是：这个目标在一个 step 里怎么流动，Scaling Laws 到底替你决定了什么，Dense 和 MoE 改变的是哪一种梯度，学习率日程为什么会卡住后面的数据实验，以及 loss 突然跳起来时，该看哪个信号、动哪个旋钮。
 
@@ -23,7 +23,7 @@ pinned: false
 
 ## 一、一个 step 里，前向和梯度各走一遍
 
-![一个预训练 step 的前向数据流与梯度回传](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-1.png)
+![一个预训练 step 的前向主流程与梯度回传](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-1.png)
 
 *图 1：一个 training step。实线是前向和权重更新，虚线是梯度——沿用系列图例里「虚线表示反馈」的含义，训练里回流的信号就是梯度。AdamW 用虚线边框，表示它常驻但不在前向计算图上。*
 
@@ -137,6 +137,10 @@ DeepSeek-V3 的 FP8 不是「整个模型用 FP8 训练」。三个 GEMM——�
 
 精度故障和数据故障的分界很具体：同一 batch 换一组机器或换一个集合通信实现就不再出现 NaN，先查缩放、累加和 all-to-all，不要先去删文档。
 
+![DeepSeek-V3 混合精度边界：降的是线性层 GEMM，不是所有算子](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-6.png)
+
+*图 5：DeepSeek-V3 的混合精度边界。实线是前向计算与权重写回，虚线是回传给常驻高精度状态的梯度。左框三个线性层 GEMM 使用细粒度分块缩放的 FP8 输入并抬回高精度累加；右框敏感算子以及常驻的 FP32 master weight、权重梯度存储和 AdamW 状态保持高精度。*
+
 ---
 
 ## 六、Loss spike：先分类，再动旋钮
@@ -150,7 +154,7 @@ Loss spike 指的是 loss 在很少的 step 内明显跳起。它可能在几十
 
 ![Loss spike 的诊断分支](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-5.png)
 
-*图 5：上面两条分叉回答「要不要动数据和 checkpoint」。下面四格回答「信号已经指向某一层时，旋钮是哪一个」。梯度裁剪和降低学习率是围栏，放在诊断之后。*
+*图 6：上面两条分叉回答「要不要动数据和 checkpoint」。下面四格回答「信号已经指向某一层时，旋钮是哪一个」。梯度裁剪和降低学习率是围栏，放在诊断之后。*
 
 ### 6.1 重放实验，决定你动的是数据还是状态
 
@@ -207,7 +211,7 @@ $$
 \mathcal{L}_z = 10^{-4} \, \mathbb{E}\!\left[\log^{2} Z\right]
 $$
 
-它惩罚的是 LM head 的尺度，不是 attention。系数 $$10^{-4}$$ 是 PaLM 的选择。换一个模型和词表，这个数需要重新看，不能当成默认开关。
+它惩罚的是 LM head 的尺度，不是 attention。系数 $$10^{-4}$$ 是 PaLM 的选择；换一个模型和词表，这个数要跟着 $$\log Z$$ 的尺度重扫。
 
 ```python
 def z_loss(logits, coef=1e-4):
@@ -231,22 +235,17 @@ Llama 3 405B 是 Dense、BF16、长余弦、batch 和序列长度一起加。报
 
 DeepSeek-V3 是 MoE、FP8 GEMM、常数学习率平台、bias 式负载均衡，再加上 MTP 这条额外损失。敏感算子留在高精度，均衡项几乎不进主 loss。报告的稳定性结论是：**没有不可恢复的 spike，也没有回滚**。预训练 2.664M H800 GPU 小时这个数对应 14.8T token 的预训练本身；第一篇引用的 2.788M 还包含上下文扩展和后训练。不要把两个账本加成一次。
 
-两次运行都稳定，只说明这两份 2024 年的配方在它们自己的运行里没有被迫回滚。不能从这里推出「BF16、早期小 batch、长余弦」就是后来的默认答案：Kimi K2 换成了 MuonClip（Muon + QK-Clip），因为 Muon 更容易把注意力 logit 打爆。PaLM 和 GLM 写的是更大的模型第一次碰到表示范围和状态耦合时实际发生过的事。第六节的五项日志仍然要留：否则下一次不可恢复的跳变，你分不清该回滚、该隔离文档、该查 FP8，还是该查优化器把 logit 推高了。
+两次运行都稳定，只说明这两份 2024 年的配方在它们自己的运行里没有被迫回滚。更晚的运行也没有停在「BF16、早期小 batch、长余弦」这一组组合上：Kimi K2 换成了 MuonClip（Muon + QK-Clip），因为 Muon 更容易把注意力 logit 打爆。PaLM 和 GLM 写的是更大的模型第一次碰到表示范围和状态耦合时实际发生过的事。第六节的五项日志仍然要留：否则下一次不可恢复的跳变，你分不清该回滚、该隔离文档、该查 FP8，还是该查优化器把 logit 推高了。
 
 ---
 
 ## 八、预训练交出去的是一个 base model
 
-预训练结束时，模型会续写，不会因此变成在回答问题。问「法国的首都是哪里」，续写「德国的首都是哪里」对语言建模是完全合理的。SFT 才开始改这个条件。那是第四篇的事。
+预训练结束时，模型会续写，还不会按问题回答。问「法国的首都是哪里」，续写「德国的首都是哪里」对语言建模完全合理。SFT 才开始改这个条件，那是第四篇，不是第三篇。
 
-这一篇该留下的判断标准有四条：
+留在工程台账上的只有几条硬边界：主监督仍是全部有效 token 上的负对数似然，MoE 的 bias 调节和 MTP 损失都要单独记账，梯度累积先求和再除以全局有效 token 数；Scaling 选的是这笔训练 FLOPs 下的参数和 token 搭配，小尺寸训过 compute-optimal 是替线上推理省钱，MoE 不能把 671B 总参数直接丢上稠密的 Chinchilla 轴；学习率一旦进入衰减，数据改动和日程改动就缠在一起，常数平台的价值是把这个决定往后推；Loss spike 先拿更早的 checkpoint 重放同一批数据——不复现就回滚并跳过那段 batch，跨状态都复现才回 manifest 隔离文档，embedding 梯度、attention logit 和 $$\log Z$$ 分别对应三个不同旋钮。
 
-1. 一个 step 的监督只有 token 级负对数似然；MoE 的 bias 和 MTP 是额外通道，要单独记账。
-2. Scaling law 选的是「这笔 FLOPs 下的参数和 token」，小模型训过最低点是为了推理，不是拟合失败。
-3. 学习率一旦进入衰减，数据改动和日程改动就缠在一起。常数平台的价值是把这个决定往后推。
-4. Loss spike 先做重放。不复现就回滚并跳过一段 batch；跨状态都复现才隔离文档。embedding、attention logit、$$\log Z$$ 是三个不同的旋钮。
-
-下一篇进入 mid-training。图 4 里 DeepSeek 的余弦段和最后 500B，以及 Llama 3 余弦后段，都会在那里变成数据问题：数学、代码和长上下文是在衰减期升配，还是在常数段就该加，怎样才不算把学习率下降误记成数据收益。
+下一篇接收的是主干训练后段的阶段化 checkpoint（常数平台或衰减窗口），以及第一篇预留的来源、领域、质量、长度标签和可重配数据池。
 
 ---
 

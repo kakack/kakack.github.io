@@ -15,7 +15,7 @@ pinned: false
 
 第三篇的原话是：只要 loss 仍铺在全部 token 上，监督位置就还没变；一旦某段数据只训 response，阶段名即使仍叫退火，语义上已经是 SFT。MiniCPM 把 SFT 风格数据放进 decay，OLMo 2 的 Dolmino 里有 FLAN，两份报告都没写明这些样本是整段算 loss，还是只算 response。这一篇把这个「没写明」变成可以问出口的问题。阶段边界由 mask 的位置定义，不由学习率日程或阶段名定义。
 
-第一篇已经预留了 `messages`、role 和 loss mask。这里用它们，不重新介绍数据湖。`-100` 只是 PyTorch 交叉熵的 ignore index，不是 SFT 的数学定义。loss 怎么平均，第二篇已经写过 token-mean、sequence-mean 和梯度累积，这里只引用。
+第一篇已经预留了 `messages`、chat template、role、loss mask 和生成 lineage。这里用它们，不重新介绍数据湖。`-100` 只是 PyTorch 交叉熵的 ignore index，不是 SFT 的数学定义。loss 怎么平均，第二篇已经写过 token-mean、sequence-mean 和梯度累积，这里只引用。
 
 > **范围**：文本指令微调。对照 [Llama 3](https://arxiv.org/abs/2407.21783) 的 SFT、[Tulu 3](https://arxiv.org/abs/2411.15124) 的公开配方，以及 [DeepSeek-V3](https://arxiv.org/abs/2412.19437) 报告里写明的 SFT 设置。报告没写的学习率、epoch、LoRA rank 不补。工具调用只写到 SFT 要学会的格式。
 
@@ -31,7 +31,7 @@ $$
 
 和第二篇的差别只在集合 $$\mathcal{T}$$：预训练里它几乎是全部 token，SFT 里它是 mask 留下来的那些位置。
 
-四种合法策略都存在，不能默认成「只训回答」：
+四种合法策略都存在，选哪一种要先看样本结构与训练目的：
 
 | 策略 | 进入 loss 的 span | 什么时候用 |
 |---|---|---|
@@ -70,31 +70,39 @@ DeepSeek-V3 的指令数据是 150 万条，覆盖多个领域，各领域的构
 
 一份能进训练的样本至少要回答三件事：role 是什么，哪一段参与 loss，生成它的模型和 prompt 版本是什么。最后一项是第一篇的 lineage。没有它，后面的偏好数据和蒸馏就不知道这条回答从哪来。
 
+![SFT 指令数据的三条公开路线与样本准入契约](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261110-2.png)
+
+*图 2：左侧并列三条公开指令数据路线，右侧绿色门禁卡住进训练前的三项声明（role 与模板、损失集合 $$\mathcal{T}$$、生成 lineage）。虚线表示训完的策略在多轮后训练里回流采样下一轮数据。*
+
 ---
 
 ## 四、Loss masking 的代码，和它的分母
 
 图 1 上被 mask 的 span，在代码里就是 label 变成 ignore index 的位置。两段都只留这一步。
 
-TRL 当前的 `DataCollatorForLanguageModeling` 先把 `input_ids` 抄成 labels。样本若带 `completion_mask`，0 的位置被设成 `-100`，对应图 1 的「只训 completion」。若带 `assistant_masks`，0 的位置同样被设成 `-100`，对应「每一轮 assistant」。padding 的 label 也是 `-100`，那是补齐，不是策略。
+TRL 当前的 `DataCollatorForLanguageModeling` 先把 `output["input_ids"]` 拷成 `output["labels"]`。样本若开 `completion_only_loss` 且带 `completion_mask`，0 的位置被设成 `-100`，对应图 1 的「只训 completion」；若开 `assistant_only_loss` 且带 `assistant_masks`，0 的位置同样被设成 `-100`，对应「每一轮 assistant」。padding 的 label 也是 `-100`，那是补齐，不是策略。
 
 ```python
-labels = input_ids.clone()
-if completion_mask is not None:          # 1 = completion，0 = prompt
-    labels[completion_mask == 0] = -100
-if assistant_masks is not None:          # 1 = assistant span
-    labels[assistant_masks == 0] = -100
+output["labels"] = output["input_ids"].clone()
+if self.completion_only_loss and "completion_mask" in examples[0]:
+    # ... pad completion_mask -> (batch, seq_len)，1 = completion，0 = prompt
+    output["labels"][completion_mask == 0] = -100
+if self.assistant_only_loss and "assistant_masks" in examples[0]:
+    # ... pad assistant_masks -> (batch, seq_len)，1 = assistant span
+    output["labels"][assistant_masks == 0] = -100
 ```
 
-LLaMA-Factory 在多轮编码时做同一件事。`IGNORE_INDEX` 就是 `-100`。`train_on_prompt` 为真时，source 和 target 都进 loss，对应「全序列」。否则 source 整段被忽略，target 保留，对应「每一轮 assistant」。`mask_history` 会把轮次倒序，使 `turn_idx == 0` 成为最后一轮，更早的 target 也被忽略。
+LLaMA-Factory 的 `SupervisedDatasetProcessor._encode_data_example` 在多轮编码时做同一件事。`IGNORE_INDEX` 就是 `-100`。`self.data_args.train_on_prompt` 为真时，source 和 target 都进 loss，对应「全序列」；否则 source 整段填成 `IGNORE_INDEX`，target 保留，对应「每一轮 assistant」。`self.data_args.mask_history` 会先把 `encoded_pairs` 倒序，使 `turn_idx == 0` 成为最后一轮，更早轮次的 target 也被忽略。
 
 ```python
-IGNORE_INDEX = -100
-if train_on_prompt:
+if self.data_args.mask_history:
+    encoded_pairs = encoded_pairs[::-1]  # 倒序后，turn_idx == 0 是最后一轮
+# 倒序之后，下面的判断发生在每一轮内部
+if self.data_args.train_on_prompt:
     source_label = source_ids
 else:
     source_label = [IGNORE_INDEX] * source_len
-if mask_history and turn_idx != 0:       # 倒序后，0 是最后一轮
+if self.data_args.mask_history and turn_idx != 0:
     target_label = [IGNORE_INDEX] * target_len
 else:
     target_label = target_ids
@@ -114,18 +122,17 @@ Full FT 更新全部权重。LoRA 在选定的线性层旁边加低秩增量，�
 
 SFT 数据过窄时，通用能力会掉。检查用第一篇冻结评测集里的通用切片。第三篇领域续训一节的两个数在这里同样适用：续训后减去续训前的 backward transfer，以及在同一批通用 token 上相对 SFT 起点的 KL。掉多少再决定要不要把通用对话加回混合，而不是等榜单出来再猜。
 
+![Full FT 与 LoRA：梯度同样来自 T，差别在写回哪片参数](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261110-3.png)
+
+*图 3：实线是模型交付与评测流程，虚线是来自损失集合 $$\mathcal{T}$$ 的反传梯度以及通用能力下滑时的配比回流。可训练与冻结写在节点文字里；LoRA 只把写回范围收窄到旁路低秩增量，不能省略右侧冻结通用切片上的 backward transfer 与 KL 检查。*
+
 ---
 
 ## 六、交出去的是 instruct model
 
-SFT 结束时，模型会按模板回答，还没有经过偏好优化。四条判断：
+SFT 结束时，模型会按模板回答，还没有经过偏好优化。上线或进入下一环之前，先过这几道检查：阶段边界只看哪些位置进入损失集合 $$\mathcal{T}$$，模板特殊 token 进不进损失、分母 $$\lvert\mathcal{T}\rvert$$ 怎么汇总必须和 mask 一起写进配置并配单测；样本缺了 role、loss mask 或生成 lineage 就不能进训练；Full FT 与 LoRA 只改参数更新范围，不替你补通用切片上的 backward transfer 与 KL 审计。
 
-1. SFT 仍是条件语言建模，变的是哪些位置进入损失。阶段边界由 mask 定义，不由阶段名定义。
-2. mask 要和模板、多轮角色一起定，不能默认成「只训回答」。loss 的分母和 mask 一起声明。
-3. 样本没有 role、mask 和生成 lineage，就不能进训练。
-4. Full FT 和 LoRA 的差别是参数更新范围，不是数据配方。
-
-偏好优化需要的是同一套模板下的 chosen 与 rejected，或者好/坏标签，以及产生它们时的 policy 版本。那是下一篇的输入，不是这一篇的损失。
+偏好优化需要的是同一套模板下的 chosen 与 rejected，或者好/坏标签，以及产生它们时的 policy 版本。
 
 ---
 

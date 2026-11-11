@@ -65,8 +65,8 @@
   <text class="small" x="1325" y="540">收到该 token 的梯度</text>
   <text class="label" x="1585" y="514">共享专家</text>
   <text class="small" x="1585" y="540">每个 token 都过</text>
-  <path class="flow" d="M1288 440L1325 478" marker-end="url(#arrow)"/>
-  <path class="flow" d="M1458 224C1612 252 1612 380 1590 470" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1318 440L1325 478" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1458 222C1600 248 1600 380 1585 478" marker-end="url(#arrow)"/>
 
   <rect class="orange" x="1000" y="582" width="680" height="110" rx="20"/>
   <text class="on" x="1340" y="622">bias 只参加 Top-k，不乘进输出</text>

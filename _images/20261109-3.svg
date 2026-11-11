@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 880" role="img" aria-labelledby="title desc">
-  <title id="title">领域续训的三个决策：起点、配比、replay</title>
-  <desc id="desc">DeepSeekMath 从代码 base 出发续训 500B token；56% 数学网页，10% 通用数据是刻意保留的 replay。</desc>
+  <title id="title">领域续训的三个决策：起点、配比与防遗忘审计</title>
+  <desc id="desc">DeepSeekMath 从代码 base 出发续训 500B token；报告明确验证保留 20% 代码稳住代码评测，工程上用通用切片审计防遗忘。</desc>
   <defs>
     <style>
       .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
@@ -24,7 +24,7 @@
     </marker>
   </defs>
   <rect class="bg" width="1800" height="880"/>
-  <text class="title" x="52" y="58">领域续训的三个决策：起点、配比、replay</text>
+  <text class="title" x="52" y="58">领域续训的三个决策：起点、配比与防遗忘审计</text>
   <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
 
   <rect class="blue" x="52" y="140" width="400" height="110" rx="22"/>
@@ -32,7 +32,7 @@
   <text class="sd" x="252" y="216">起点：代码 base，不是通用 base</text>
   <rect class="ivory" x="52" y="282" width="400" height="88" rx="18" stroke-dasharray="10 8"/>
   <text class="label" x="252" y="318">起点消融（可选但便宜）</text>
-  <text class="small" x="252" y="348">代码出发 > 通用出发，迁移不对称</text>
+  <text class="small" x="252" y="348">代码出发 &gt; 通用出发，迁移不对称</text>
 
   <path class="flow" d="M452 195H560" marker-end="url(#arrow)"/>
 
@@ -46,21 +46,22 @@
   <text class="bar" x="771" y="264">数学网页 56%</text>
   <text class="bar" x="1014" y="264">代码 20%</text>
   <text class="bar" x="1110" y="300">arXiv 10%</text>
-  <text class="bar" x="1174" y="336">通用 10%（replay）</text>
+  <text class="bar" x="1174" y="336">自然语言 10%</text>
   <path class="ink" d="M1110 276V242" stroke-width="2"/>
   <path class="ink" d="M1174 312V242" stroke-width="2"/>
-  <text class="small" x="1219" y="180">AlgebraicStack 4%</text>
+  <text class="small" x="1166" y="174">AlgebraicStack 4%</text>
+  <path class="ink" d="M1219 180V192" stroke-width="2"/>
 
-  <path class="flow" d="M1260 245H1350" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1260 245H1360" marker-end="url(#arrow)"/>
 
   <polygon points="1540,150 1720,245 1540,340 1360,245" class="green"/>
   <text class="on" x="1540" y="236">消融后再信</text>
   <text class="sd" x="1540" y="264">最像 ≠ 最有用</text>
 
   <rect class="ivory" x="560" y="430" width="700" height="150" rx="22"/>
-  <text class="label" x="910" y="478">replay 防的是哪种失败</text>
-  <text class="small" x="910" y="510">领域续训最常见的塌法：通用能力悄悄退化，而评测里没放通用切片</text>
-  <text class="small" x="910" y="540">10% 通用数据 + 冻结评测集里的通用切片，两道保险缺一不可</text>
+  <text class="label" x="910" y="478">防遗忘靠配比与通用切片双保险</text>
+  <text class="small" x="910" y="510">报告明确验证：保留 20% 代码稳住 HumanEval / MBPP；10% 自然语言列在配比中</text>
+  <text class="small" x="910" y="540">工程检查：10% 自然语言只是配比；在冻结通用集上算 backward transfer 与 KL</text>
 
   <rect class="orange" x="1360" y="430" width="388" height="150" rx="22"/>
   <text class="on" x="1554" y="482">DeepSeekMath-Base 7B</text>

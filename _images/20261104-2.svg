@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">Agent 信用分配三格与 Kimi K2 里两处不同的 Rubric</title>
+  <desc id="desc">上半部分展示终端规则奖励、过程检查与不可验证任务 Rubric 三种信用分配；下半部分区分 Kimi K2 在合成轨迹进 SFT 前的 Judge Rubric 过滤与在线 RL 阶段的 Self-Critique Rubric。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="56">Agent 信用分配的三格边界与 Kimi K2 里两处不同的 Rubric</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Top Section: 3 Credit Assignment Buckets -->
+  <text class="head" x="52" y="122">1. 轨迹上的信用分配分成三格</text>
+
+  <rect class="green" x="52" y="146" width="532" height="164" rx="20"/>
+  <text class="on" x="318" y="190">第一格：终端规则奖励</text>
+  <text class="sd" x="318" y="224">任务末尾 1 个比特（测试通过 / 指令约束满足）</text>
+  <text class="sd" x="318" y="254">注：SWE-RL 写明的仓库级规则奖励例子是</text>
+  <text class="sd" x="318" y="282">「与参考解的补丁相似度」，而非单测变绿</text>
+
+  <rect class="dash" x="634" y="146" width="532" height="164" rx="20"/>
+  <text class="label" x="900" y="190">第二格：中间过程检查（PRM）</text>
+  <text class="small" x="900" y="224">设想给每一次工具调用单独打分</text>
+  <text class="small" x="900" y="254">DeepSeek-R1 未纳入大规模 RL：步骤边界难切、</text>
+  <text class="small" x="900" y="282">标注难扩规模，模型打分易重陷 Reward Hacking</text>
+
+  <rect class="blue" x="1216" y="146" width="532" height="164" rx="20"/>
+  <text class="on" x="1482" y="190">第三格：开放任务 Self-Critique Rubric</text>
+  <text class="sd" x="1482" y="224">写作、开放问答等没有可编程判分器</text>
+  <text class="sd" x="1482" y="254">按结构化 Rubric 对候选输出做成对比较</text>
+  <text class="sd" x="1482" y="282">需配合可验证锚点防评判器自身漂移</text>
+
+  <!-- Bottom Section: Disambiguating the two Rubrics in Kimi K2 -->
+  <text class="head" x="52" y="372">2. Kimi K2 报告里两处都叫「Rubric」，但阶段与作用完全不同</text>
+
+  <!-- Left Box: Offline SFT Trajectory Filtering -->
+  <rect class="ivory" x="52" y="400" width="760" height="346" rx="22"/>
+  <text class="label" x="432" y="444">场景 A：进 SFT 之前的合成轨迹过滤（数据清洗，非 RL 奖励）</text>
+
+  <rect class="ivory" x="88" y="484" width="210" height="104" rx="16"/>
+  <text class="label" x="193" y="528">模拟环境交互</text>
+  <text class="small" x="193" y="558">批量合成工具轨迹</text>
+
+  <rect class="green" x="342" y="484" width="214" height="104" rx="16"/>
+  <text class="on" x="449" y="528">Judge + 题面 Rubric</text>
+  <text class="sd" x="449" y="558">只留判定成功的轨迹</text>
+
+  <rect class="blue" x="600" y="484" width="176" height="104" rx="16"/>
+  <text class="on" x="688" y="528">SFT 数据池</text>
+  <text class="sd" x="688" y="558">离线训练资产</text>
+
+  <path class="flow" d="M298 536H342" marker-end="url(#arrow)"/>
+  <path class="flow" d="M556 536H600" marker-end="url(#arrow)"/>
+  <text class="small" x="432" y="652">职责边界：这里只是第四篇 SFT 数据入库前的质检筛子，</text>
+  <text class="small" x="432" y="684">并没有在线反向传播奖励梯度</text>
+
+  <!-- Right Box: Online RL Post-training -->
+  <rect class="ivory" x="868" y="400" width="880" height="346" rx="22"/>
+  <text class="label" x="1308" y="438">场景 B：RL 后训练阶段的在线混合奖励（梯度更新闭环）</text>
+
+  <rect class="orange" x="904" y="534" width="200" height="114" rx="18"/>
+  <text class="on" x="1004" y="582">Actor Policy</text>
+  <text class="sd" x="1004" y="614">采样，可训练</text>
+
+  <rect class="green" x="1174" y="492" width="292" height="88" rx="16"/>
+  <text class="on" x="1320" y="530">可验证任务：规则 Verifier</text>
+  <text class="sd" x="1320" y="558">提供客观对错信号</text>
+
+  <rect class="blue" x="1174" y="608" width="292" height="96" rx="16"/>
+  <text class="on" x="1320" y="646">Critic（Self-Critique Rubric）</text>
+  <text class="sd" x="1320" y="676">成对评判开放任务，可训练</text>
+
+  <rect class="ivory" x="1530" y="538" width="184" height="106" rx="16"/>
+  <text class="label" x="1622" y="582">策略更新</text>
+  <text class="small" x="1622" y="612">合并两路信号</text>
+
+  <!-- Flows inside RL box -->
+  <path class="flow" d="M1104 566C1140 566 1138 536 1174 536" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1104 612C1140 612 1138 656 1174 656" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1466 536C1498 536 1498 572 1530 572" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1466 656C1498 656 1498 608 1530 608" marker-end="url(#arrow)"/>
+
+  <!-- Crucial Kimi K2 fact: Verifiable on-policy rollouts continuously update Critic! -->
+  <path class="grad" d="M1320 580V608" marker-end="url(#arrow)"/>
+  <text class="small" x="1488" y="728">关键校准：用可验证任务 on-policy rollout 持续更新 Critic</text>
+  <path class="grad" d="M1622 538V464H1004V534" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="798">实线是采样与判分主流程，虚线是梯度更新：包括回到 Policy 的策略梯度，以及把客观规则信号持续灌进 Critic 的校准更新。</text>
+</svg>

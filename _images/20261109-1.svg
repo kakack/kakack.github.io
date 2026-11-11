@@ -37,7 +37,7 @@
   <text class="small" x="190" y="416">warmup</text>
   <text class="small" x="660" y="200">常数平台：探针实验在这里分支</text>
   <text class="small" x="748" y="340">短衰减探针（虚线，可选）</text>
-  <text class="small" x="1340" y="280">衰减：正式升配在这里</text>
+  <text class="small" x="1440" y="246">衰减：正式升配在这里</text>
 
   <rect class="panel" x="52" y="478" width="1696" height="330" rx="26"/>
   <text class="head" x="84" y="524">高质量 / 领域数据的采样权重</text>
@@ -50,7 +50,8 @@
   <text class="axis" x="1500" y="786">token</text>
 
   <path class="dash" d="M1100 226V740" stroke-width="4"/>
-  <text class="label" x="1100" y="464">同一时刻</text>
+  <rect x="1044" y="441" width="112" height="34" rx="8" fill="#FAF9F5"/>
+  <text class="label" x="1100" y="465">同一时刻</text>
 
   <text class="note" x="52" y="860">曲线和配比都是示意。衰减的起点与升配的时刻重合：这段 loss 的下降里，学习率和数据各自做了多少功，单看曲线分不出。</text>
   <text class="note" x="52" y="894">平台上的虚线分支是 MiniCPM 式短衰减探针与 OLMo 2 的 microanneal：从同一平台 checkpoint 出发，衰减几十 B token 就能比数据。</text>

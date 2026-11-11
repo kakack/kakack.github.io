@@ -50,8 +50,8 @@
   <path class="ink" d="M140 590V470" stroke-width="3"/>
   <path class="flow" d="M160 572L210 500H820C1040 500 1160 530 1320 566H1460V586H1640"/>
   <text class="small" x="500" y="488">2.2e-4 保持到 10T token</text>
-  <text class="small" x="1080" y="524">其后 4.3T：余弦降到 2.2e-5</text>
-  <text class="small" x="1390" y="554">333B</text>
+  <text class="small" x="1150" y="498">其后 4.3T：余弦降到 2.2e-5</text>
+  <text class="small" x="1390" y="550">333B</text>
   <text class="small" x="1560" y="612">最后 167B：7.3e-6</text>
   <text class="axis" x="160" y="628">前 2,000 step warmup</text>
   <text class="note" x="84" y="700">形状是示意，数字来自技术报告。常数段的用途是：还没承诺衰减之前，可以按同一学习率继续加 token。</text>

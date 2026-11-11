@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 860" role="img" aria-labelledby="title desc">
+  <title id="title">偏好变体坐标与 Llama 3 的 DPO 损失拆解</title>
+  <desc id="desc">上半部分按相对标准 DPO 改了哪一项分组展示 IPO、KTO、ORPO 与 SimPO/Tulu 3；下半部分展示 Llama 3 在同一模板下 mask 掉格式 token 并在 chosen 上加 0.2 倍 NLL。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:3.8;stroke-dasharray:8 7}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="860"/>
+  <text class="title" x="52" y="56">DPO 变体分组与 Llama 3 损失里的两处算法修改</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Top Section: Variants grouped by what single piece they change -->
+  <text class="head" x="52" y="122">1. 变体按「改了哪一项」归类，而不是一串平行缩写</text>
+
+  <rect class="ivory" x="52" y="148" width="398" height="214" rx="20"/>
+  <rect class="blue" x="84" y="172" width="334" height="44" rx="10"/>
+  <text class="on" x="251" y="201">IPO：改 BT→DPO 的损失形状</text>
+  <text class="small" x="251" y="248">确定性偏好下，标准 DPO 会把</text>
+  <text class="small" x="251" y="278">chosen / rejected 对数比推向无穷</text>
+  <text class="small" x="251" y="308">改用平方损失把对数比拉在有限目标</text>
+  <text class="small" x="251" y="338">（TRL 实现另除以长度使 β 可比）</text>
+
+  <rect class="ivory" x="482" y="148" width="398" height="214" rx="20"/>
+  <rect class="blue" x="514" y="172" width="334" height="44" rx="10"/>
+  <text class="on" x="681" y="201">KTO：改「必须成对」的数据要求</text>
+  <text class="small" x="681" y="248">不要求同题成对的 chosen 与 rejected</text>
+  <text class="small" x="681" y="278">直接接收单条样本的好 / 坏二元标签</text>
+  <text class="small" x="681" y="308">对应前景理论里的得失权衡</text>
+  <text class="small" x="681" y="338">适配线上点赞 / 点踩类非配对反馈</text>
+
+  <rect class="ivory" x="912" y="148" width="398" height="214" rx="20"/>
+  <rect class="blue" x="944" y="172" width="334" height="44" rx="10"/>
+  <text class="on" x="1111" y="201">ORPO：去掉冻结 Reference</text>
+  <text class="small" x="1111" y="248">把 SFT 交叉熵与偏好对比</text>
+  <text class="small" x="1111" y="278">合写成单阶段 Odds Ratio 损失</text>
+  <text class="small" x="1111" y="308">省掉预计算或常驻 Reference logp</text>
+  <text class="small" x="1111" y="338">单阶段同时学格式与偏好拉踩</text>
+
+  <rect class="ivory" x="1342" y="148" width="406" height="214" rx="20"/>
+  <rect class="blue" x="1374" y="172" width="342" height="44" rx="10"/>
+  <text class="on" x="1545" y="201">SimPO / Tulu 3：加长度归一化</text>
+  <text class="small" x="1545" y="248">SimPO 去 Reference，用序列平均</text>
+  <text class="small" x="1545" y="278">对数概率充当隐式奖励</text>
+  <text class="small" x="1545" y="308">Tulu 3 公开采用长度归一化 DPO</text>
+  <text class="small" x="1545" y="338">在损失侧抑制长回答系统性占优</text>
+
+  <!-- Bottom Section: Llama 3 DPO Recipe Anatomy -->
+  <text class="head" x="52" y="424">2. Llama 3 的 DPO 配方拆解（同一套模板渲染，LR = 1e-5，β = 0.1）</text>
+
+  <!-- Chosen Row -->
+  <text class="label" x="116" y="502">chosen</text>
+  <rect class="dash" x="210" y="466" width="168" height="58" rx="12"/>
+  <text class="small" x="294" y="500">Header 屏蔽</text>
+  <rect class="blue" x="392" y="466" width="416" height="58" rx="12"/>
+  <text class="on" x="600" y="501">chosen 回答正文（算对数概率）</text>
+  <rect class="dash" x="822" y="466" width="168" height="58" rx="12"/>
+  <text class="small" x="906" y="500">终止符屏蔽</text>
+
+  <!-- Rejected Row -->
+  <text class="label" x="116" y="592">rejected</text>
+  <rect class="dash" x="210" y="556" width="168" height="58" rx="12"/>
+  <text class="small" x="294" y="590">Header 屏蔽</text>
+  <rect class="blue" x="392" y="556" width="416" height="58" rx="12"/>
+  <text class="on" x="600" y="591">rejected 回答正文（算对数概率）</text>
+  <rect class="dash" x="822" y="556" width="168" height="58" rx="12"/>
+  <text class="small" x="906" y="590">终止符屏蔽</text>
+
+  <text class="small" x="600" y="650">修改 1：两边同时 Mask 格式 token，防止梯度要求同时提高又压低同一套角色头与终止符</text>
+
+  <!-- Loss combination -->
+  <rect class="ivory" x="1076" y="458" width="388" height="78" rx="16"/>
+  <text class="label" x="1270" y="492">DPO 对数比分类项</text>
+  <text class="small" x="1270" y="518">-log σ(β · Δ log-ratio)</text>
+
+  <rect class="ivory" x="1076" y="556" width="388" height="84" rx="16"/>
+  <text class="label" x="1270" y="590">修改 2：chosen 上加 0.2 × NLL</text>
+  <text class="small" x="1270" y="618">防止对比学习把 chosen 本身的概率也拉低</text>
+
+  <rect class="orange" x="1540" y="494" width="208" height="110" rx="18"/>
+  <text class="on" x="1644" y="542">Policy</text>
+  <text class="sd" x="1644" y="574">可训练（六轮迭代）</text>
+
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M990 486H1076"/>
+    <path d="M990 506C1034 506 1034 596 1076 596"/>
+    <path d="M990 585C1034 585 1034 514 1076 514"/>
+  </g>
+  <path class="grad" d="M1464 497C1504 497 1504 532 1540 532" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1464 598C1504 598 1504 566 1540 566" marker-end="url(#arrow)"/>
+
+  <!-- Bottom note -->
+  <rect class="green" x="52" y="692" width="1696" height="66" rx="16"/>
+  <text class="on" x="900" y="732">第四篇与第五篇在这里合流：格式 token 进不进 𝒯 仍要显式声明；0.2 × NLL 让 SFT 项与偏好项出现在同一条总损失里</text>
+
+  <text class="note" x="52" y="814">实线是前向计算与损失组装，虚线边框是被 Mask 的格式 token，虚线箭头是回到可训练 Policy 的梯度。</text>
+</svg>

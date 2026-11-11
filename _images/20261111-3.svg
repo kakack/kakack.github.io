@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">评估防失真与闭环追责：Judge 偏差、时间切片与数据契约回流</title>
+  <desc id="desc">左上展示 LLM-as-a-Judge 的位置、冗长与自我增强三种偏差；右上展示按训练语料 cutoff 切分静态旧题与动态新题；下方展示分项失败信号指回第一篇的 manifest、tool schema 与 checkpoint。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:3.8;stroke-dasharray:8 7}
+      .cutoff{fill:none;stroke:#141413;stroke-width:4;stroke-dasharray:10 8}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .feedback{fill:none;stroke:#141413;stroke-width:3.8;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="56">评估不是事后总分：防 Judge 偏差、防榜单过期、指回第一篇契约</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Left Panel: LLM-as-a-Judge 3 Biases -->
+  <rect class="ivory" x="52" y="114" width="820" height="436" rx="22"/>
+  <text class="head" x="88" y="158">1. 模型当裁判的三种固有偏差（Zheng et al.）</text>
+
+  <rect class="ivory" x="88" y="186" width="234" height="148" rx="16"/>
+  <text class="label" x="205" y="232">位置偏差</text>
+  <text class="small" x="205" y="266">交换候选 A / B 的</text>
+  <text class="small" x="205" y="294">展示顺序即改变胜负</text>
+
+  <rect class="ivory" x="345" y="186" width="234" height="148" rx="16"/>
+  <text class="label" x="462" y="232">冗长偏差</text>
+  <text class="small" x="462" y="266">倾向判更长的回答赢</text>
+  <text class="small" x="462" y="294">放大前文各环长度膨胀</text>
+
+  <rect class="ivory" x="602" y="186" width="234" height="148" rx="16"/>
+  <text class="label" x="719" y="232">自我增强偏差</text>
+  <text class="small" x="719" y="266">Judge 更偏爱与自己</text>
+  <text class="small" x="719" y="294">同一模型家族的输出</text>
+
+  <rect class="green" x="88" y="366" width="748" height="150" rx="18"/>
+  <text class="on" x="462" y="414">评测记录纪律：Judge 配置与分数绑定落盘</text>
+  <text class="sd" x="462" y="448">固定 Judge 版本号、采样温度、Prompt 模板与正反双向顺序交换（Swap）</text>
+  <text class="sd" x="462" y="480">能力曲线、偏好胜率、Agent 成功率按冻结 Holdout 分项报，严禁压成一个平均分</text>
+
+  <!-- Right Panel: Dynamic Benchmark Cutoff -->
+  <rect class="ivory" x="928" y="114" width="820" height="436" rx="22"/>
+  <text class="head" x="964" y="158">2. 静态榜会过期：对齐训练语料时间截止线</text>
+
+  <!-- Timeline axis -->
+  <path class="flow" d="M968 232H1704" marker-end="url(#arrow)"/>
+  <text class="small" x="1110" y="208">更早发布的公开题目</text>
+  <text class="small" x="1548" y="208">持续更新的新发布题目</text>
+
+  <path class="cutoff" d="M1336 196V516"/>
+  <rect class="orange" x="1220" y="246" width="232" height="42" rx="10"/>
+  <text class="sd" x="1336" y="273">训练语料 Cutoff 日期</text>
+
+  <rect class="dash" x="964" y="314" width="340" height="202" rx="16"/>
+  <text class="label" x="1134" y="360">早于 Cutoff 的静态题库</text>
+  <text class="small" x="1134" y="396">原题或改写版可能已混入网页池</text>
+  <text class="small" x="1134" y="426">涨分可能来自「背题记忆」</text>
+  <text class="small" x="1134" y="456">需回查第一篇 n-gram / 语义去污染</text>
+
+  <rect class="blue" x="1368" y="314" width="344" height="202" rx="16"/>
+  <text class="on" x="1540" y="360">晚于 Cutoff 的干净切片</text>
+  <text class="sd" x="1540" y="396">LiveCodeBench：按题目发布时间切分</text>
+  <text class="sd" x="1540" y="426">LiveBench：持续轮换新题防泄漏</text>
+  <text class="sd" x="1540" y="456">先核对时间线，再把涨分记给算法</text>
+
+  <!-- Bottom Full-Width Loopback to Part 1 Manifest -->
+  <rect class="ivory" x="52" y="596" width="540" height="156" rx="20"/>
+  <text class="label" x="322" y="644">分项评测发现异常或回退</text>
+  <text class="small" x="322" y="678">某领域掉点 / 输出暴涨 / 工具调用失败</text>
+  <text class="small" x="322" y="708">不靠猜超参，按 Lineage 逆向定位</text>
+
+  <rect class="orange" x="692" y="596" width="1056" height="156" rx="22"/>
+  <text class="on" x="1220" y="642">全系列收束回第一篇数据契约：任何失败必须能指回三项坐标</text>
+  <rect class="ivory" x="728" y="668" width="308" height="58" rx="12"/>
+  <text class="small" x="882" y="703">1. 哪一份数据 Manifest 与配比</text>
+  <rect class="ivory" x="1062" y="668" width="316" height="58" rx="12"/>
+  <text class="small" x="1220" y="703">2. 哪一版 Tool Schema 与权限边界</text>
+  <rect class="ivory" x="1404" y="668" width="312" height="58" rx="12"/>
+  <text class="small" x="1560" y="703">3. 哪个 Teacher / Policy Checkpoint</text>
+
+  <path class="flow" d="M462 550C462 576 322 570 322 596" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1540 550C1540 578 520 574 460 596" marker-end="url(#arrow)"/>
+  <path class="feedback" d="M592 674H692" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="800">实线是分项评估与时间切分流程，虚线是把评测失败追责回第一篇契约的控制闭环：没有 Lineage 的分数，改不动训练流水线。</text>
+</svg>

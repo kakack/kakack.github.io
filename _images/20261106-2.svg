@@ -58,7 +58,7 @@
   <circle cx="1335" cy="418" r="8" fill="#FAF9F5" stroke="#141413" stroke-width="3"/>
   <circle cx="1168" cy="300" r="11" fill="#788C5D" stroke="#141413" stroke-width="3"/>
   <text class="small" x="1335" y="392">同预算最低点</text>
-  <text class="small" x="1168" y="274">更小 N，更多 D</text>
+  <text class="small" x="1232" y="274">更小 N，更多 D</text>
 
   <rect class="green" x="978" y="520" width="340" height="64" rx="16"/>
   <text class="on" x="1148" y="558">8B / 70B：训练换推理</text>

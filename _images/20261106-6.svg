@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">DeepSeek-V3 混合精度边界：FP8 仅进线性层 GEMM</title>
+  <desc id="desc">左侧展示线性层前向、激活梯度、权重梯度三个 GEMM 采用细粒度分块缩放的 FP8 输入并做高精度累加；右侧展示保持 BF16 或 FP32 的敏感算子与常驻高精度状态。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:10 8}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="56">DeepSeek-V3 混合精度边界：降的是线性层 GEMM，不是所有算子</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Left Panel: FP8 GEMM Zone -->
+  <rect class="ivory" x="52" y="114" width="848" height="632" rx="24"/>
+  <text class="head" x="88" y="160">FP8 计算区：仅限线性层的三个矩阵乘（GEMM）</text>
+
+  <rect class="blue" x="88" y="192" width="366" height="108" rx="18"/>
+  <text class="on" x="271" y="236">激活与梯度输入（FP8）</text>
+  <text class="sd" x="271" y="268">按 1×128 细粒度分块缩放</text>
+
+  <rect class="blue" x="498" y="192" width="366" height="108" rx="18"/>
+  <text class="on" x="681" y="236">计算权重副本（FP8）</text>
+  <text class="sd" x="681" y="268">按 128×128 分块缩放（防离群值撑爆）</text>
+
+  <!-- 3 GEMMs -->
+  <rect class="ivory" x="88" y="366" width="238" height="112" rx="16"/>
+  <text class="label" x="207" y="414">前向 Fprop</text>
+  <text class="small" x="207" y="444">FP8 输入矩阵乘</text>
+
+  <rect class="ivory" x="357" y="366" width="238" height="112" rx="16"/>
+  <text class="label" x="476" y="414">激活梯度 Dgrad</text>
+  <text class="small" x="476" y="444">FP8 反传激活梯度</text>
+
+  <rect class="ivory" x="626" y="366" width="238" height="112" rx="16"/>
+  <text class="label" x="745" y="414">权重梯度 Wgrad</text>
+  <text class="small" x="745" y="444">FP8 算当前层权重梯度</text>
+
+  <!-- High-precision accumulation -->
+  <rect class="green" x="88" y="548" width="776" height="118" rx="18"/>
+  <text class="on" x="476" y="596">累加器抬回高精度（Tensor Core 累加后输出高精度张量）</text>
+  <text class="sd" x="476" y="630">在 V2-Lite / V2 规模约 1T token 对照验证中，相对 BF16 的 loss 误差低于 0.25%</text>
+
+  <text class="small" x="476" y="712">故障分界：同一 batch 换机器或换集合通信实现就不出 NaN → 先查分块缩放、累加与 all-to-all</text>
+
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M230 300V366"/>
+    <path d="M310 300C340 330 430 330 460 366"/>
+    <path d="M640 300C600 330 520 330 492 366"/>
+    <path d="M725 300V366"/>
+    <path d="M207 478V548"/>
+    <path d="M476 478V548"/>
+    <path d="M745 478V548"/>
+  </g>
+
+  <!-- Right Panel: BF16 / FP32 Preserved Zone -->
+  <rect class="ivory" x="952" y="114" width="796" height="632" rx="24"/>
+  <text class="head" x="988" y="160">高精度保留区：保持原 BF16 或 FP32 不降精度</text>
+
+  <rect class="ivory" x="988" y="192" width="346" height="94" rx="16"/>
+  <text class="label" x="1161" y="232">Embedding 与输出头</text>
+  <text class="small" x="1161" y="262">词表与 Logits 边界保持高精度</text>
+
+  <rect class="ivory" x="1366" y="192" width="346" height="94" rx="16"/>
+  <text class="label" x="1539" y="232">MoE 门控（Router）</text>
+  <text class="small" x="1539" y="262">路由打分与分发对精度敏感</text>
+
+  <rect class="ivory" x="988" y="310" width="346" height="94" rx="16"/>
+  <text class="label" x="1161" y="350">Norm（RMSNorm / LN）</text>
+  <text class="small" x="1161" y="380">均值方差归约保持高精度</text>
+
+  <rect class="ivory" x="1366" y="310" width="346" height="94" rx="16"/>
+  <text class="label" x="1539" y="350">Attention 算子</text>
+  <text class="small" x="1539" y="380">指数位与 FP32 同宽，抑制分数溢出</text>
+
+  <!-- Persistent Optimizer & Master Weights -->
+  <rect class="blue" x="988" y="476" width="724" height="190" rx="20"/>
+  <text class="on" x="1350" y="524">常驻高精度状态（可训练）</text>
+  <text class="sd" x="1350" y="558">FP32 Master Weight  |  高精度权重梯度存储  |  AdamW 动量与二阶矩</text>
+  <rect class="orange" x="1080" y="584" width="540" height="54" rx="14"/>
+  <text class="on" x="1350" y="618">优化器在高精度状态上更新，每步量化写回计算权重</text>
+
+  <!-- Cross-panel gradient & weight writeback routed cleanly through center alley x=926 -->
+  <path class="grad" d="M864 607H988" marker-end="url(#arrow)"/>
+  <text class="small" x="926" y="592">Wgrad</text>
+  <path class="flow" d="M988 524H926V246H864" marker-end="url(#arrow)"/>
+  <text class="small" x="1152" y="454">高精度更新后，经分块量化写回计算权重</text>
+
+  <text class="note" x="52" y="798">实线是前向计算与权重写回，虚线是回传给常驻状态的梯度。FP8 省掉的是三大线性矩阵乘带宽与算力，敏感算子和主权重不跟着降级。</text>
+</svg>

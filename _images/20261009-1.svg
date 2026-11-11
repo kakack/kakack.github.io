@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 780" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1320" role="img" aria-labelledby="title desc">
   <title id="title">PPO 四模型与 DPO 两模型</title>
-  <desc id="desc">PPO 里 Actor 采样，RM 打分，Reference 提供 KL，Critic 估计优势。DPO 只更新 Policy。</desc>
+  <desc id="desc">PPO 里一批 rollout 由 RM、Reference、Critic 分头消费；DPO 同一布局下打分和估值两格是空的。</desc>
   <defs>
     <style>
       .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
@@ -11,46 +11,71 @@
       .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:8 7}
       .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round}
       .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round}
-      .title{font:700 34px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .on{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .label{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .small{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .sd{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .head{font:700 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:20px;fill:#141413}
     </style>
     <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
       <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round"/>
     </marker>
   </defs>
-  <rect class="bg" width="1800" height="780"/>
+  <rect class="bg" width="1800" height="1320"/>
   <text class="title" x="52" y="56">PPO 四模型与 DPO 两模型</text>
   <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
-  
-  <text class="head" x="52" y="130">PPO：一次更新里四个角色同时在场</text>
-  <rect class="orange" x="52" y="170" width="250" height="110" rx="18"/>
-  <rect class="blue" x="430" y="170" width="280" height="110" rx="18"/>
-  <rect class="dash" x="840" y="170" width="300" height="110" rx="18"/>
-  <rect class="green" x="1260" y="170" width="280" height="110" rx="18"/>
-  <text class="on" x="177" y="214">Actor</text><text class="sd" x="177" y="244">采样，可训练</text>
-  <text class="on" x="570" y="214">Reward model</text><text class="sd" x="570" y="244">打分，冻结</text>
-  <text class="label" x="990" y="214">Reference</text><text class="small" x="990" y="244">KL，冻结</text>
-  <text class="on" x="1400" y="214">Critic</text><text class="sd" x="1400" y="244">优势，可训练</text>
-  <path class="flow" d="M302 225H430" marker-end="url(#arrow)"/>
-  <path class="flow" d="M710 225H840" marker-end="url(#arrow)"/>
-  <path class="flow" d="M1140 225H1260" marker-end="url(#arrow)"/>
-  <path class="grad" d="M1400 280C1400 390 177 390 177 280" marker-end="url(#arrow)"/>
 
-  <text class="head" x="52" y="450">DPO：同一张图里少掉 Critic 和显式 RM</text>
-  <rect class="orange" x="52" y="490" width="320" height="110" rx="18"/>
-  <rect class="dash" x="500" y="490" width="360" height="110" rx="18"/>
-  <rect class="ivory" x="1000" y="490" width="540" height="110" rx="18"/>
-  <text class="on" x="212" y="534">Policy</text><text class="sd" x="212" y="564">可训练</text>
-  <text class="label" x="680" y="534">Reference</text><text class="small" x="680" y="564">对数概率可预计算</text>
-  <text class="label" x="1270" y="534">分类损失直接比较两条对数比</text>
-  <text class="small" x="1270" y="564">没有在线采样，也没有 Critic</text>
-  <path class="flow" d="M372 545H500" marker-end="url(#arrow)"/>
-  <path class="grad" d="M212 600C212 680 680 680 680 600" marker-end="url(#arrow)"/>
-  <text class="note" x="52" y="740">实线是主流程，虚线表示反馈（梯度），与第二篇图 1 一致。虚线框是冻结模型。颜色仍表示起止、决策和资产。</text>
+  <text class="head" x="52" y="130">PPO：一批 rollout，三个消费者，两处更新</text>
+  <rect class="orange" x="52" y="320" width="250" height="110" rx="18"/>
+  <text class="on" x="177" y="364">Actor</text><text class="sd" x="177" y="394">采样，可训练</text>
+  <rect class="blue" x="390" y="320" width="240" height="110" rx="18"/>
+  <text class="on" x="510" y="364">一批 rollout</text><text class="sd" x="510" y="394">带对数概率</text>
+  <path class="flow" d="M302 375H390" marker-end="url(#arrow)"/>
 
+  <rect class="blue" x="740" y="180" width="300" height="96" rx="16"/>
+  <text class="on" x="890" y="222">Reward model</text><text class="sd" x="890" y="250">打分，冻结</text>
+  <rect class="blue" x="740" y="327" width="300" height="96" rx="16"/>
+  <text class="on" x="890" y="369">Reference</text><text class="sd" x="890" y="397">KL，冻结</text>
+  <rect class="blue" x="740" y="474" width="300" height="96" rx="16"/>
+  <text class="on" x="890" y="516">Critic</text><text class="sd" x="890" y="544">估值，可训练</text>
+  <text class="small" x="890" y="596">Critic 由价值损失单独更新</text>
+
+  <path class="flow" d="M630 352C690 352 680 228 740 228" marker-end="url(#arrow)"/>
+  <path class="flow" d="M630 375H740" marker-end="url(#arrow)"/>
+  <path class="flow" d="M630 398C690 398 680 522 740 522" marker-end="url(#arrow)"/>
+
+  <rect class="ivory" x="1180" y="327" width="340" height="96" rx="16"/>
+  <text class="label" x="1350" y="369">优势与回报</text>
+  <text class="small" x="1350" y="397">KL 折进奖励，再进 PPO 裁剪</text>
+  <path class="flow" d="M1040 228C1110 228 1110 355 1180 355" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1040 375H1180" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1040 522C1110 522 1110 395 1180 395" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1350 423C1350 704 177 704 177 430" marker-end="url(#arrow)"/>
+
+  <text class="head" x="52" y="740">DPO：同一布局，打分和估值两格是空的</text>
+  <rect class="orange" x="52" y="920" width="250" height="110" rx="18"/>
+  <text class="on" x="177" y="964">Policy</text><text class="sd" x="177" y="994">可训练</text>
+  <rect class="blue" x="390" y="920" width="240" height="110" rx="18"/>
+  <text class="on" x="510" y="964">chosen / rejected</text><text class="sd" x="510" y="994">离线，带 policy 版本</text>
+  <path class="flow" d="M302 975H390" marker-end="url(#arrow)"/>
+
+  <rect class="dash" x="740" y="780" width="300" height="96" rx="16"/>
+  <text class="label" x="890" y="822">这一格是空的</text>
+  <text class="small" x="890" y="850">显式 RM 不再训练</text>
+  <rect class="blue" x="740" y="927" width="300" height="96" rx="16"/>
+  <text class="on" x="890" y="969">Reference</text><text class="sd" x="890" y="997">冻结，对数概率可预计算</text>
+  <rect class="dash" x="740" y="1074" width="300" height="96" rx="16"/>
+  <text class="label" x="890" y="1116">这一格也是空的</text>
+  <text class="small" x="890" y="1144">Critic 不在</text>
+  <path class="flow" d="M630 975H740" marker-end="url(#arrow)"/>
+
+  <rect class="ivory" x="1180" y="927" width="340" height="96" rx="16"/>
+  <text class="label" x="1350" y="969">分类损失</text>
+  <text class="small" x="1350" y="997">比较两条对数比，β 乘在差上</text>
+  <path class="flow" d="M1040 975H1180" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1350 1023C1350 1272 177 1272 177 1030" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="1286">实线是主流程，虚线表示反馈（梯度），与第二篇图 1 一致。可训练与冻结写在节点文字里；上排虚线只画策略梯度，Critic 由价值损失单独更新。</text>
 </svg>

@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 700" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 720" role="img" aria-labelledby="title desc">
   <title id="title">GRPO：组内优势，没有 Critic</title>
-  <desc id="desc">同一题的一组 rollout 经验证器打分，组内标准化后更新 policy。</desc>
+  <desc id="desc">沿用第五篇同一布局：同题一组 rollout 由规则 Verifier 打分，Reference 提供损失里的 KL，Critic 格留空。</desc>
   <defs>
     <style>
       .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
@@ -11,46 +11,46 @@
       .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:8 7}
       .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round}
       .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round}
-      .title{font:700 34px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .on{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .label{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .small{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .sd{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .head{font:700 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:20px;fill:#141413}
     </style>
     <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
       <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round"/>
     </marker>
   </defs>
-  <rect class="bg" width="1800" height="700"/>
+  <rect class="bg" width="1800" height="720"/>
   <text class="title" x="52" y="56">GRPO：组内优势，没有 Critic</text>
   <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
-  
-  <rect class="blue" x="52" y="160" width="220" height="100" rx="18"/>
-  <text class="on" x="162" y="204">同一道题</text><text class="sd" x="162" y="232">采样 G 条</text>
-  <path class="flow" d="M272 210H350" marker-end="url(#arrow)"/>
-  <rect class="ivory" x="350" y="140" width="190" height="64" rx="14"/>
-  <rect class="ivory" x="350" y="220" width="190" height="64" rx="14"/>
-  <rect class="ivory" x="350" y="300" width="190" height="64" rx="14"/>
-  <text class="label" x="445" y="178">rollout 1</text>
-  <text class="label" x="445" y="258">rollout 2</text>
-  <text class="label" x="445" y="338">rollout G</text>
-  <path class="flow" d="M540 172H660" marker-end="url(#arrow)"/>
-  <path class="flow" d="M540 252H660" marker-end="url(#arrow)"/>
-  <path class="flow" d="M540 332H660" marker-end="url(#arrow)"/>
-  <rect class="green" x="660" y="190" width="250" height="110" rx="18"/>
-  <text class="on" x="785" y="236">Verifier</text><text class="sd" x="785" y="266">对错或测试</text>
-  <path class="flow" d="M910 245H1020" marker-end="url(#arrow)"/>
-  <rect class="ivory" x="1020" y="185" width="320" height="120" rx="18"/>
-  <text class="label" x="1180" y="236">(r − mean) / std</text>
-  <text class="small" x="1180" y="266">组内优势</text>
-  <rect class="orange" x="1020" y="430" width="320" height="110" rx="18"/>
-  <text class="on" x="1180" y="476">Policy</text><text class="sd" x="1180" y="506">可训练，没有 Critic</text>
-  <path class="grad" d="M1180 305V430" marker-end="url(#arrow)"/>
-  <rect class="dash" x="1420" y="190" width="300" height="110" rx="18"/>
-  <text class="label" x="1570" y="236">对照第五篇</text>
-  <text class="small" x="1570" y="266">这一格是空的：Critic</text>
-  <text class="note" x="52" y="640">实线是主流程，虚线是回到 policy 的梯度。Dr. GRPO 去掉除以回答长度，以及除以组内标准差。</text>
 
+  <rect class="orange" x="52" y="280" width="250" height="110" rx="18"/>
+  <text class="on" x="177" y="324">Policy</text><text class="sd" x="177" y="354">采样，可训练</text>
+
+  <rect class="blue" x="390" y="280" width="240" height="110" rx="18"/>
+  <text class="on" x="510" y="324">同题 G 条 rollout</text><text class="sd" x="510" y="354">落 rollout 与 reward 日志</text>
+  <path class="flow" d="M302 335H390" marker-end="url(#arrow)"/>
+
+  <rect class="green" x="740" y="140" width="300" height="96" rx="16"/>
+  <text class="on" x="890" y="182">Verifier</text><text class="sd" x="890" y="210">规则判分（带版本），替掉 RM</text>
+  <rect class="blue" x="740" y="287" width="300" height="96" rx="16"/>
+  <text class="on" x="890" y="329">Reference</text><text class="sd" x="890" y="357">冻结，KL 加在损失里</text>
+  <rect class="dash" x="740" y="434" width="300" height="96" rx="16"/>
+  <text class="label" x="890" y="476">对照第五篇：这一格是空的</text>
+  <text class="small" x="890" y="504">Critic 不再训练</text>
+
+  <path class="flow" d="M630 312C690 312 680 188 740 188" marker-end="url(#arrow)"/>
+  <path class="flow" d="M630 335H740" marker-end="url(#arrow)"/>
+
+  <rect class="ivory" x="1180" y="287" width="360" height="96" rx="16"/>
+  <text class="label" x="1360" y="329">组内优势与损失</text>
+  <text class="small" x="1360" y="357">(r − mean) / std，再加相对 Reference 的 KL</text>
+  <path class="flow" d="M1040 188C1110 188 1110 315 1180 315" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1040 335H1180" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1360 383C1360 642 177 642 177 390" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="676">沿用第五篇图 1 同一布局：实线是主流程，虚线是回到 Policy 的梯度。KL 加在损失里；Dr. GRPO 去掉除以回答长度与组内标准差。</text>
 </svg>

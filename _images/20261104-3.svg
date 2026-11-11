@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 820" role="img" aria-labelledby="title desc">
+  <title id="title">同步 Rollout 等待气泡 vs AReaL 异步解耦与轨迹版本契约</title>
+  <desc id="desc">上方展示同步 RL 被单条最长多轮工具轨迹阻塞造成算力空转；下方展示 AReaL 拆开生成与训练后，每条轨迹必须写入 policy 版本、reference、tool schema 版本与权限边界。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .idle{fill:#FAF9F5;stroke:#141413;stroke-width:3.5;stroke-dasharray:8 7}
+      .barrier{fill:none;stroke:#141413;stroke-width:4;stroke-dasharray:10 8}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="820"/>
+  <text class="title" x="52" y="56">异步 Agent Rollout（AReaL）：拆开长尾等待，锁死轨迹版本</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Top Half: Synchronous Barrier Bubble -->
+  <text class="head" x="52" y="122">1. 同步 RL：整批训练被单条最长的多轮工具交互卡在同步障上</text>
+  <rect class="ivory" x="52" y="144" width="1696" height="236" rx="22"/>
+
+  <text class="label" x="140" y="200">Worker 1</text>
+  <rect class="blue" x="224" y="170" width="320" height="46" rx="10"/>
+  <text class="sd" x="384" y="199">短轨迹完成（版本 v_t）</text>
+  <rect class="idle" x="558" y="170" width="662" height="46" rx="10"/>
+  <text class="small" x="889" y="199">GPU 空闲等待最长轨迹结束（Bubble）</text>
+
+  <text class="label" x="140" y="264">Worker 2</text>
+  <rect class="blue" x="224" y="234" width="510" height="46" rx="10"/>
+  <text class="sd" x="479" y="263">中等轨迹完成（版本 v_t）</text>
+  <rect class="idle" x="748" y="234" width="472" height="46" rx="10"/>
+  <text class="small" x="984" y="263">GPU 空闲等待</text>
+
+  <text class="label" x="140" y="328">Worker 3</text>
+  <rect class="blue" x="224" y="298" width="996" height="46" rx="10"/>
+  <text class="sd" x="722" y="327">多轮调工具 + 沙箱编译测试超长轨迹（全部来自同一策略版本 v_t）</text>
+
+  <path class="barrier" d="M1254 160V362"/>
+  <text class="small" x="1312" y="182">全局同步障</text>
+  <rect class="orange" x="1376" y="212" width="332" height="100" rx="16"/>
+  <text class="on" x="1542" y="256">单次同步更新 → v_t+1</text>
+  <text class="sd" x="1542" y="286">吞吐受限于最慢那条轨迹</text>
+  <path class="flow" d="M1254 262H1376" marker-end="url(#arrow)"/>
+
+  <!-- Bottom Half: AReaL Asynchronous Decoupling + Mandatory Metadata -->
+  <text class="head" x="52" y="434">2. AReaL 异步解耦：生成与训练持续并行，轨迹必须自带版本身份证</text>
+  <rect class="ivory" x="52" y="456" width="1028" height="288" rx="22"/>
+
+  <text class="label" x="140" y="534">Rollout 池</text>
+  <rect class="blue" x="236" y="492" width="244" height="72" rx="12"/>
+  <text class="sd" x="358" y="524">短轨迹 #1 完成</text>
+  <text class="sd" x="358" y="548">（版本 v_t-1）</text>
+
+  <rect class="blue" x="502" y="492" width="292" height="72" rx="12"/>
+  <text class="sd" x="648" y="524">跨步长轨迹 #2 完成</text>
+  <text class="sd" x="648" y="548">（起于 v_t-2，中断续采）</text>
+
+  <rect class="blue" x="816" y="492" width="230" height="72" rx="12"/>
+  <text class="sd" x="931" y="524">新轨迹 #4 采样中</text>
+  <text class="sd" x="931" y="548">（接收最新 v_t+1）</text>
+
+  <rect class="orange" x="236" y="632" width="810" height="84" rx="16"/>
+  <text class="on" x="641" y="668">Learner 异步训练流（可训练：凑满有效批次即更新，不等长尾）</text>
+  <text class="sd" x="641" y="698">同一次梯度更新里会混入来自 v_t-2、v_t-1、v_t 的多版本轨迹</text>
+
+  <path class="flow" d="M358 564V632" marker-end="url(#arrow)"/>
+  <path class="flow" d="M648 564V632" marker-end="url(#arrow)"/>
+  <path class="grad" d="M931 632V564" marker-end="url(#arrow)"/>
+  <text class="small" x="984" y="604">推送新权重</text>
+
+  <!-- Right Panel: Trajectory Contract Card -->
+  <rect class="green" x="1128" y="456" width="620" height="288" rx="22"/>
+  <text class="on" x="1438" y="502">每条 Trajectory 强制落盘的四项契约</text>
+  <rect class="ivory" x="1164" y="524" width="548" height="44" rx="10"/>
+  <text class="small" x="1438" y="552">1. policy_version：记录产生每步动作的精确策略版本</text>
+  <rect class="ivory" x="1164" y="578" width="548" height="44" rx="10"/>
+  <text class="small" x="1438" y="606">2. 对应版本的 Reference 对数概率与优势校准基准</text>
+  <rect class="ivory" x="1164" y="632" width="548" height="44" rx="10"/>
+  <text class="small" x="1438" y="660">3. environment / tool_schema 版本号与观察 Mask 边界</text>
+  <rect class="ivory" x="1164" y="686" width="548" height="42" rx="10"/>
+  <text class="small" x="1438" y="713">4. 沙箱权限边界（与本次评测的 schema 同一版）</text>
+
+  <path class="flow" d="M1080 600H1128" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="786">混入未标版本的中断轨迹会让重要性比失去参照；而评测时若换了 tool schema 或放宽网络/读写权限，涨分也不能归因给模型。</text>
+</svg>

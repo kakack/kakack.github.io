@@ -17,6 +17,10 @@ pinned: false
 
 > **范围**：黑盒样本、白盒 logits、on-policy 蒸馏，以及 judge 偏差和会过期的榜。散度方向、样本从谁来、看不看 logits，分成三句，不并成一个「蒸馏」开关。
 
+![黑盒与白盒蒸馏，以及评估回流到数据契约](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261111-1.png)
+
+*图 1：实线是主流程，虚线表示反馈，与第二篇图 1 一致。蒸馏损失产生的梯度指向可训练的 Student；Student 的分项评估不合成单一总分，失败信号沿下方虚线指回第一篇的数据契约与 manifest。*
+
 ---
 
 ## 一、三句分开的工程选择
@@ -27,9 +31,9 @@ pinned: false
 
 第三句是看不看 logits。只有文本样本时，学生看不到教师在该 token 上的分布。白盒蒸馏对齐的是这个分布。[Gemma 2](https://arxiv.org/abs/2408.00118) 的 2B 和 9B 用知识蒸馏代替 next-token 的 one-hot，教师在每个 token 上的分布替换掉那个 one-hot；报告也写了在学生自己的分布上继续蒸馏，引用的就是 GKD 和 MiniLLM。[Gemma 3](https://arxiv.org/abs/2503.19786) 写明每个 token 按教师概率抽取 256 个 logit，学生在这组样本上学习教师分布。两份报告都是 logit 蒸馏，抽样方式并不相同。
 
-![黑盒、白盒，以及评估回到数据](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261111-1.png)
+![把「蒸馏」拆成三句独立的工程选择：散度、采样与粒度](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261111-2.png)
 
-*图 1：实线是主流程，虚线表示反馈。回到白盒那一格的是蒸馏梯度；绕回 Teacher 的是评估对数据和配方的反馈，与第二篇图 1 的虚线同一含义。*
+*图 2：把笼统的「蒸馏」拆回三列分开的选择。散度方向决定覆盖空隙还是贴住主峰，样本从谁来决定在哪个分布上对齐，监督粒度区分纯文本 one-hot、全词表分布与按概率抽取的 logits。三列可以同时用，Gemma 2 就同时用了后两列。*
 
 ---
 
@@ -43,11 +47,15 @@ pinned: false
 
 ## 三、评估拆开报，并且会过期
 
-能力、偏好和污染不能合成一个总分。base 上的受控曲线、偏好胜率、agent 的任务成功率，各自回答不同的问题。把它们平均掉，失败就无法指回是数据、奖励还是 judge。
+能力、偏好和污染不能合成一个总分。按第一篇预留的冻结 `holdout` 拆开报：base 上的受控曲线、偏好胜率、agent 的任务成功率，各自回答不同的问题。把它们平均掉，失败就无法指回是数据、奖励还是 `judge`。
 
 用模型当裁判时，偏差是评测配置的一部分。[Zheng 等](https://arxiv.org/abs/2306.05685) 在 MT-Bench 和 Chatbot Arena 上写了三种：位置偏差，交换两个回答的顺序会改变胜负；冗长偏差，更长的回答更容易被判赢；自我增强，裁判更偏好和自己同一家族的模型。judge 的版本、温度和选项顺序因此要和分数一起记录。
 
 静态榜还会过期。题目若出现在训练语料里，涨分可以来自记住。[LiveCodeBench](https://arxiv.org/abs/2403.07974) 按题目发布时间切分，用来把训练截止日之后的题和更早的题分开。[LiveBench](https://arxiv.org/abs/2406.19314) 同样靠持续更换题目来限制污染。一个不再更新的榜上的涨分，先对题目日期和训练 cutoff，再记到算法上。
+
+![评估不是事后总分：防 Judge 偏差、防榜单过期、指回第一篇契约](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261111-3.png)
+
+*图 3：左上锁定模型裁判的三种固有偏差，右上用训练语料截止日切开污染旧题与动态新题，下方虚线把分项异常逆向指回第一篇预留的 manifest、`tool schema` 版本与模型 checkpoint。*
 
 ---
 

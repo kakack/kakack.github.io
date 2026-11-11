@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 820" role="img" aria-labelledby="title desc">
-  <title id="title">一个 step：前向是数据，反向是梯度</title>
+  <title id="title">一个 step：前向主流程与反向梯度</title>
   <desc id="desc">token 经 embedding、Transformer 和 LM head 得到交叉熵；虚线把梯度送回优化器。</desc>
   <defs>
     <style>
@@ -29,7 +29,7 @@
     </marker>
   </defs>
   <rect class="bg" width="1800" height="820"/>
-  <text class="title" x="52" y="58">一个 step：前向是数据，反向是梯度</text>
+  <text class="title" x="52" y="58">一个 step：前向主流程与反向梯度</text>
   <path class="ink" d="M52 76C520 74 1280 78 1748 75" stroke-width="2.5"/>
 
   <rect class="ivory" x="52" y="104" width="26" height="26" rx="6"/>
@@ -74,8 +74,7 @@
   <text class="on" x="1663" y="286">Loss</text>
   <text class="sd" x="1663" y="314">一个标量</text>
 
-  <path class="grad" d="M1663 342C1663 430 141 430 141 520" marker-end="url(#arrowO)"/>
-  <path class="grad" d="M1430 342C1430 470 656 470 656 508" marker-end="url(#arrowO)"/>
+  <path class="grad" d="M1663 342C1663 434 177 434 177 520" marker-end="url(#arrowO)"/>
 
   <rect class="ivory" x="52" y="520" width="250" height="108" rx="22"/>
   <rect class="ivory" x="360" y="520" width="300" height="108" rx="22"/>

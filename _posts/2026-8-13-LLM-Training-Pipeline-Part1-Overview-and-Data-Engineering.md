@@ -60,7 +60,7 @@ pinned: false
 
 自回归预训练在上下文 $$x_{\lt t}$$ 下预测 $$x_t$$，最小化 token 级负对数似然。Scaling Laws 用小规模实验估计参数量、有效数据量与算力之间的关系；[Chinchilla](https://arxiv.org/abs/2203.15556) 给出 compute-optimal 视角，后来的超量训练与数据受限研究则说明：最优点还取决于推理预算、数据质量和可重复数据量。
 
-架构上常见 Dense（如 [Llama 3](https://arxiv.org/abs/2407.21783)）和 MoE（如 DeepSeek-V3）两条路线；注意力实现包括 MHA、GQA 和 MLA。第二篇会把单个 training step 的 data/gradient flow、LR schedule、BF16/FP8 与 loss spike 诊断放在同一张图里。案例数字也会明确 tokenizer 口径：Llama 3 405B 报告约 15.6T 训练 token；DeepSeek-V3 报告 14.8T token。
+架构上常见 Dense（如 [Llama 3](https://arxiv.org/abs/2407.21783)）和 MoE（如 DeepSeek-V3）两条路线；注意力实现包括 MHA、GQA 和 MLA。第二篇会拆开单个 training step 的前向主流程与反向梯度、LR schedule、BF16/FP8 与 loss spike 诊断分支。案例数字也会明确 tokenizer 口径：Llama 3 405B 报告约 15.6T 训练 token；DeepSeek-V3 报告 14.8T token。
 
 ### 2.2 Mid-training：高杠杆，但不是魔法窗口
 
@@ -76,13 +76,13 @@ SFT 在指令—回答、多轮对话或工具轨迹上继续最大似然训练�
 
 ### 2.4 偏好对齐：RM/PPO 与直接偏好优化
 
-经典 RLHF 先从偏好对训练 reward model，再用 PPO 更新 policy，并用 reference policy 的 KL 约束漂移。[DPO](https://arxiv.org/abs/2305.18290)在特定偏好模型假设下，把优化写成 chosen/rejected 相对 reference 的分类损失：省掉显式 RM 训练和在线 rollout，但训练时仍需 policy 与 reference 的 log probability（reference 结果可预计算）。SimPO、IPO、ORPO 等改变目标或参考项；[KTO](https://arxiv.org/abs/2402.01306)使用二元好/坏反馈，最好视为相邻的 preference optimization 方法，而不是简单的 DPO 小改版。
+经典 RLHF 先从偏好对训练 reward model，再用 PPO 更新 policy，并用 reference policy 的 KL 约束漂移。[DPO](https://arxiv.org/abs/2305.18290)在特定偏好模型假设下，把优化写成 chosen/rejected 相对 reference 的分类损失：省掉显式 RM 训练和在线 rollout，但训练时仍需 policy 与 reference 的 log probability（reference 结果可预计算）。SimPO、IPO、ORPO 等改变目标或参考项；[KTO](https://arxiv.org/abs/2402.01306)使用不配对的好/坏标签，最好视为相邻的 preference optimization 方法，而不是简单的 DPO 小改版。
 
 ### 2.5 推理 RL（RLVR）：奖励可验证的长程推理
 
 RLVR 用答案匹配、单元测试、形式证明检查器等 verifier 提供奖励。[GRPO](https://arxiv.org/abs/2402.03300)的核心简化是以同题多条 rollout 的组内相对奖励构造 advantage，省掉 learned value/critic；它是否保留 reference model 取决于是否计算 KL。[DAPO](https://arxiv.org/abs/2503.14476)不只是「去 KL」，还组合了动态采样、非对称 clipping、token-level policy gradient 与超长样本处理等工程设计。
 
-[DeepSeek-R1](https://arxiv.org/abs/2501.12948)报告观察到反思、回溯等行为，但「涌现」是对实验现象的描述，不是所有模型和奖励设置都能复现的保证。第六篇会把 reward hacking、熵坍缩、长度膨胀和 KL 监控放进一套排障树。
+[DeepSeek-R1](https://arxiv.org/abs/2501.12948)报告观察到反思、回溯等行为，但「涌现」是对实验现象的描述，不是所有模型和奖励设置都能复现的保证。第六篇会把 KL 爆炸、熵坍缩、长度膨胀与弱奖励假阳性逐项拆开。
 
 ### 2.6 Agentic 训练：在环境中学习多轮决策
 
@@ -96,13 +96,13 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 
 | 后续模块 | 开训前需要预留的输入与接口 |
 |---|---|
-| Pretrain | tokenizer、数据 mixture、序列边界、训练与验证切片 |
-| Mid-training | 来源/领域/质量/长度标签、阶段化 checkpoint、可重配数据池 |
-| SFT | `messages`/chat template、role 与 loss mask、生成 lineage |
-| 偏好优化 | chosen/rejected 或二元反馈、policy/reference 版本 |
+| Pretrain | tokenizer、mixture、序列边界、训练与验证切片 |
+| Mid-training | 来源、领域、质量、长度标签，阶段化 checkpoint，可重配数据池 |
+| SFT | `messages`、chat template、role、loss mask、生成 lineage |
+| 偏好优化 | 同一模板下的 chosen/rejected 或好/坏标签，以及产生它们时的 policy 版本 |
 | 推理 RL | problem、verifier/grader 版本、rollout 与 reward 日志 |
 | Agentic 训练 | environment/tool schema 与版本、trajectory、权限边界 |
-| 蒸馏与评估 | teacher/checkpoint/prompt lineage、holdout、污染与 judge 版本 |
+| 蒸馏与评估 | teacher、checkpoint、prompt 的 lineage，holdout，污染与 judge 版本 |
 
 本篇聚焦 Pretrain 一行以及所有阶段共用的控制面：目标、权利、谱系、评测和版本；后训练专用数据留到对应篇目。接下来把总图的起点放大，回答这些接口如何在第一个 batch 进入 GPU 之前落地。
 
@@ -210,7 +210,7 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 | 多抽取器 union/路由 | 增加覆盖，结构页面可择优 | 去重、质量归因与成本更复杂 | 内容异质、强调 code/table 的管线 |
 | 模型解析器 | 能识别语义块并转 Markdown | GPU/推理成本、模型偏差 | 高价值 STEM 或结构化页面 |
 
-[Nemotron-CC](https://arxiv.org/abs/2412.02595)报告其 jusText 配置比 trafilatura 获得约 57.5% 更多被分类为高质量的 token，选择的是高召回路线。相反 FineWeb 选择更保守的 trafilatura。[Beyond a Single Extractor](https://arxiv.org/abs/2602.19548)进一步发现，多抽取器结果取 union 可让 DCLM-Baseline 的 token yield 最多提高 71%，且标准任务不降；表格和代码任务对抽取器差异尤其敏感。[AICC](https://arxiv.org/abs/2511.16397)则用 0.6B 模型做 HTML 序列标注和 Markdown 恢复，在其约 62B-token 对照中相对 trafilatura 版本平均高 1.08 个百分点。
+[Nemotron-CC](https://arxiv.org/abs/2412.02595)报告其不叠加启发式后过滤的 jusText 配置，比经启发式过滤的 trafilatura 基线多拿到约 57.4% 被分类为高质量的 token，选择的是高召回路线。相反 FineWeb 选择更保守的 trafilatura。[Beyond a Single Extractor](https://arxiv.org/abs/2602.19548)进一步发现，多抽取器结果取 union 可让 DCLM-Baseline 的 token yield 最多提高 71%，且标准任务不降；表格和代码任务对抽取器差异尤其敏感。[AICC](https://arxiv.org/abs/2511.16397)则用 0.6B 模型做 HTML 序列标注和 Markdown 恢复，在其约 62B-token 对照中相对 trafilatura 版本平均高 1.08 个百分点。
 
 PDF 应先检测 born-digital 还是扫描件：优先版面感知文本解析，失败再 OCR；恢复双栏阅读顺序、标题层级、公式、表格与参考文献，并保留页码/bounding box 方便追溯。代码则按仓库而非孤立文件处理：识别语言与依赖，过滤 vendor、minified、generated、二进制和数据文件，扫描 secret，并以 repository/commit 为切分与去重单位。[The Stack v2](https://arxiv.org/abs/2402.19173)基于 Software Heritage 的持久标识与多种仓库附属内容，是这条分支的重要参考。
 
@@ -369,6 +369,10 @@ Tokenizer 后还不是训练数据。需要决定：
 
 发布训练前设置 QA gate：schema/checksum、空文档与解码错误、每 stage 留存率、来源/语言/长度/质量漂移、duplicate cluster 跨 split、PII/secret 抽检、污染率、tokenizer fertility、packed sequence mask 单测、data loader 吞吐与固定 seed 可重放。输出 dataset card 与精确 manifest，而不仅是一个总 token 数。
 
+![序列构造：Packing、跨文档隔离与 Manifest 溯源](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-5.png)
+
+*图 5：分词后的两条序列去向与门禁。短文档经 EOS 拼接进 packed sequence，由 block-diagonal mask 阻断跨文档注意力；未切碎的长文档单独保留给长上下文阶段；两者经 QA gate 落成二进制分片与精确 manifest，虚线在训练出现异常时按 step 反查回具体文档。*
+
 ---
 
 ## 五、公开管线如何做不同的开训决策
@@ -428,6 +432,10 @@ OLMo 3 / Dolma 3 则展示了完整开放的数据生命周期：不同来源各
 7. **审计污染与 judge**：先去污染，尽量用可复现 scorer，LLM-as-a-judge 要做顺序/长度/风格校准；
 8. **保留失败样本**：比较被保留和被丢弃的 stratified sample，检查分类器究竟学到了什么捷径。
 
+![数据决策的受控代理实验：从假设注册到跨尺度复核](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-6.png)
+
+*图 6：开训前的数据实验闭环。实线是单因素对照经多尺度初筛、目标 checkpoint 退火复核与切片审计后写入版本化 sidecar 的主流程；虚线是出现回退或跨尺度翻转时，抽检正负样本回到假设注册的控制回路。*
+
 FineWeb 论文报的是全程消融合计：70 多个模型、估计 8 万 H100 GPU 小时。官方博客里逐 Common Crawl snapshot 的那一组是 **192 个模型、超过 6 万 H100 GPU 小时**。两个口径都是官方数字，统计范围不同，混用才会得出「论文写错了」或「博客纠正了论文」。proxy 排名可能随尺度、LR 和评测任务翻转。
 
 ---
@@ -447,7 +455,7 @@ FineWeb 论文报的是全程消融合计：70 多个模型、估计 8 万 H100 
 
 最值得带走的不是某个阈值，而是三个原则：**原始内容与决策标签分离；按成本级联但按依赖排 DAG；任何“最佳配方”都要用自己的目标、数据池与尺度重新消融。**
 
-完成这些工作后，第二篇的 optimizer 才真正有了可消费、可追溯的输入：冻结的 tokenizer、可重放的 sample order、通过 QA 的 packed sequences，以及能把 loss spike 追溯到具体数据批次的 manifest。下一篇就从这里进入 Pretrain：next-token objective、Scaling Laws、Dense/MoE、LR schedule 与 BF16/FP8。重点会是一套 loss spike 诊断路径——如何用 batch 指纹、梯度范数、激活统计和数值重放区分坏数据与数值不稳定，再决定 skip batch、回滚、降 LR、QK-Norm、attention scale、z-loss 或 embedding 独立 LR。
+交到下一篇优化器手里的输入已经固定：冻结的 tokenizer、定好配比的 mixture 与训练/验证切片、写死序列边界并通过 QA 的 packed sequence、可重放的 sample order，以及能把一次 loss spike 指回具体批次的 manifest。
 
 ---
 

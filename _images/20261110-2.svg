@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">指令数据的三条构造路线与准入契约</title>
+  <desc id="desc">对比人工精写、多轮拒绝采样与大规模多领域打包加 sample masking 三种公开构造方式，并统一收敛到 role、loss mask 与生成 lineage 三项准入契约。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .feedback{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="56">SFT 指令数据的三条公开路线与样本准入契约</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Left: 3 Public Construction Routes -->
+  <text class="head" x="52" y="124">1. 公开配方的三类数据来源</text>
+
+  <rect class="ivory" x="52" y="150" width="880" height="156" rx="20"/>
+  <text class="label" x="492" y="194">路线 A：人工精写与公开混合（LIMA / Tulu 3）</text>
+  <text class="small" x="492" y="228">LIMA 用约 1,000 条人工高质样本验证指令形式迁移</text>
+  <text class="small" x="492" y="258">Tulu 3 公开全套混合与超参（8B LR 5e-6、70B 2e-6，2 epoch，batch 128，4096；RS 因性价比低未入终版）</text>
+
+  <rect class="ivory" x="52" y="336" width="880" height="170" rx="20"/>
+  <text class="label" x="492" y="380">路线 B：多轮 Rejection Sampling 闭环（Llama 3，共六轮后训练）</text>
+  <text class="small" x="492" y="414">人工收集 Prompt → 当轮 Chat Policy 采 K ∈ [10, 30] 条候选 → Reward Model 选优并入 SFT</text>
+  <text class="small" x="492" y="444">Prompt token 被 mask，只算 target 交叉熵；最大模型 LR 1e-5，约 8.5K–9K step</text>
+  <text class="small" x="492" y="474">每一轮训完的新策略，回头重采下一轮 SFT 样本与偏好标注</text>
+
+  <rect class="ivory" x="52" y="536" width="880" height="170" rx="20"/>
+  <text class="label" x="492" y="580">路线 C：多领域合成打包 + Sample Masking（DeepSeek-V3）</text>
+  <text class="small" x="492" y="614">150 万条指令覆盖多领域，Base 上训 2 epoch，LR 从 5e-6 余弦降到 1e-6</text>
+  <text class="small" x="492" y="644">多条短样本拼进同一条序列提吞吐，用 Sample Masking（Block-Diagonal 后训练版）禁止样本互看</text>
+  <text class="small" x="492" y="674">单测必须同时断言「样本间注意力隔离边界」与「样本内 Loss Mask 位置」</text>
+
+  <!-- Right: Mandatory Sample Gate & Output -->
+  <text class="head" x="1032" y="124">2. 进训练前的样本门禁与交付</text>
+
+  <rect class="green" x="1032" y="168" width="716" height="256" rx="22"/>
+  <text class="on" x="1390" y="216">合格样本必答的三项契约（缺一不进训练）</text>
+  <rect class="ivory" x="1072" y="240" width="636" height="46" rx="12"/>
+  <text class="small" x="1390" y="269">1. 明确 Role 与唯一绑定的 Chat Template（分隔符 / EOS 口径一致）</text>
+  <rect class="ivory" x="1072" y="298" width="636" height="46" rx="12"/>
+  <text class="small" x="1390" y="327">2. 明确参与损失的集合 𝒯（模板特殊 token 进不进损失单独声明）</text>
+  <rect class="ivory" x="1072" y="356" width="636" height="46" rx="12"/>
+  <text class="small" x="1390" y="385">3. 生成 Lineage（由哪一版模型、哪一版 Prompt 与过滤规则产出）</text>
+
+  <rect class="blue" x="1032" y="486" width="716" height="114" rx="20"/>
+  <text class="on" x="1390" y="532">SFT 训练批次（全局有效分母 |𝒯| 与 Mask 一同写进配置）</text>
+  <text class="sd" x="1390" y="566">跨 micro-batch 先累加 token loss 再除以全局 |𝒯|，防短回答梯度被二次放大</text>
+
+  <rect class="orange" x="1152" y="648" width="476" height="84" rx="18"/>
+  <text class="on" x="1390" y="684">Instruct Policy（可训练）</text>
+  <text class="sd" x="1390" y="712">交出按模板回答的模型，也可回流采样下一轮数据</text>
+
+  <!-- Flows -->
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M932 228C982 228 982 266 1032 266"/>
+    <path d="M932 420C982 420 982 316 1032 316"/>
+    <path d="M932 620C982 620 982 366 1032 366"/>
+    <path d="M1390 424V486"/>
+    <path d="M1390 600V648"/>
+  </g>
+  <!-- Iterative Rejection Sampling回流 -->
+  <path class="feedback" d="M1152 690C1004 690 996 462 932 462" marker-end="url(#arrow)"/>
+  <text class="small" x="1054" y="720">多轮迭代回流采样</text>
+
+  <text class="note" x="52" y="796">实线是样本准入与训练主流程，虚线是训后策略回流采样（如 Llama 3 六轮迭代）。没有 Lineage，后续偏好优化与蒸馏就无法追溯样本来源。</text>
+</svg>

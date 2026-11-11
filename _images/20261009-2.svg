@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 780" role="img" aria-labelledby="title desc">
+  <title id="title">奖励模型过优化曲线与三道验证防线</title>
+  <desc id="desc">左图示意 Gao 等人的奖励模型过优化曲线：随策略相对 Reference 的 KL 增大，代理 RM 分数持续上涨而真实人类偏好先升后降；右图列出上线前核对 RM 的三件事。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .axis{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .proxy{fill:none;stroke:#6A9BCC;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+      .gold{fill:none;stroke:#D97757;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+      .split{fill:none;stroke:#141413;stroke-width:3;stroke-dasharray:9 8}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="780"/>
+  <text class="title" x="52" y="56">奖励模型过优化（Gao et al.）与 RM 上线前的三项核对</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Left Panel: Overoptimization Schematic Curve -->
+  <rect class="ivory" x="52" y="116" width="1008" height="572" rx="24"/>
+  <text class="head" x="92" y="162">1. 代理奖励与真实偏好的分叉（示意图）</text>
+
+  <!-- Axes -->
+  <path class="axis" d="M148 598V212" marker-end="url(#arrow)"/>
+  <path class="axis" d="M148 598H988" marker-end="url(#arrow)"/>
+  <text class="small" x="568" y="644">策略偏离 Reference 的距离（KL 散度 / 优化步数）</text>
+  <text class="small" x="236" y="216">奖励 / 偏好得分</text>
+
+  <!-- Vertical Divergence Threshold -->
+  <path class="split" d="M556 226V598"/>
+  <text class="small" x="356" y="572">有效对齐区（KL 受控）</text>
+  <text class="small" x="772" y="572">过优化区（Reward Hacking）</text>
+
+  <!-- Proxy RM Curve (keeps rising) -->
+  <path class="proxy" d="M176 544C310 430 460 352 556 312C680 262 820 232 948 214"/>
+  <rect class="blue" x="676" y="180" width="308" height="46" rx="12"/>
+  <text class="sd" x="830" y="209">代理 RM 分数 r(x, y) 持续上涨</text>
+
+  <!-- True Human Preference Curve (peaks then drops) -->
+  <path class="gold" d="M176 552C300 448 446 376 556 368C680 362 810 434 944 522"/>
+  <circle class="green" cx="556" cy="368" r="11"/>
+  <rect class="green" x="436" y="302" width="240" height="42" rx="10"/>
+  <text class="sd" x="556" y="329">真实人类偏好拐点</text>
+
+  <rect class="orange" x="688" y="454" width="292" height="52" rx="12"/>
+  <text class="sd" x="834" y="486">真实偏好回落（钻空子 / 冗长讨好）</text>
+
+  <!-- Right Panel: 3 RM Verification Checks -->
+  <rect class="ivory" x="1108" y="116" width="640" height="572" rx="24"/>
+  <text class="head" x="1148" y="162">2. 核对一份 RM 的三道标尺</text>
+  <text class="note" x="1148" y="198">RM 训练集准确率不是上线指标，需联合检查：</text>
+
+  <rect class="blue" x="1148" y="228" width="560" height="118" rx="18"/>
+  <text class="on" x="1428" y="272">标尺 1：留出偏好对准确率</text>
+  <text class="sd" x="1428" y="306">检验同分布未见过的 chosen / rejected 判别力</text>
+
+  <rect class="green" x="1148" y="376" width="560" height="118" rx="18"/>
+  <text class="on" x="1428" y="420">标尺 2：公开分布外基准（RewardBench）</text>
+  <text class="sd" x="1428" y="454">覆盖对话、推理、安全等跨领域难例切片</text>
+
+  <rect class="ivory" x="1148" y="524" width="560" height="132" rx="18"/>
+  <text class="label" x="1428" y="568">标尺 3：RM 分数与回答长度的相关性</text>
+  <text class="small" x="1428" y="602">验证侧抓「越长分越高」偏差；损失侧由</text>
+  <text class="small" x="1428" y="630">长度归一化（如 Tulu 3）分头治理，各管一段</text>
+
+  <text class="note" x="52" y="738">KL 惩罚在 PPO 与 DPO 里不是装饰项，而是把策略拉在左侧有效区内；离线 DPO 若用过旧 policy 的样本，分类损失下降也会出现同类偏移。</text>
+</svg>

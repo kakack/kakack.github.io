@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 780" role="img" aria-labelledby="title desc">
+  <title id="title">DeepSeek-R1 多阶段交替流水线与 R1-Zero 对照</title>
+  <desc id="desc">上方支线展示 R1-Zero 直接在 Base 上做规则 RL 的实验观察；下方主干展示冷启动 SFT、推理 RL、拒绝采样与通用数据回流、二轮 SFT 再到全场景 RL 的多阶段交替配方。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .flow{fill:none;stroke:#141413;stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round}
+      .feedback{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="780"/>
+  <text class="title" x="52" y="56">DeepSeek-R1 不是单段 GRPO：R1-Zero 支线与正式多阶段配方</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Shared Base Model -->
+  <rect class="blue" x="52" y="294" width="216" height="148" rx="20"/>
+  <text class="on" x="160" y="356">V3-Base</text>
+  <text class="sd" x="160" y="388">同一预训练底座</text>
+
+  <!-- Upper Branch: R1-Zero -->
+  <text class="head" x="342" y="132">探路支线：R1-Zero（无冷启动 SFT，直接在 Base 上做规则 RL）</text>
+  <rect class="ivory" x="342" y="156" width="600" height="116" rx="18"/>
+  <text class="label" x="642" y="198">纯规则奖励 RL（数学答案 + 代码测试 + 格式奖励）</text>
+  <text class="small" x="642" y="230">不用神经网络 PRM，也不做 MCTS（防奖励 Hack 与搜索爆炸）</text>
+
+  <rect class="dash" x="1016" y="156" width="732" height="116" rx="18"/>
+  <text class="label" x="1382" y="198">R1-Zero 观察结论（属该次运行现象，非普适保证）</text>
+  <text class="small" x="1382" y="230">自发出现长 CoT 反思与回溯，但存在可读性差、中英语言混杂问题</text>
+
+  <!-- Lower Main Pipeline: Multi-stage R1 -->
+  <text class="head" x="342" y="348">正式配方：SFT 与 RL 多轮交替，中间用拒绝采样回流合成数据</text>
+
+  <rect class="ivory" x="342" y="378" width="224" height="148" rx="18"/>
+  <text class="label" x="454" y="428">1. 冷启动 SFT</text>
+  <text class="small" x="454" y="460">少量可读长 CoT</text>
+  <text class="small" x="454" y="488">先对齐推理格式</text>
+
+  <rect class="ivory" x="614" y="378" width="228" height="148" rx="18"/>
+  <text class="label" x="728" y="428">2. 推理导向 RL</text>
+  <text class="small" x="728" y="460">规则验证器驱动</text>
+  <text class="small" x="728" y="488">强化数学与代码推理</text>
+
+  <rect class="blue" x="890" y="378" width="256" height="148" rx="18"/>
+  <text class="on" x="1018" y="428">3. 拒绝采样造数</text>
+  <text class="sd" x="1018" y="460">从 RL checkpoint 筛推理轨迹</text>
+  <text class="sd" x="1018" y="488">+ 汇总写作/问答通用数据</text>
+
+  <rect class="ivory" x="1194" y="378" width="218" height="148" rx="18"/>
+  <text class="label" x="1303" y="428">4. 第二轮 SFT</text>
+  <text class="small" x="1303" y="460">合并推理与非推理</text>
+  <text class="small" x="1303" y="488">恢复全领域可用性</text>
+
+  <rect class="orange" x="1460" y="378" width="288" height="148" rx="20"/>
+  <text class="on" x="1604" y="428">5. 全场景 RL → R1</text>
+  <text class="sd" x="1604" y="460">推理题继续走规则验证</text>
+  <text class="sd" x="1604" y="488">一般场景对齐有用性与安全</text>
+
+  <!-- Flows -->
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M268 334C306 334 300 214 342 214"/>
+    <path d="M942 214H1016"/>
+    <path d="M268 410C302 410 306 452 342 452"/>
+    <path d="M566 452H614"/>
+    <path d="M842 452H890"/>
+    <path d="M1146 452H1194"/>
+    <path d="M1412 452H1460"/>
+  </g>
+
+  <!-- Distillation & Data回流 callout at bottom -->
+  <rect class="green" x="342" y="596" width="1406" height="92" rx="18"/>
+  <text class="on" x="1045" y="636">模块回流兑现：第 3 步把 RL 产出的轨迹变成第二轮 SFT 资产；训完的 R1 轨迹还可继续向小模型蒸馏（接第八篇）</text>
+  <text class="sd" x="1045" y="668">印证第一篇总图：SFT、偏好与 RL 并非单向串行过一遍，而是靠模型合成数据与验证门禁多轮交替</text>
+
+  <path class="feedback" d="M1018 526V596" marker-end="url(#arrow)"/>
+  <path class="feedback" d="M1604 526V596" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="742">实线是阶段推进主流程，虚线是模型产出的数据向后续 SFT 或蒸馏资产沉淀。把 R1 简化成「做一次 GRPO」会漏掉中间两轮 SFT 与数据回流。</text>
+</svg>

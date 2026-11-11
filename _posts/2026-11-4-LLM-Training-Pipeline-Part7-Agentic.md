@@ -21,7 +21,7 @@ pinned: false
 
 一条轨迹是模型输出和外部观察交替出现。模型发出的调用是动作，可以进损失。观察是环境返回的，默认和第四篇里的 user 内容一样，不进 $$\mathcal{T}$$。只有当这段文字本身是模型要学习的输出时，才把它放进 mask。
 
-工具的名字、参数和返回字段构成 schema。第一篇的接口表把 agent 的输入写成 environment / tool schema 与版本。版本是样本字段：训练轨迹用的 schema，和后面评测用的 schema，必须是同一版。版本变了，成功率的变化不能记到模型上。
+工具的名字、参数和返回字段构成 schema，沙箱允许读写什么、能不能访问外部网络构成权限边界。第一篇的接口表把这一环写成 `environment`/`tool schema` 与版本、`trajectory` 和权限边界：版本与边界都是轨迹字段，训练轨迹用的 schema 和权限边界，必须与评测完全一致；任何一项变了，成功率的变化都不能记到模型上。
 
 ![奖励放在轨迹末端](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261104-1.png)
 
@@ -33,11 +33,15 @@ pinned: false
 
 终端规则奖励是第一格。测试通过与否、指令约束是否满足，都是任务结束时的一个比特，整段轨迹共享它。第六篇已经写过这种稀疏性：中间步骤没有单独的梯度。
 
-过程检查是第二格。逐步奖励或过程奖励模型可以给中间步骤打分。[DeepSeek-R1](https://arxiv.org/abs/2501.12948) 的不成功尝试说明，他们没有把这一格放进大规模 RL：步骤边界难定义，标注扩不了规模，模型打分又会回到 reward hacking。这里不把第二格写成默认。
+过程检查是第二格。逐步奖励或过程奖励模型可以给中间步骤打分。[DeepSeek-R1](https://arxiv.org/abs/2501.12948) 的不成功尝试说明，他们没有把这一格放进大规模 RL：步骤边界难定义，标注扩不了规模，模型打分又会回到 reward hacking。
 
 不可验证任务上的 rubric 是第三格。[Kimi K2](https://arxiv.org/abs/2507.20534) 把后训练写成两半：可验证任务用规则奖励；写作、开放问答这类没有标准答案的任务，用 self-critique rubric，由模型按 rubric 对自己的输出做成对比较。报告还写了 critic 会用可验证任务上的 on-policy rollout 继续更新，把规则信号灌进这个评判器。这是报告里的机制，不是「模型自己评自己所以奖励可靠」。
 
 同一份报告里还有一件不同的事：合成工具轨迹时，每道题配 rubric，judge 只留下判定成功的轨迹。那是进 SFT 之前的过滤，不是上面那个 RL 奖励。两处都用了 rubric 这个词，记账时要分开。
+
+![Agent 信用分配的三格边界与 Kimi K2 里两处不同的 Rubric](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261104-2.png)
+
+*图 2：上半部分并列轨迹信用分配的三格边界；下半部分把 Kimi K2 里两处同名机制拆开——左框是进 SFT 前筛轨迹的离线质检，右框是在线 RL 的混合奖励闭环（虚线为回到 Policy 与持续校准 Critic 的梯度更新）。*
 
 ---
 
@@ -46,6 +50,10 @@ pinned: false
 同步的 RL 等一批里最长的轨迹结束，再用同一个 policy 的样本更新。长轨迹一多，短轨迹就在空等。[AReaL](https://arxiv.org/abs/2505.24298) 把生成和训练拆开：更新不再被这条最长轨迹挡住，同一次更新里的轨迹可以来自不同的 policy 版本。
 
 版本因此要写在轨迹上。优势、KL 用的 reference、以及当时的工具 schema，都跟着这一版走。混进一条没标版本的中断轨迹，后面无法判断梯度来自哪一个策略。
+
+![异步 Agent Rollout（AReaL）：拆开长尾等待，锁死轨迹版本](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261104-3.png)
+
+*图 3：上排同步 RL 被单条最长多轮交互卡在全局同步障上；下排 AReaL 拆开生成与训练后，同一次更新会混入跨版本轨迹，因此右侧四项版本与权限边界契约必须随每条 `trajectory` 落盘。*
 
 ---
 
@@ -71,12 +79,12 @@ pinned: false
 
 ## 六、交出去的是带版本的轨迹
 
-1. 奖励默认在轨迹末端。观察进不进损失，和动作是不是模型输出，要分开写。
-2. 规则奖励、过程奖励、self-critique rubric 是三格。K2 的轨迹过滤和它的 RL rubric 也不是同一步。
-3. 异步 rollout 的 policy 版本是样本字段。AReaL 拆开的是生成和训练的等待，不是把版本抹掉。
-4. τ-bench 和 SWE-bench Verified 是冻结切片。schema 版本必须和训练一致。
+一条合格的 agent 轨迹交付出去时，自身就要带着对账字段：
 
-下一篇把这个贵的策略迁到更小的模型上，并把评估接回第一篇的数据契约。
+- **监督位置与奖励来源分开记**：动作是模型输出，观察默认不进损失；终端规则奖励、过程检查、self-critique rubric 分属三格，Kimi K2 合成轨迹时的 judge 过滤和它 RL 阶段的 rubric 也不是同一步；仓库级训练若像 SWE-RL 那样用参考解相似度当奖励，引用时不能写成测试通过。
+- **异步采样与评测切片同时锁版本**：AReaL 拆开生成与训练等待后，`policy` 版本、`reference` 与当时的 `tool schema` 都要落进每条 `trajectory`；τ-bench 与 SWE-bench Verified 只是冻结环境切片，换一版 schema 或权限边界，分数就不能跨行比较。
+
+下一篇接收这套昂贵策略的 `teacher`、`checkpoint` 与 `prompt` lineage，讨论向小模型迁移时的三条蒸馏选择，并用冻结 `holdout`、污染检查与 `judge` 版本把评估接回第一篇的数据契约。
 
 ---
 

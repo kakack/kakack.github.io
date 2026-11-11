@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 880" role="img" aria-labelledby="title desc">
+  <title id="title">RLVR 排障面板：前置 Base 对照与三种失控信号</title>
+  <desc id="desc">顶部门禁要求先锁 Verifier 版本并做同家族 Base 的 pass@k 对照排除假阳性；下方并列展示 KL 爆炸、熵坍缩（并列 Yue et al. 与 ProRL 证据）以及长度膨胀与采样方差三类失控。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:20px;fill:#141413;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:17px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="880"/>
+  <text class="title" x="52" y="56">RLVR 归因与排障：前置 Base 对照门禁与三类失控</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Gate 0: Base & Verifier Control -->
+  <rect class="green" x="52" y="108" width="1696" height="118" rx="22"/>
+  <text class="on" x="900" y="152">第 0 步前置核对：锁死 Verifier / Grader 版本，并先测同家族 Base 的大 k pass@k</text>
+  <text class="sd" x="900" y="186">排除混淆（Shao et al. / Wu et al.）：若 Base 本身 pass@k 很高，弱奖励甚至随机奖励也容易看似涨分；判题正则改版更不能混画一条曲线</text>
+
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M318 226V278"/>
+    <path d="M900 226V278"/>
+    <path d="M1482 226V278"/>
+  </g>
+
+  <!-- Column 1: KL Explosion -->
+  <rect class="ivory" x="52" y="278" width="532" height="516" rx="22"/>
+  <rect class="orange" x="84" y="306" width="468" height="54" rx="12"/>
+  <text class="on" x="318" y="340">失控 1：KL 散度飙升</text>
+
+  <text class="label" x="318" y="402">先核对 KL 写在哪个位置</text>
+  <text class="small" x="318" y="432">第五篇 PPO：通常把 KL 折进奖励</text>
+  <text class="small" x="318" y="460">DeepSeekMath GRPO：把相对 Ref 的 KL 加在损失里</text>
+  <text class="small" x="318" y="488">两处不是同一个超参开关</text>
+
+  <rect class="blue" x="84" y="526" width="468" height="236" rx="16"/>
+  <text class="on" x="318" y="568">DAPO 去掉损失项 KL 后的四道围栏</text>
+  <text class="sd" x="318" y="604">1. 解开 Clip 上下界（Clip-Higher 防早熟）</text>
+  <text class="sd" x="318" y="634">2. 动态采样：丢掉整组全对或全错的零梯度题</text>
+  <text class="sd" x="318" y="664">3. Token 级 Policy Gradient 汇总</text>
+  <text class="sd" x="318" y="694">4. 超长截断样本单独处理，防噪声反扑</text>
+
+  <!-- Column 2: Entropy Collapse & Two Competing Evidences -->
+  <rect class="ivory" x="634" y="278" width="532" height="516" rx="22"/>
+  <rect class="orange" x="666" y="306" width="468" height="54" rx="12"/>
+  <text class="on" x="900" y="340">失控 2：熵坍缩（只看 pass@1 会漏检）</text>
+
+  <text class="label" x="900" y="402">典型指纹：解法坍缩成少数路径</text>
+  <text class="small" x="900" y="432">pass@1 暂时持平或微涨，但大 k 下的 pass@k 先掉</text>
+  <text class="small" x="900" y="462">关于 RL 是否真正扩宽推理边界，两组证据并列：</text>
+
+  <rect class="ivory" x="666" y="492" width="468" height="122" rx="14"/>
+  <text class="label" x="900" y="528">证据 A：Yue et al.（2025）</text>
+  <text class="small" x="900" y="558">若干 RLVR 运行在大 k 下 pass@k 被 Base 追平</text>
+  <text class="small" x="900" y="586">倾向认为 RL 主要在提纯已有正确路径的概率</text>
+
+  <rect class="blue" x="666" y="632" width="468" height="130" rx="14"/>
+  <text class="on" x="900" y="668">证据 B：ProRL（2025）</text>
+  <text class="sd" x="900" y="698">拉长训练步数、保留 KL 控制并周期性重置 Ref</text>
+  <text class="sd" x="900" y="726">报告在部分任务上可把推理边界推过原 Base</text>
+
+  <!-- Column 3: Length Inflation & Importance Sampling Variance -->
+  <rect class="ivory" x="1216" y="278" width="532" height="516" rx="22"/>
+  <rect class="orange" x="1248" y="306" width="468" height="54" rx="12"/>
+  <text class="on" x="1482" y="340">失控 3：长度膨胀与长序列方差</text>
+
+  <text class="label" x="1482" y="402">CoT 变长 ≠ 学会了深度反思</text>
+  <text class="small" x="1482" y="432">奖励不罚长度时，目标分母会把长度写进梯度</text>
+
+  <rect class="ivory" x="1248" y="466" width="468" height="138" rx="14"/>
+  <text class="label" x="1482" y="504">修正 1：Dr. GRPO（修分母偏差）</text>
+  <text class="small" x="1482" y="534">去掉 1/|o|（防做错的长回答受罚更轻）</text>
+  <text class="small" x="1482" y="562">去掉 /std（防近全对/全错题把噪声优势放大）</text>
+  <text class="small" x="1482" y="588">与第二篇、第四篇的 Loss 分母口径一脉相承</text>
+
+  <rect class="blue" x="1248" y="622" width="468" height="140" rx="14"/>
+  <text class="on" x="1482" y="660">修正 2：GSPO（修重要性比层级）</text>
+  <text class="sd" x="1482" y="690">Token 级比值方差沿长 CoT 累加，MoE 路由</text>
+  <text class="sd" x="1482" y="718">波动进一步放大该方差 → 改用序列级重要性比</text>
+
+  <text class="note" x="52" y="840">验收一次 RLVR 运行，至少同时摆出四列数字：锁版本的 pass@1、大 k 下的 pass@k、同家族 Base 对照曲线、以及平均回答长度。</text>
+</svg>

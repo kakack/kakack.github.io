@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 860" role="img" aria-labelledby="title desc">
+  <title id="title">长上下文三道评估关卡与短任务回退归因</title>
+  <desc id="desc">上半部分展示长文档 PPL、NIAH 升级门与 RULER 多任务验收三道不可互相替代的关卡；下半部分展示短任务掉点时先换回旧 RoPE 测短序列区分位置问题与长文升采样配比偏移。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .feedback{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="860"/>
+  <text class="title" x="52" y="56">长上下文排障：三道评估边界与短任务回退的两路归因</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Top Section: 3 Non-substitutable Long-context Gates -->
+  <text class="head" x="52" y="124">1. 三道长文指标各管一段，不能互相顶替</text>
+
+  <rect class="ivory" x="52" y="150" width="504" height="184" rx="20"/>
+  <text class="label" x="304" y="198">第一道：长文档验证 PPL</text>
+  <text class="small" x="304" y="232">全序列位置平均，局部预测占绝大多数</text>
+  <text class="small" x="304" y="262">职责：只看续训数值是否平稳在正轨</text>
+  <text class="small" x="304" y="294">盲区：PPL 下降 ≠ 远距离检索已建立</text>
+
+  <rect class="green" x="648" y="150" width="504" height="184" rx="20"/>
+  <text class="on" x="900" y="198">第二道：每级升级 Gate（NIAH + 短任务）</text>
+  <text class="sd" x="900" y="232">PPL 与 NIAH 背离时，优先信 NIAH</text>
+  <text class="sd" x="900" y="262">职责：每个台阶快速否决，短任务完全恢复才升</text>
+  <text class="sd" x="900" y="294">盲区：单针全绿 ≠ 复杂长文推理可用</text>
+
+  <rect class="orange" x="1244" y="150" width="504" height="184" rx="20"/>
+  <text class="on" x="1496" y="198">第三道：升级后验收（RULER 式多任务）</text>
+  <text class="sd" x="1496" y="232">多针检索、跨段聚合、长程变量追踪</text>
+  <text class="sd" x="1496" y="262">职责：核定真实有效上下文长度</text>
+  <text class="sd" x="1496" y="294">防止标称 128K 在一半长度处就明显退化</text>
+
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M556 242H648"/>
+    <path d="M1152 242H1244"/>
+  </g>
+
+  <!-- Bottom Section: Short-task regression attribution -->
+  <text class="head" x="52" y="408">2. 短任务掉点（MMLU / 算术 / 代码回退）：先分「位置的锅」还是「数据的锅」</text>
+
+  <rect class="ivory" x="52" y="514" width="356" height="140" rx="20"/>
+  <text class="label" x="230" y="568">观察到短任务分数下滑</text>
+  <text class="small" x="230" y="602">先不要同时改学习率、配比和位置编码</text>
+
+  <rect class="green" x="478" y="502" width="430" height="164" rx="20"/>
+  <text class="on" x="693" y="552">零训练成本重测实验</text>
+  <text class="sd" x="693" y="586">不动当前权重，仅把推理 RoPE 换回扩展前配置</text>
+  <text class="sd" x="693" y="616">在短序列基准上重跑，分数是否恢复？</text>
+
+  <!-- Branch A: Position -->
+  <rect class="ivory" x="1028" y="432" width="720" height="132" rx="20"/>
+  <text class="label" x="1388" y="476">分数恢复 → 位置侧稀释了短程分辨率</text>
+  <text class="small" x="1388" y="510">指纹：回退集中在代码补全、多步算术等位置敏感任务，且随扩展比 s 增大</text>
+  <text class="small" x="1388" y="538">旋钮：缩小单步扩展跨度、采用分频段插值、核查 YaRN 温度项是否漏乘</text>
+
+  <!-- Branch B: Data / Implicit Mixture Shift -->
+  <rect class="blue" x="1028" y="606" width="720" height="150" rx="20"/>
+  <text class="on" x="1388" y="652">分数未恢复 → 长文升采样带来隐形配比偏移（查 Manifest）</text>
+  <text class="sd" x="1388" y="686">指纹：所有短任务普遍下滑；书籍/论文/仓库挤占了短网页、对话与指令风格文本</text>
+  <text class="sd" x="1388" y="718">旋钮：拉第一篇来源/领域标签做对照表 → 用 Packing 补回短文档或纳入领域回归 Gate</text>
+
+  <path class="flow" d="M408 584H478" marker-end="url(#arrow)"/>
+  <path class="flow" d="M908 548C964 548 968 498 1028 498" marker-end="url(#arrow)"/>
+  <text class="small" x="968" y="486">恢复</text>
+  <path class="flow" d="M908 620C964 620 968 680 1028 680" marker-end="url(#arrow)"/>
+  <text class="small" x="968" y="698">未恢复</text>
+
+  <text class="note" x="52" y="814">分阶段扩长不只是为了数值稳定，更为了在每个台阶上把位置分辨率代价与长文升采样的隐形分布偏移当场拆开。</text>
+</svg>

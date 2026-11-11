@@ -21,7 +21,7 @@ o1 只作为推理时用更多计算换正确率的现象。它的训练步骤�
 
 ## 一、验证器换掉的是 RM，不是信用分配
 
-结果奖励是稀疏的 0/1。它不再经过 Bradley-Terry，也绕开「RM 分数和真实偏好分叉」。代价是整段长 CoT 只有结尾一个比特，中间步骤的对错没有单独的梯度。
+结果奖励是稀疏的 0/1。它不再经过 Bradley-Terry，也绕开「RM 分数和真实偏好分叉」。代价是整段长 CoT 只有结尾一个比特，中间步骤的对错没有单独的梯度。第一篇给推理 RL 预留的接口在这里落地：每道 `problem` 绑定明确的 `verifier`/`grader` 版本，训练侧同时落盘 `rollout` 与 `reward` 日志；判题脚本或提取正则一旦改版，前后两批奖励就不能直接拼进同一条曲线。
 
 [Lightman 等](https://arxiv.org/abs/2305.20050) 用逐步对错训练过程奖励模型，用来重排或引导搜索。[DeepSeek-R1](https://arxiv.org/abs/2501.12948) 的「不成功的尝试」写了他们为什么没有把 PRM 放进大规模 RL：细粒度步骤很难定义，自动标注不可靠，人工标注扩不了规模；一旦奖励来自模型，就会回到 Gao 等人的 reward hacking，还要再训一次 RM。MCTS 同样被放下：token 的分支比棋盘大，价值模型又直接决定搜索质量，他们没有把 AlphaGo 那条迭代做稳。报告说这些方法不是不可能，只是在他们的实验里，相对开销不值。R1-Zero 用的是规则：数学看最终答案，代码看测试，另加格式奖励，不用神经网络的过程奖励。
 
@@ -33,11 +33,11 @@ PPO 用 Critic 把回报变成优势。GRPO 对同一道题采样一组回答，
 
 ![GRPO 用组内优势，不训练 Critic](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261023-1.png)
 
-*图 1：实线是主流程，虚线是回到 policy 的梯度，与第二篇图 1、第五篇图 1 一致。和第五篇四模型图比，少的是 Critic。Verifier 是规则，不是 RM。*
+*图 1：沿用第五篇图 2 的同一布局。实线是主流程，虚线是回到 Policy 的梯度；中间三格并行位置里，规则 Verifier 替掉显式 RM，Reference 仍在（KL 加在损失里），Critic 那一格留空。*
 
 DeepSeekMath 的 GRPO 仍把相对 reference 的 KL 加在损失里。第五篇的 PPO-RLHF 通常把 KL 折进奖励。DAPO 说「去掉 KL」时，去掉的是 GRPO 损失里的那一项，不是第五篇奖励里的那一项。两处不是同一个开关。
 
-组内优势可以写成。均值和标准差都在同一道题的 $$G$$ 条回答上算。
+第一行是 GRPO 的组内优势，均值和标准差都在同一道题的 $$G$$ 条回答上算。第二行是 Dr. GRPO，不再除以标准差。
 
 ```python
 adv = (reward - reward.mean()) / (reward.std() + eps)
@@ -53,6 +53,10 @@ adv = reward - reward.mean()
 
 R1-Zero 没有 SFT 冷启动，直接在 base 上做 RL。报告观察到反思和回溯。第一篇已经写过：这是那次运行的现象，不是保证。后面还有冷启动 SFT、推理 RL、拒绝采样、再 SFT、以及面向一般场景的 RL。公开配方是这几段接起来的，不是「纯 RL 就够了」。
 
+![DeepSeek-R1 不是单段 GRPO：R1-Zero 支线与正式多阶段配方](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261023-2.png)
+
+*图 2：上方是直接在 Base 上做规则 RL 的 R1-Zero 支线；下方是 R1 的正式多阶段交替配方。实线是阶段推进，虚线表示模型产出的轨迹沉淀回第二轮 SFT 资产与后续蒸馏，对应第一篇总图的模块回流。*
+
 [DAPO](https://arxiv.org/abs/2503.14476) 在 GRPO 上改了四件事：去掉损失里的 KL，采样时丢掉整组全对或全错的题，clip 的上下界解开，policy gradient 按 token 而不是按整段平均，超长样本另作处理。[GSPO](https://arxiv.org/abs/2507.18071) 再改重要性采样的层级：token 级比值的方差会沿长序列累加，MoE 的路由波动会把它放大；序列级比值修的是这个方差，不是笼统的「长序列更难」。
 
 ---
@@ -67,6 +71,10 @@ KL 爆炸时，先看 KL 是加在损失里还是已经折进奖励。DAPO 去�
 
 还有一层更靠前的混淆。[有工作](https://arxiv.org/abs/2506.10947)报告，随机甚至错误的奖励也能让部分 Qwen 数学设置涨分。[Wu 等](https://arxiv.org/abs/2508.21188) 把这类现象收成条件：base 在该任务上的 pass@k 已经很高时，弱奖励或假奖励更容易看起来有效；对齐弱的时候，这些做法带不动，标准 RL 仍然有差。所以一份涨分要先对 base 家族和 pass@k 做对照，再记到奖励设计头上。这和第一篇的说法相同：评估是控制信号，不是事后的总分。
 
+![RLVR 归因与排障：前置 Base 对照门禁与三类失控](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261023-3.png)
+
+*图 3：顶部门禁要求先锁死 `verifier` 版本并对同家族 Base 做 pass@k 对照，排除高起点底座上的弱奖励假阳性；下方三栏分别给出 KL 飙升、熵坍缩（并列两组公开证据）以及长度膨胀与采样方差的检查项。*
+
 ---
 
 ## 五、推理时的计算是另一笔账
@@ -77,12 +85,9 @@ KL 爆炸时，先看 KL 是加在损失里还是已经折进奖励。DAPO 去�
 
 ## 六、交出去的是带验证器的策略
 
-1. 可验证奖励换掉的是 RM，没有换掉信用分配。
-2. GRPO 的优势来自组内统计。$$1/|o|$$ 和 $$\mathrm{std}$$ 是两处会把长度和难度写进梯度的分母。
-3. KL 在 GRPO 的损失里，和在 PPO 奖励里，不是同一个开关。
-4. pass@1、pass@k 和回答长度要一起看。假奖励能不能涨分，先看 base 的 pass@k。
+验证器换掉的是学出来的 RM，没有换掉长链条里的信用分配。复核一次 RLVR 运行时，先对清四本账：DeepSeekMath 的 GRPO 把相对 reference 的 KL 加在损失里，和第五篇 PPO 折进奖励的不是同一个开关，DAPO 拿掉的也是损失里这一项；优势里的 $$1/|o|$$ 与组内标准差 $$\mathrm{std}$$ 会把长度偏差和难度偏差写进梯度，GSPO 的序列级比值修的则是长序列与 MoE 路由波动累加出的重要性采样方差；看涨分不能只报 pass@1，要把大 $$k$$ 下的 pass@k、回答长度和同家族 base 对照摆在一起，先排除高 pass@k 底座上的弱奖励假阳性，并核对日志里的 `verifier` 版本没有漂移。
 
-下一篇把这一次解答换成环境里的一串动作。奖励更晚才出现。
+下一篇把一次解答换成环境里的一串动作：输入变成第一篇预留的 `environment`/`tool schema` 与版本、受权限边界约束的多轮 `trajectory`，奖励也退到轨迹末端才出现。
 
 ---
 

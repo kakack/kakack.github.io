@@ -32,60 +32,66 @@
   <text class="note" x="604" y="118">梯度回到参数</text>
 
   <g class="small">
-    <text x="430" y="168">system</text>
-    <text x="690" y="168">user</text>
-    <text x="950" y="168">assistant</text>
-    <text x="1210" y="168">user</text>
-    <text x="1470" y="168">assistant</text>
+    <text x="415" y="168">system</text>
+    <text x="675" y="168">user</text>
+    <text x="935" y="168">assistant</text>
+    <text x="1195" y="168">user</text>
+    <text x="1455" y="168">assistant</text>
   </g>
-<text class="row" x="36" y="266">全序列</text>
-<rect class="loss" x="300" y="230" width="230" height="64" rx="16"/>
-<text class="on" x="415.0" y="268">loss</text>
-<rect class="loss" x="560" y="230" width="230" height="64" rx="16"/>
-<text class="on" x="675.0" y="268">loss</text>
-<rect class="loss" x="820" y="230" width="230" height="64" rx="16"/>
-<text class="on" x="935.0" y="268">loss</text>
-<rect class="loss" x="1080" y="230" width="230" height="64" rx="16"/>
-<text class="on" x="1195.0" y="268">loss</text>
-<rect class="loss" x="1340" y="230" width="230" height="64" rx="16"/>
-<text class="on" x="1455.0" y="268">loss</text>
-<text class="row" x="36" y="396">只训 completion</text>
-<rect class="mask" x="300" y="360" width="230" height="64" rx="16"/>
-<text class="label" x="415.0" y="398">在 prompt</text>
-<rect class="mask" x="560" y="360" width="230" height="64" rx="16"/>
-<text class="label" x="675.0" y="398">在 prompt</text>
-<rect class="mask" x="820" y="360" width="230" height="64" rx="16"/>
-<text class="label" x="935.0" y="398">旧回答也在 prompt</text>
-<rect class="mask" x="1080" y="360" width="230" height="64" rx="16"/>
-<text class="label" x="1195.0" y="398">在 prompt</text>
-<rect class="loss" x="1340" y="360" width="230" height="64" rx="16"/>
-<text class="on" x="1455.0" y="398">completion</text>
-<text class="row" x="36" y="526">每轮 assistant</text>
-<rect class="mask" x="300" y="490" width="230" height="64" rx="16"/>
-<text class="label" x="415.0" y="528">mask</text>
-<rect class="mask" x="560" y="490" width="230" height="64" rx="16"/>
-<text class="label" x="675.0" y="528">mask</text>
-<rect class="loss" x="820" y="490" width="230" height="64" rx="16"/>
-<text class="on" x="935.0" y="528">loss</text>
-<rect class="mask" x="1080" y="490" width="230" height="64" rx="16"/>
-<text class="label" x="1195.0" y="528">mask</text>
-<rect class="loss" x="1340" y="490" width="230" height="64" rx="16"/>
-<text class="on" x="1455.0" y="528">loss</text>
-<text class="row" x="36" y="656">只训最后一轮</text>
-<rect class="mask" x="300" y="620" width="230" height="64" rx="16"/>
-<text class="label" x="415.0" y="658">mask</text>
-<rect class="mask" x="560" y="620" width="230" height="64" rx="16"/>
-<text class="label" x="675.0" y="658">mask</text>
-<rect class="mask" x="820" y="620" width="230" height="64" rx="16"/>
-<text class="label" x="935.0" y="658">target 被涂掉</text>
-<rect class="mask" x="1080" y="620" width="230" height="64" rx="16"/>
-<text class="label" x="1195.0" y="658">mask</text>
-<rect class="loss" x="1340" y="620" width="230" height="64" rx="16"/>
-<text class="on" x="1455.0" y="658">最后一轮</text>
+  <text class="row" x="36" y="266">全序列</text>
+  <rect class="loss" x="300" y="230" width="230" height="64" rx="16"/>
+  <text class="on" x="415" y="268">loss</text>
+  <rect class="loss" x="560" y="230" width="230" height="64" rx="16"/>
+  <text class="on" x="675" y="268">loss</text>
+  <rect class="loss" x="820" y="230" width="230" height="64" rx="16"/>
+  <text class="on" x="935" y="268">loss</text>
+  <rect class="loss" x="1080" y="230" width="230" height="64" rx="16"/>
+  <text class="on" x="1195" y="268">loss</text>
+  <rect class="loss" x="1340" y="230" width="230" height="64" rx="16"/>
+  <text class="on" x="1455" y="268">loss</text>
 
-  <path class="grad" d="M1572 360C1680 360 1680 792 1220 792" marker-end="url(#arrow)"/>
+  <text class="row" x="36" y="396">只训 completion</text>
+  <rect class="mask" x="300" y="360" width="230" height="64" rx="16"/>
+  <text class="label" x="415" y="398">在 prompt</text>
+  <rect class="mask" x="560" y="360" width="230" height="64" rx="16"/>
+  <text class="label" x="675" y="398">在 prompt</text>
+  <rect class="mask" x="820" y="360" width="230" height="64" rx="16"/>
+  <text class="label" x="935" y="398">旧回答也在 prompt</text>
+  <rect class="mask" x="1080" y="360" width="230" height="64" rx="16"/>
+  <text class="label" x="1195" y="398">在 prompt</text>
+  <rect class="loss" x="1340" y="360" width="230" height="64" rx="16"/>
+  <text class="on" x="1455" y="398">completion</text>
+
+  <text class="row" x="36" y="526">每轮 assistant</text>
+  <rect class="mask" x="300" y="490" width="230" height="64" rx="16"/>
+  <text class="label" x="415" y="528">mask</text>
+  <rect class="mask" x="560" y="490" width="230" height="64" rx="16"/>
+  <text class="label" x="675" y="528">mask</text>
+  <rect class="loss" x="820" y="490" width="230" height="64" rx="16"/>
+  <text class="on" x="935" y="528">loss</text>
+  <rect class="mask" x="1080" y="490" width="230" height="64" rx="16"/>
+  <text class="label" x="1195" y="528">mask</text>
+  <rect class="loss" x="1340" y="490" width="230" height="64" rx="16"/>
+  <text class="on" x="1455" y="528">loss</text>
+
+  <text class="row" x="36" y="656">只训最后一轮</text>
+  <rect class="mask" x="300" y="620" width="230" height="64" rx="16"/>
+  <text class="label" x="415" y="658">mask</text>
+  <rect class="mask" x="560" y="620" width="230" height="64" rx="16"/>
+  <text class="label" x="675" y="658">mask</text>
+  <rect class="mask" x="820" y="620" width="230" height="64" rx="16"/>
+  <text class="label" x="935" y="658">target 被涂掉</text>
+  <rect class="mask" x="1080" y="620" width="230" height="64" rx="16"/>
+  <text class="label" x="1195" y="658">mask</text>
+  <rect class="loss" x="1340" y="620" width="230" height="64" rx="16"/>
+  <text class="on" x="1455" y="658">最后一轮</text>
+
+  <path class="grad" d="M1570 262H1648"/>
+  <path class="grad" d="M1570 392H1648"/>
+  <path class="grad" d="M1570 522H1648"/>
+  <path class="grad" d="M1570 652H1648"/>
+  <path class="grad" d="M1648 262V750C1648 792 1606 792 1220 792" marker-end="url(#arrow)"/>
   <rect class="asset" x="860" y="760" width="360" height="64" rx="18"/>
   <text class="on" x="1040" y="798">参数：只从 loss span 收到梯度</text>
   <text class="note" x="52" y="848">completion 与「只训最后一轮」颜色可以一样。差别在旧回答是 prompt 的一部分，还是编码成 target 之后被涂掉。</text>
-
 </svg>

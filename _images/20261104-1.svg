@@ -11,13 +11,13 @@
       .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:8 7}
       .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round}
       .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round}
-      .title{font:700 34px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .label{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .on{font:600 18px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .small{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413;text-anchor:middle}
-      .sd{font:500 14px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#FAF9F5;text-anchor:middle}
-      .note{font:500 16px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
-      .head{font:700 20px Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;fill:#141413}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:20px;fill:#141413}
     </style>
     <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
       <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round"/>

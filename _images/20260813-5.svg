@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">序列构造：Packing、Block-Diagonal Mask 与 Manifest 溯源</title>
+  <desc id="desc">短文档通过 EOS 拼接进入定长序列并由 block-diagonal mask 隔离跨文档注意力；超长文档保留整篇进入长文档池；两者均经 QA Gate 写入可重放的训练分片与 manifest。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:3.5;stroke-dasharray:8 7}
+      .flow{fill:none;stroke:#141413;stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round}
+      .feedback{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:20px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="56">序列构造：Packing、跨文档隔离与 Manifest 溯源</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Left: Tokenized Documents -->
+  <text class="head" x="52" y="126">1. 分词后文档资产</text>
+  <rect class="blue" x="52" y="154" width="320" height="250" rx="20"/>
+  <text class="on" x="212" y="198">普通短文档 A / B / C</text>
+  <text class="sd" x="212" y="228">已用冻结 Tokenizer 编码</text>
+  <rect class="ivory" x="84" y="252" width="256" height="40" rx="10"/>
+  <text class="small" x="212" y="278">doc_id = 1042（短网页）</text>
+  <rect class="ivory" x="84" y="302" width="256" height="40" rx="10"/>
+  <text class="small" x="212" y="328">doc_id = 8819（代码文件）</text>
+  <rect class="ivory" x="84" y="352" width="256" height="36" rx="10"/>
+  <text class="small" x="212" y="376">doc_id = 3305（问答片段）</text>
+
+  <rect class="blue" x="52" y="458" width="320" height="156" rx="20"/>
+  <text class="on" x="212" y="508">超长文档 D（书籍 / 论文 / 仓库）</text>
+  <text class="sd" x="212" y="540">不按当前序列长度切碎</text>
+  <text class="sd" x="212" y="568">保留完整 doc_id 与结构边界</text>
+
+  <!-- Center: Packing + Block-diagonal mask -->
+  <text class="head" x="456" y="126">2. 定长序列组装与注意力掩码</text>
+  <rect class="ivory" x="456" y="154" width="710" height="330" rx="22"/>
+  <text class="label" x="811" y="192">Packed Sequence（高利用率拼接 + EOS 分隔）</text>
+
+  <!-- Packed strip -->
+  <rect class="blue" x="492" y="212" width="160" height="46" rx="10"/>
+  <text class="on" x="572" y="241">Doc A</text>
+  <rect class="orange" x="658" y="212" width="58" height="46" rx="10"/>
+  <text class="sd" x="687" y="240">EOS</text>
+  <rect class="blue" x="722" y="212" width="190" height="46" rx="10"/>
+  <text class="on" x="817" y="241">Doc B</text>
+  <rect class="orange" x="918" y="212" width="58" height="46" rx="10"/>
+  <text class="sd" x="947" y="240">EOS</text>
+  <rect class="blue" x="982" y="212" width="148" height="46" rx="10"/>
+  <text class="on" x="1056" y="241">Doc C</text>
+
+  <!-- 3x3 Block-Diagonal Attention Matrix -->
+  <text class="label" x="685" y="298">Block-Diagonal Mask（Llama 3）</text>
+  <rect class="blue" x="515" y="316" width="104" height="44" rx="8"/>
+  <text class="sd" x="567" y="344">A 看 A</text>
+  <rect class="dash" x="629" y="316" width="104" height="44" rx="8"/>
+  <text class="small" x="681" y="344">屏蔽 0</text>
+  <rect class="dash" x="743" y="316" width="104" height="44" rx="8"/>
+  <text class="small" x="795" y="344">屏蔽 0</text>
+
+  <rect class="dash" x="515" y="368" width="104" height="44" rx="8"/>
+  <text class="small" x="567" y="396">屏蔽 0</text>
+  <rect class="blue" x="629" y="368" width="104" height="44" rx="8"/>
+  <text class="sd" x="681" y="396">B 看 B</text>
+  <rect class="dash" x="743" y="368" width="104" height="44" rx="8"/>
+  <text class="small" x="795" y="396">屏蔽 0</text>
+
+  <rect class="dash" x="515" y="420" width="104" height="44" rx="8"/>
+  <text class="small" x="567" y="448">屏蔽 0</text>
+  <rect class="dash" x="629" y="420" width="104" height="44" rx="8"/>
+  <text class="small" x="681" y="448">屏蔽 0</text>
+  <rect class="blue" x="743" y="420" width="104" height="44" rx="8"/>
+  <text class="sd" x="795" y="448">C 看 C</text>
+
+  <rect class="ivory" x="878" y="316" width="256" height="148" rx="14"/>
+  <text class="label" x="1006" y="354">两级确定性 Shuffle</text>
+  <text class="small" x="1006" y="384">打散同站点 / 同质量桶连续段</text>
+  <text class="small" x="1006" y="412">固定 seed 精确恢复</text>
+  <text class="small" x="1006" y="440">每步真实的 sample order</text>
+
+  <!-- Long doc pool -->
+  <rect class="blue" x="456" y="516" width="710" height="98" rx="20"/>
+  <text class="on" x="811" y="558">独立长文档池（未切碎整篇存档，带长度 / 来源 / 领域标签）</text>
+  <text class="sd" x="811" y="588">兑现于第三篇 Mid-training 长上下文扩展，免去回头重解析</text>
+
+  <!-- Right: QA Gate & Manifest -->
+  <text class="head" x="1250" y="126">3. 门禁与交付契约</text>
+  <rect class="green" x="1250" y="182" width="498" height="132" rx="20"/>
+  <text class="on" x="1499" y="226">开训前 QA Gate</text>
+  <text class="sd" x="1499" y="258">Packed mask 单测 / 污染率 / PII 抽检</text>
+  <text class="sd" x="1499" y="286">Checksum / 分片留存率 / Loader 吞吐压测</text>
+
+  <rect class="orange" x="1250" y="388" width="498" height="150" rx="22"/>
+  <text class="on" x="1499" y="436">二进制 Shard + 精确 Manifest</text>
+  <text class="sd" x="1499" y="468">记录 shard_id、byte offset、doc/chunk ID</text>
+  <text class="sd" x="1499" y="498">与确定性全局 sample order</text>
+
+  <!-- Audit / Spike trace box -->
+  <rect class="ivory" x="1250" y="616" width="498" height="114" rx="18"/>
+  <text class="label" x="1499" y="658">训练期异常批次 / Loss Spike（step k）</text>
+  <text class="small" x="1499" y="690">按 step k 反查批次 → 精准隔离问题文档</text>
+
+  <!-- Flows -->
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M372 279H456"/>
+    <path d="M372 548C410 548 418 565 456 565"/>
+    <path d="M1166 248H1250"/>
+    <path d="M1166 565C1208 565 1208 278 1250 278"/>
+    <path d="M1499 314V388"/>
+  </g>
+  <path class="feedback" d="M1499 616V538" marker-end="url(#arrow)"/>
+  <path class="feedback" d="M1250 673H212C170 673 170 645 170 614" marker-end="url(#arrow)"/>
+
+  <text class="note" x="52" y="798">实线为主流程，虚线为训练异常回溯。Packing 负责把短文喂满序列，Block-diagonal mask 负责挡住跨文档串味，Manifest 负责事后追责。</text>
+</svg>

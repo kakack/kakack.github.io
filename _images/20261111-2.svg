@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">知识蒸馏的三个独立工程选择</title>
+  <desc id="desc">并列拆解蒸馏的三个独立维度：散度方向（前向 KL 覆盖 vs MiniLLM 反向 KL 寻峰）、采样来源（离线教师轨迹 vs GKD 学生 on-policy 采样）与监督粒度（纯文本 one-hot、Gemma 2 全词表分布、Gemma 3 抽取 256 个 logit）。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .curveP{fill:none;stroke:#141413;stroke-width:4.5;stroke-linecap:round}
+      .curveQ{fill:none;stroke:#D97757;stroke-width:4.5;stroke-dasharray:8 6;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413;text-anchor:middle}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="56">把「蒸馏」拆成三句独立的工程选择：散度、采样与粒度</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Column 1: Divergence Direction -->
+  <rect class="ivory" x="52" y="114" width="532" height="632" rx="24"/>
+  <text class="head" x="318" y="160">1. 散度方向（教师 p，学生 q）</text>
+
+  <rect class="ivory" x="86" y="192" width="464" height="246" rx="18"/>
+  <text class="label" x="318" y="232">前向 KL(p ∥ q)：覆盖所有模式</text>
+  <!-- Bimodal teacher + wide covering student -->
+  <path class="curveP" d="M126 364C160 364 176 266 216 266C256 266 274 358 318 358C362 358 380 274 420 274C460 274 476 364 510 364"/>
+  <path class="curveQ" d="M126 364C180 270 456 270 510 364"/>
+  <text class="small" x="318" y="396">实线 p 双峰，虚线 q 被迫横跨中间空隙</text>
+  <text class="small" x="318" y="422">代价：把教师概率接近 0 的区域也抬高</text>
+
+  <rect class="blue" x="86" y="464" width="464" height="248" rx="18"/>
+  <text class="on" x="318" y="506">反向 KL(q ∥ p)：MiniLLM 贴住主峰</text>
+  <rect class="ivory" x="114" y="528" width="408" height="106" rx="12"/>
+  <path class="curveP" d="M142 614C174 614 190 544 226 544C262 544 278 608 318 608C358 608 374 552 410 552C446 552 462 614 494 614"/>
+  <path class="curveQ" d="M142 614C178 614 194 540 226 540C258 540 274 614 318 614H494"/>
+  <text class="sd" x="318" y="666">学生 q 集中锁定教师高概率主模式</text>
+  <text class="sd" x="318" y="694">不去填低概率空隙，抑制生成胡言乱语</text>
+
+  <!-- Column 2: Sampling Source -->
+  <rect class="ivory" x="634" y="114" width="532" height="632" rx="24"/>
+  <text class="head" x="900" y="160">2. 样本从谁来（前缀轨迹分布）</text>
+
+  <rect class="ivory" x="668" y="192" width="464" height="246" rx="18"/>
+  <text class="label" x="900" y="236">离线教师采样（黑盒序列 SFT）</text>
+  <text class="small" x="900" y="274">Teacher（冻结）写出整条回答序列</text>
+  <text class="small" x="900" y="306">Student（可训练）在教师前缀上做最大似然</text>
+  <rect class="ivory" x="704" y="334" width="392" height="78" rx="12"/>
+  <text class="small" x="900" y="366">隐患：部署推理时学生沿自己的分布往下走，</text>
+  <text class="small" x="900" y="394">一旦偏离教师轨迹就会发生误差累积</text>
+
+  <rect class="orange" x="668" y="464" width="464" height="248" rx="18"/>
+  <text class="on" x="900" y="508">学生 On-Policy 采样（GKD）</text>
+  <text class="sd" x="900" y="546">先由 Student 从自己的当前分布采样序列</text>
+  <text class="sd" x="900" y="578">再请冻结 Teacher 在这些学生状态上给出目标分布</text>
+  <rect class="ivory" x="704" y="606" width="392" height="80" rx="12"/>
+  <text class="small" x="900" y="638">收益：直接在学生真正会踩到的状态上纠偏</text>
+  <text class="small" x="900" y="666">（Gemma 2 报告结合了 GKD 与 MiniLLM）</text>
+
+  <!-- Column 3: Supervision Granularity -->
+  <rect class="ivory" x="1216" y="114" width="532" height="632" rx="24"/>
+  <text class="head" x="1482" y="160">3. 看不看 Logits（每个位置给什么）</text>
+
+  <rect class="ivory" x="1250" y="192" width="464" height="156" rx="18"/>
+  <text class="label" x="1482" y="232">粒度 A：纯文本样本（One-Hot）</text>
+  <text class="small" x="1482" y="266">只见最终采出的单个 token（如 R1 推理轨迹蒸馏）</text>
+  <text class="small" x="1482" y="296">注意：学生会连同教师的长 CoT 长度一起继承，</text>
+  <text class="small" x="1482" y="324">长度分布必须同 Teacher / Prompt 写入 Manifest</text>
+
+  <rect class="blue" x="1250" y="372" width="464" height="156" rx="18"/>
+  <text class="on" x="1482" y="414">粒度 B：全词表分布（Gemma 2：2B / 9B）</text>
+  <text class="sd" x="1482" y="450">用教师在每个 token 上的完整概率分布</text>
+  <text class="sd" x="1482" y="482">直接替换预训练 / 微调里的 next-token one-hot</text>
+
+  <rect class="green" x="1250" y="552" width="464" height="160" rx="18"/>
+  <text class="on" x="1482" y="594">粒度 C：概率抽样 Logits（Gemma 3）</text>
+  <text class="sd" x="1482" y="630">每个 token 按教师概率抽取 256 个 logit</text>
+  <text class="sd" x="1482" y="662">学生在这组抽样支撑集上对齐教师分布</text>
+  <text class="sd" x="1482" y="690">（同属白盒蒸馏，但与全词表逐项对齐不同）</text>
+
+  <text class="note" x="52" y="796">报告说「用了蒸馏」时，先对号入座这三列：散度是前向还是反向、前缀来自教师还是学生、监督是文本还是抽样/全量 Logits。</text>
+</svg>

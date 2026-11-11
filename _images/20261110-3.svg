@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 780" role="img" aria-labelledby="title desc">
+  <title id="title">Full FT 与 LoRA：同一份 Mask 梯度，不同的参数写回范围</title>
+  <desc id="desc">损失集合 T 发出的同一份反传梯度，在 Full FT 中更新全部权重并靠 checkpoint 回退，在 LoRA 中冻结主干只更新旁路低秩增量；两者均需过通用切片 backward transfer 与 KL 审计。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="780"/>
+  <text class="title" x="52" y="56">Full FT 与 LoRA：梯度同样来自 𝒯，差别在写回哪片参数</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Left: Same Masked Loss Source -->
+  <rect class="blue" x="52" y="302" width="356" height="176" rx="22"/>
+  <text class="on" x="230" y="356">监督损失集合 𝒯</text>
+  <text class="sd" x="230" y="390">只对未 Mask 的 target 算交叉熵</text>
+  <text class="sd" x="230" y="420">梯度源头与归一化分母 |𝒯| 相同</text>
+
+  <!-- Upper Branch: Full Fine-Tuning -->
+  <rect class="ivory" x="504" y="128" width="712" height="232" rx="22"/>
+  <text class="head" x="540" y="172">路径 1：Full FT（全参数更新）</text>
+  <rect class="orange" x="540" y="198" width="330" height="126" rx="16"/>
+  <text class="on" x="705" y="246">整块线性层权重 W</text>
+  <text class="sd" x="705" y="280">全部参数可训练、全量写回</text>
+
+  <rect class="ivory" x="900" y="198" width="280" height="126" rx="16"/>
+  <text class="label" x="1040" y="238">工程与公开锚点</text>
+  <text class="small" x="1040" y="268">Llama 3 / Tulu 3 公开采用</text>
+  <text class="small" x="1040" y="296">回退依赖保存 Checkpoint</text>
+
+  <!-- Lower Branch: LoRA -->
+  <rect class="ivory" x="504" y="394" width="712" height="240" rx="22"/>
+  <text class="head" x="540" y="436">路径 2：LoRA（主干冻结 + 旁路低秩增量）</text>
+  <rect class="blue" x="540" y="462" width="300" height="62" rx="14"/>
+  <text class="on" x="690" y="500">原底座权重 W（冻结）</text>
+  <rect class="orange" x="540" y="540" width="300" height="68" rx="14"/>
+  <text class="on" x="690" y="572">低秩增量 ΔW = B·A</text>
+  <text class="sd" x="690" y="596">仅旁路可训练（未报 rank 不补）</text>
+
+  <rect class="ivory" x="876" y="462" width="304" height="146" rx="16"/>
+  <text class="label" x="1028" y="504">工程可回退性与边界</text>
+  <text class="small" x="1028" y="536">卸载 ΔW 即可无损退回底座</text>
+  <text class="small" x="1028" y="566">长序列下激活与 Logits 仍可能</text>
+  <text class="small" x="1028" y="592">先于参数占满显存</text>
+
+  <!-- Right: General Slice Audit -->
+  <rect class="green" x="1308" y="238" width="440" height="304" rx="22"/>
+  <text class="on" x="1528" y="288">冻结通用切片防遗忘审计</text>
+  <rect class="ivory" x="1344" y="316" width="368" height="82" rx="14"/>
+  <text class="label" x="1528" y="350">1. Backward Transfer</text>
+  <text class="small" x="1528" y="380">微调后 − 微调前在通用基准上的差值</text>
+  <rect class="ivory" x="1344" y="416" width="368" height="88" rx="14"/>
+  <text class="label" x="1528" y="450">2. 相对 SFT 起点的 KL</text>
+  <text class="small" x="1528" y="480">在同一批通用 token 上监控分布漂移</text>
+
+  <!-- Dashed Gradients from T -->
+  <path class="grad" d="M408 356C460 356 460 261 540 261" marker-end="url(#arrow)"/>
+  <path class="grad" d="M408 424C460 424 460 574 540 574" marker-end="url(#arrow)"/>
+  <text class="small" x="456" y="242">反传梯度</text>
+  <text class="small" x="452" y="598">反传梯度</text>
+
+  <!-- Main evaluation flows -->
+  <path class="flow" d="M1216 261C1262 261 1262 340 1308 340" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1216 518C1262 518 1262 440 1308 440" marker-end="url(#arrow)"/>
+
+  <!-- Feedback to mixture routed cleanly below LoRA container -->
+  <path class="grad" d="M1528 542V676H230V478" marker-end="url(#arrow)"/>
+  <text class="small" x="880" y="706">通用切片明显下滑 → 把通用对话按配比补回 SFT 数据混合</text>
+
+  <text class="note" x="52" y="752">实线是模型交付与评测主流程，虚线是反传梯度与配比回流。换 LoRA 只缩小参数写回范围，不能替代冻结通用切片上的退化检查。</text>
+</svg>

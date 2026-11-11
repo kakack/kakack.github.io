@@ -31,6 +31,10 @@ $$
 
 [Gao 等](https://arxiv.org/abs/2210.10760)把过优化写成一条曲线：策略在 RM 上的分数可以随 KL 继续涨，人的偏好先升后降。所以 RM 的训练准确率不是上线指标。后面用三件事情核对一份 RM：留出偏好对上的准确率，[RewardBench](https://arxiv.org/abs/2403.13787) 这类公开基准，以及分数和回答长度的相关性。长度偏差在验证侧是这张相关性，在损失侧是下一节的长度归一化。两处各管一段。
 
+![奖励模型过优化（Gao et al.）与 RM 上线前的三项核对](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261009-2.png)
+
+*图 1：左框示意 Gao 等人的奖励模型过优化曲线——随相对 Reference 的距离拉大，代理 RM 分数继续上升而真实偏好先升后降；右框列出核对一份 RM 的三道独立标尺。*
+
 ---
 
 ## 二、PPO：四个模型，两条冻结
@@ -45,7 +49,7 @@ InstructGPT 把它拆成三步：SFT、用成对偏好训 RM、再用 PPO 更新
 
 ![PPO 的四个模型与 DPO 的两个模型](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261009-1.png)
 
-*图 1：上排是 PPO，下排是 DPO。实线是主流程，虚线表示反馈（梯度），与第二篇图 1 一致。虚线框是冻结模型。上排的虚线只画回到 Actor 的策略梯度；Critic 用价值损失单独更新。颜色仍表示起止、决策和资产。*
+*图 2：上排是 PPO，下排是 DPO，同一布局。实线是主流程，虚线表示反馈（梯度），与第二篇图 1 一致；可训练与冻结写在节点文字里。一批 rollout 由 RM、Reference、Critic 分头消费；虚线只画回到 Actor 的策略梯度，Critic 由价值损失单独更新。下排同一列里，打分和估值两格是空的。*
 
 Actor 采样，Reward model 打分，Reference 提供 KL 里的旧策略，Critic 把回报变成优势。常见写法把 KL 折进奖励再交给 PPO，而不是像后面 GRPO 那样把 KL 单独加在损失里。Actor 和 Critic 更新，RM 和 Reference 冻结。KL 是约束策略不要离开 SFT 模型，不是损失上的装饰项。
 
@@ -55,7 +59,7 @@ Actor 采样，Reward model 打分，Reference 提供 KL 里的旧策略，Criti
 
 在 Bradley-Terry 和上面的 KL 约束同时成立时，最优策略的奖励差可以写成 policy 与 reference 的对数比。于是成对偏好变成一个分类损失，RM 不必再单独训练，rollout 也不必在线采。Reference 的对数概率仍要，可以提前算好。
 
-图 1 下排只留 Policy 和 Reference。少掉的是 Critic，以及那个显式的 reward model。分布偏移留在损失外面：偏好对若来自很旧的 policy，当前模型是在做离线分类，分类损失可以继续降，而新政策下的偏好不一定更好。这就是 Gao 那条曲线在没有 RM 时的对应物。
+图 2 下排只留 Policy 和 Reference。少掉的是 Critic，以及那个显式的 reward model。分布偏移留在损失外面：偏好对若来自很旧的 policy，当前模型是在做离线分类，分类损失可以继续降，而新策略下的偏好不一定更好。这就是 Gao 那条曲线在没有 RM 时的对应物。
 
 [Azar 等](https://arxiv.org/abs/2310.12036)指出另一处裂缝：偏好若是确定性的，Bradley-Terry 再推出 DPO，会把 chosen 与 rejected 的对数比推向无穷。IPO 用平方损失把这个比拉住，改的是 BT 到 DPO 的那一步，不是又一个采样技巧。
 
@@ -70,7 +74,9 @@ Actor 采样，Reward model 打分，Reference 提供 KL 里的旧策略，Criti
 ```python
 chosen_logratios = chosen_logps - ref_chosen_logps
 rejected_logratios = rejected_logps - ref_rejected_logps
-delta_score = chosen_logratios - rejected_logratios
+chosen_scores = chosen_logratios          # reverse_kl 分支
+rejected_scores = rejected_logratios
+delta_score = chosen_scores - rejected_scores
 per_sequence_loss = -F.logsigmoid(self.beta * delta_score)
 ```
 
@@ -79,6 +85,10 @@ per_sequence_loss = -F.logsigmoid(self.beta * delta_score)
 chosen 与 rejected 必须是同一套 chat template 渲染的。格式 token 若留在两条序列里，模型会同时被要求提高和降低它们的概率。Llama 3 因此在 DPO 损失里 mask 掉 header 和终止符。这和第四篇是同一件事：模板 token 进不进 $$\mathcal{T}$$，要单独声明。
 
 他们还在 chosen 序列上加了一项 NLL，系数 0.2，用来挡住 chosen 的对数概率在对比学习里下降。于是这一阶段的总损失里，第四篇的 SFT 项和这一篇的偏好项同时在，系数是报告里的 0.2。
+
+![DPO 变体分组与 Llama 3 损失里的两处算法修改](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261009-3.png)
+
+*图 3：上半部分按「相对标准 DPO 改了哪一项」归类四种常见变体；下半部分拆开 Llama 3 的 DPO 损失——同一套模板渲染下虚线框格式 token 被同时屏蔽，chosen 额外加上系数 0.2 的 NLL 项，虚线箭头为回到可训练 Policy 的梯度。*
 
 ---
 
@@ -92,12 +102,13 @@ Constitutional AI 用书面原则让模型生成和修改偏好，奖励信号�
 
 ## 六、交出去的是带偏好的策略，还不是可验证的推理
 
-1. 偏好模型的假设决定了后面能用哪一个损失。BT 推不出 IPO 要修的那种确定性偏好。
-2. PPO 里 Actor 和 Critic 更新，RM 和 Reference 冻结。KL 在这套写法里折进奖励。
-3. DPO 省掉的是在线采样和显式 RM，不是 reference 的对数概率。
-4. 长度偏差分两处查：RM 分数与长度的相关性，以及损失里的长度归一化。
+把这一轮对齐压回三组可核对的对账单：
 
-下一篇从这里接：当奖励可以由验证器给出时，学出来的 RM 不再是必要的。
+- **偏好假设与离线偏移**：Bradley-Terry 假定可传递标量奖励，确定性偏好下推到 DPO 会把对数比推向无穷（IPO 用平方损失拉住）；离线偏好对要查产生它们时的 `policy` 版本，留出集准确率之外同时核对 RewardBench。
+- **谁在场、KL 放在哪**：PPO 同时挂四个模型，Actor 与 Critic 更新，RM 与 Reference 冻结，KL 折进奖励；DPO 省掉在线采样与显式 RM，仍需 Reference 的对数概率，格式 token 进不进损失集合 $$\mathcal{T}$$ 要单独声明，并可像 Llama 3 那样在 chosen 上加系数 0.2 的 NLL。
+- **长度偏差分两头查**：验证侧查 RM 分数与回答长度的相关性，损失侧查有没有做长度归一化。
+
+当对错能由明确规则判定时，学出来的 RM 就不再是必要的中间层；下一篇接收的输入是第一篇预留的 `problem`、`verifier`/`grader` 版本，以及同题采样出的 `rollout` 与 `reward` 日志。
 
 ---
 

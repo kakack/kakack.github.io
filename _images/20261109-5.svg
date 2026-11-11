@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 780" role="img" aria-labelledby="title desc">
+  <title id="title">RoPE 波长分组与 YaRN 注意力温度缩放</title>
+  <desc id="desc">按每对维度的旋转波长相对原训练长度分组：短波长高频不动，过渡带平滑混合，长波长低频插值；同时在 Query 与 Key 缓存上乘温度因子。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .cutoff{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:9 8}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="780"/>
+  <text class="title" x="52" y="56">长上下文位置编码：按 RoPE 波长分组与 YaRN 温度修正</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+
+  <!-- Left Panel: Wavelength Spectrum across head dimensions -->
+  <rect class="ivory" x="52" y="116" width="1084" height="568" rx="24"/>
+  <text class="head" x="88" y="162">1. 按旋转波长 λ = 2π / θ 对注意力头维度分组</text>
+
+  <!-- Axis -->
+  <path class="flow" d="M96 226H1088" marker-end="url(#arrow)"/>
+  <text class="small" x="240" y="206">小维度下标 i（高频・短波长）</text>
+  <text class="small" x="920" y="206">大维度下标 i（低频・超长波长）</text>
+
+  <!-- Training Length Threshold Line -->
+  <rect class="green" x="628" y="248" width="240" height="40" rx="10"/>
+  <text class="sd" x="748" y="274">原训练长度边界（如 8K）</text>
+  <path class="cutoff" d="M748 288V570"/>
+
+  <!-- 3 Wavelength Bands -->
+  <rect class="blue" x="92" y="316" width="300" height="236" rx="18"/>
+  <text class="on" x="242" y="366">高频短波长区</text>
+  <text class="sd" x="242" y="400">波长远小于原训练长度</text>
+  <text class="sd" x="242" y="432">训练期内已转满许多圈</text>
+  <rect class="ivory" x="116" y="468" width="252" height="56" rx="12"/>
+  <text class="label" x="242" y="502">不插值（保留局部精度）</text>
+
+  <rect class="ivory" x="418" y="316" width="300" height="236" rx="18"/>
+  <text class="label" x="568" y="366">中频平滑过渡带</text>
+  <text class="small" x="568" y="400">波长接近原训练长度量级</text>
+  <text class="small" x="568" y="432">避免硬切造成频谱跳变</text>
+  <rect class="blue" x="442" y="468" width="252" height="56" rx="12"/>
+  <text class="on" x="568" y="502">线性 Ramp 平滑混合</text>
+
+  <rect class="orange" x="774" y="316" width="324" height="236" rx="18"/>
+  <text class="on" x="936" y="366">低频长波长区（波长 &gt; L）</text>
+  <text class="sd" x="936" y="400">原训练期内连一圈都没转满</text>
+  <text class="sd" x="936" y="432">直接外推时最先出现越界失真</text>
+  <rect class="ivory" x="798" y="468" width="276" height="56" rx="12"/>
+  <text class="label" x="936" y="502">位置插值压回已见区间</text>
+
+  <text class="small" x="594" y="618">注：调大 RoPE base（如 Llama 3 设为 500,000）会把角频率调低、波长拉长，使波长超过 L 的维度变多，而非缩回 L 以内</text>
+
+  <!-- Right Panel: YaRN Temperature Scaling -->
+  <rect class="ivory" x="1184" y="116" width="564" height="568" rx="24"/>
+  <text class="head" x="1220" y="162">2. YaRN 注意力温度缩放</text>
+
+  <rect class="blue" x="1224" y="206" width="224" height="92" rx="16"/>
+  <text class="on" x="1336" y="246">Query 旋转缓存</text>
+  <text class="sd" x="1336" y="274">乘 √(1/t)</text>
+
+  <rect class="blue" x="1484" y="206" width="224" height="92" rx="16"/>
+  <text class="on" x="1596" y="246">Key 旋转缓存</text>
+  <text class="sd" x="1596" y="274">乘 √(1/t)</text>
+
+  <rect class="ivory" x="1224" y="356" width="484" height="114" rx="18"/>
+  <text class="label" x="1466" y="402">工程实现：√(1/t) = 0.1 ln(s) + 1</text>
+  <text class="small" x="1466" y="436">s 为上下文扩展倍数；因子写进 RoPE 缓存</text>
+
+  <rect class="green" x="1224" y="528" width="484" height="118" rx="18"/>
+  <text class="on" x="1466" y="576">等效把 QKᵀ Logits 乘上 (0.1 ln s + 1)²</text>
+  <text class="sd" x="1466" y="610">抵消长序列下注意力熵增与分布变平</text>
+
+  <g class="flow" marker-end="url(#arrow)">
+    <path d="M1336 298V356"/>
+    <path d="M1596 298V356"/>
+    <path d="M1466 470V528"/>
+  </g>
+
+  <text class="note" x="52" y="736">全局 Position Interpolation 把所有维度一起压成 m/s，会稀释短程分辨率；YaRN 只压没转满周期的低频维度，并用温度项稳住长程注意力聚焦。</text>
+</svg>
