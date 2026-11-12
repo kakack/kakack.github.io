@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900" role="img" aria-labelledby="title desc">
+  <title id="title">两个分母：组内标准差和回答长度，各自把什么写进了梯度</title>
+  <desc id="desc">左栏用 0/1 奖励、G=16 的算术画出标准化后的优势；右栏画出每 token 权重随回答长度的反比关系；底部并列三种归约。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="900"/>
+  <text class="title" x="52" y="56">两个分母：组内标准差和回答长度，各自把什么写进了梯度</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="panel" x="52" y="108" width="820" height="470" rx="26"/>
+  <text class="head" x="84" y="154">除以组内标准差：难度偏差</text>
+  <path class="thin" d="M150 470H820"/>
+  <path class="thin" d="M150 470V200"/>
+  <rect x="190" y="230" width="78" height="240" rx="8" fill="#6A9BCC" stroke="#141413" stroke-width="3.5"/>
+  <text class="small" x="229" y="494">对 1 条</text>
+  <text class="small" x="229" y="220.06">3.87</text>
+  <rect x="314" y="363" width="78" height="107" rx="8" fill="#6A9BCC" stroke="#141413" stroke-width="3.5"/>
+  <text class="small" x="353" y="494">对 4 条</text>
+  <text class="small" x="353" y="352.74">1.73</text>
+  <rect x="438" y="408" width="78" height="62" rx="8" fill="#6A9BCC" stroke="#141413" stroke-width="3.5"/>
+  <text class="small" x="477" y="494">对 8 条</text>
+  <text class="small" x="477" y="398.0">1.00</text>
+  <rect x="562" y="434" width="78" height="36" rx="8" fill="#6A9BCC" stroke="#141413" stroke-width="3.5"/>
+  <text class="small" x="601" y="494">对 12 条</text>
+  <text class="small" x="601" y="424.04">0.58</text>
+  <rect x="686" y="454" width="78" height="16" rx="8" fill="#6A9BCC" stroke="#141413" stroke-width="3.5"/>
+  <text class="small" x="725" y="494">对 15 条</text>
+  <text class="small" x="725" y="443.88">0.26</text>
+  <text class="lsmall" x="84" y="190">做对那条回答的优势</text>
+  <text class="lsmall" x="560" y="250">16 条里只对 1 条：</text>
+  <text class="lsmall" x="560" y="276">这一条被放大到 3.87</text>
+  <text class="lsmall" x="84" y="548">横轴是一组 16 条里做对的条数。全对或全错时分子为零，这组不产生梯度。</text>
+  <rect class="panel" x="928" y="108" width="820" height="470" rx="26"/>
+  <text class="head" x="960" y="154">除以回答长度：长度偏差</text>
+  <path class="thin" d="M1026 470H1700"/>
+  <path class="thin" d="M1026 470V200"/>
+  <path class="flow" d="M1066 215C1100 380 1300 440 1680 456"/>
+  <circle cx="1082" cy="262" r="10" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <circle cx="1560" cy="451" r="10" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <text class="lsmall" x="1104" y="258">200 token：每个 token 权重大</text>
+  <text class="lsmall" x="1380" y="396">2000 token：只有十分之一</text>
+  <text class="lsmall" x="960" y="190">每个 token 的权重</text>
+  <text class="lsmall" x="1600" y="494">回答长度</text>
+  <text class="lsmall" x="960" y="548">做对的里面偏向短的；做错的里面，长的被罚得更轻。</text>
+  <rect class="ivory" x="52" y="620" width="540" height="110" rx="18"/>
+  <text class="label" x="322.0" y="655">GRPO</text>
+  <text class="small" x="322.0" y="683">每条先除以自己的长度</text>
+  <text class="small" x="322.0" y="707">优势除以组内标准差</text>
+  <rect class="ivory" x="630" y="620" width="540" height="110" rx="18"/>
+  <text class="label" x="900.0" y="655">DAPO</text>
+  <text class="small" x="900.0" y="683">除以这一组的 token 总数</text>
+  <text class="small" x="900.0" y="707">优势仍除以标准差</text>
+  <rect class="ivory" x="1208" y="620" width="540" height="110" rx="18"/>
+  <text class="label" x="1478.0" y="655">Dr. GRPO</text>
+  <text class="small" x="1478.0" y="683">除以常数，不跟长度走</text>
+  <text class="small" x="1478.0" y="707">优势只减组内均值</text>
+  <text class="note" x="52" y="792">柱高和曲线来自公式的算术，不是某次运行的数据：0/1 奖励、总体标准差、G=16。</text>
+  <text class="note" x="52" y="826">两处偏差的命名与 Dr. GRPO 的改法来自 Liu 等人的工作。分母若跟着样本走，日志里的长度变化不一定是能力变化。</text>
+</svg>

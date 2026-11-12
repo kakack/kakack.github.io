@@ -27,6 +27,8 @@ pinned: false
 
 *图 1：一个 training step。实线是前向和权重更新，虚线是梯度——沿用系列图例里「虚线表示反馈」的含义，训练里回流的信号就是梯度。AdamW 用虚线边框，表示它常驻但不在前向计算图上。*
 
+### 1.1 前向与损失
+
 前向路径是：
 
 $$
@@ -47,13 +49,41 @@ $$
 
 其中 $$\mathcal{T}$$ 是参与 loss 的位置。预训练里通常是几乎全部 token；packing 时文档边界是否断开，第一篇已经要求在样本格式里定死，这里不能再临时改。PaLM 明确不用 label smoothing，loss 就是平均对数概率，外加后面会讲的 z-loss。
 
+### 1.2 分母
+
 这个平均的分母会直接改变第六节的诊断信号。token-mean 按有效 token 数平均；sequence-mean 先在每条序列里平均，再在 batch 上平均，短序列里每个 token 的梯度更大。梯度累积时，不要对每个 micro-batch 先做 mean 再把 loss 相加，否则有效 token 少的那一份会被放大。正确的写法是把各 micro-batch 的 token loss 之和累加起来，最后除以全局有效 token 数。日志里的 grad norm 必须和这个归一口径记在一起，否则尖峰可能只是分母变了。
+
+把梯度累积的 $$K$$ 个 micro-batch 和数据并行的 $$R$$ 个 rank 都写出来。记第 $$k$$ 个 micro-batch 在第 $$r$$ 个 rank 上的 token 损失之和为 $$S_{k,r}$$，有效 token 数为 $$n_{k,r}$$，一次更新用的损失是
+
+$$
+\mathcal{L} = \frac{\sum_{k=1}^{K}\sum_{r=1}^{R} S_{k,r}}{\sum_{k=1}^{K}\sum_{r=1}^{R} n_{k,r}}
+$$
+
+分子分母都要跨 rank、跨 micro-batch 求和之后再相除。实现上有一个省事的地方：有效 token 数只取决于 labels，前向之前就能数出来。先把这一步更新要用的全部 $$n_{k,r}$$ 数完，做一次 all-reduce 得到全局分母，之后每个 micro-batch 用「本地损失之和除以全局分母」做反向，梯度自然累加成上式。
+
+常见的错法是每个 rank、每个 micro-batch 各自先取平均，再对这些平均值取平均。算术：两个 micro-batch，一个有 4000 个有效 token，一个因为序列断尾只有 400 个，各自平均再合并，后者每个 token 的权重是前者的 10 倍。预训练里序列多数是满的，这个偏差通常很小；最后一个不满的 batch、长度分桶之后的短序列桶、以及第四篇 mask 之后的 SFT，是它变大的地方。
+
+### 1.3 反向与常驻状态
 
 反向路径比前向更容易被讲丢。交叉熵对 logit 的梯度是 $$\mathrm{softmax}(z) - y$$，它先穿过 LM head，再穿过每一层的 attention 和 FFN（或 MoE 专家），最后到达 embedding。AdamW 用这份梯度更新的是优化器状态里的动量和方差，再写回权重。因此常驻显存里有三份不同的东西：计算用的低精度权重、FP32 master weight、Adam 的两个矩。图 1 里 AdamW 用虚线框，是因为它不在前向计算图上，但每一步都在。
 
 Activation checkpointing 不改变这个箭头的方向，只把「保存下来的激活」换成「反向时重算」。它省的是激活显存，不省参数，也不省 logits。logits 为什么会单独把卡打满，仍然是上一篇并行文章的问题。
 
+### 1.4 指纹与日志
+
 这张图还故意没画 batch 指纹。指纹不参与梯度，但 spike 发生时，没有它你就无法把一次跳变指回第一篇的 manifest。日志里至少要能对上：step、loss、全局 grad norm、embedding 的 grad norm、attention logit 的最大值、输出 $$\log Z$$、以及这个 batch 的数据 ID。
+
+| 字段 | 记什么 | 第六节哪一步用它 |
+|---|---|---|
+| `step`、`loss` | 更新步数；按 1.2 节口径归一的损失 | 判断是否自行恢复 |
+| `n_valid_tokens` | 这一步的全局有效 token 数 | 排除「只是分母变了」 |
+| `global_grad_norm` | 裁剪之前的全局梯度范数 | 领先信号；裁剪之后的值看不出尖峰 |
+| `emb_grad_norm` | embedding 参数的梯度范数 | 指向 embedding 的那一格 |
+| `max_attn_logit` | 各层注意力分数的最大值 | 指向 attention 的那一格 |
+| `output_log_z` | 输出 logits 的 logsumexp 均值 | 指向 LM head 的那一格 |
+| `batch_digest` | 这一步消费的 shard、偏移和文档 ID 的摘要 | 重放同一批数据；指回 manifest |
+
+`global_grad_norm` 记裁剪之前的值。裁剪之后的范数被上界压平，真正的尖峰在日志里消失了。`batch_digest` 存摘要即可，完整的文档 ID 列表由第一篇的 manifest 按 step 反查。
 
 ---
 
@@ -63,16 +93,48 @@ Activation checkpointing 不改变这个箭头的方向，只把「保存下来�
 
 *图 2：左图的橙点是固定 FLOPs 下 loss 曲线的最低点。右图的绿点故意离开最低点，换更小的模型和更多 token。曲线是示意图。*
 
+### 2.1 一笔预算，两种花法
+
+训练一个 dense Transformer 的算力可以近似成
+
+$$
+C \approx 6ND
+$$
+
+其中 $$N$$ 是参数量，$$D$$ 是训练 token 数：前向每个参数每个 token 大约 2 次浮点运算，反向大约是前向的两倍。这个近似不含注意力里随序列长度增长的那一项，序列不太长时可以忽略，第三篇的长上下文阶段不能。拿 Llama 3 405B 验一遍，算术：$$6\times 405\times 10^{9}\times 15.6\times 10^{12}$$ 约为 $$3.8\times 10^{25}$$，和报告给的训练预算对得上。
+
+预算 $$C$$ 固定时，$$N$$ 和 $$D$$ 此消彼长。Scaling law 回答的是这条曲线上哪一点的 loss 最低。
+
 [Kaplan 等（2020）](https://arxiv.org/abs/2001.08361)在当时的拟合里让参数量比数据量涨得更快。[Chinchilla](https://arxiv.org/abs/2203.15556)在同一笔计算预算上扫模型大小，得到的是参数和 token 大致同比缩放，常用的记忆点是约 20 token/参数。这是他们的数据、tokenizer 和拟合下的最低点，不是物理常数。数据变干净、重复策略变了，最低点会移动。
 
-Llama 3 没有直接套 20 这个数。他们在 $$6\times 10^{18}$$ 到 $$10^{22}$$ FLOPs 上做 isoFLOP：每个预算训练若干尺寸，用二次曲线找 loss 最低的那一档，再拟合「最优 token 数随预算怎么涨」。两个对他们有用、也容易被讲丢的结论是：
+### 2.2 Llama 3 的 isoFLOP
+
+Llama 3 没有直接套 20 这个数。他们在 $$6\times 10^{18}$$ 到 $$10^{22}$$ FLOPs 上做 isoFLOP：每个预算训练若干尺寸，用二次曲线找 loss 最低的那一档，再拟合「最优 token 数随预算怎么涨」。拟合出来的是一条幂律，最优 token 数大约按预算的 0.53 次方增长；指数若正好是 0.5，就是 Chinchilla 的「参数和 token 同比缩放」。把这条线外推到 $$3.8\times 10^{25}$$ FLOPs，得到的建议是约 402B 参数配约 16.55T token，最后落地的是 405B 和 15.6T。
+
+这里的外推跨了三个多数量级：拟合用的最大预算是 $$10^{22}$$，旗舰的预算是它的三千多倍。两个对他们有用、也容易被讲丢的结论是：
 
 1. 预算越大，最低点附近越平。旗舰尺寸对「参数和 token 对调一小截」不敏感，所以他们最终选了 405B，对应训练预算 $$3.8\times 10^{25}$$ FLOPs、15.6T token。报告把这个尺寸称为**在他们自己的 scaling law 下近似 compute-optimal**。
 2. 8B 和 70B 被故意训过这个最低点。同样的推理预算下，更小的模型多吃 token，部署更便宜。这不是「没按 scaling law」，而是目标从「这笔训练 FLOPs 的最低 loss」换成了「上线之后每个 token 的成本」。
 
+第二条换的那个目标可以写成一笔账。模型上线后，每生成或处理一个 token 的前向大约是 $$2N$$ 次浮点运算。设整个服务周期一共处理 $$D_{\mathrm{inf}}$$ 个 token，总算力是
+
+$$
+C_{\mathrm{total}} \approx 6ND + 2ND_{\mathrm{inf}}
+$$
+
+前一项付一次，后一项随用量涨。$$D_{\mathrm{inf}}$$ 超过 $$3D$$ 之后，推理就成了大头。这时把 $$N$$ 减半、把 $$D$$ 加倍，训练预算不变，推理的开销减半，代价是离开 isoFLOP 的最低点、loss 略高一点。最低点附近越平，这笔交换越划算。[Sardana 等](https://arxiv.org/abs/2401.00448) 把推理用量放进目标之后重新推了这条最优线，结论是用量越大，越应该选更小的模型、训更多的 token。8B 和 70B 的选择是这条线上的点。
+
+### 2.3 这些拟合里的「参数量」
+
 按 Chinchilla 的 20 token/参数，405B 配 15.6T（约 38 token/参数）会显得 token 偏多。和 Llama 3 自己的结论放在一起并不矛盾：最低点跟数据和拟合走，不跟 2022 年的一个比值走。这些拟合里的「参数量」默认是每个 token 都参与更新的 dense 参数。MoE 的总参数和激活参数是两笔账：DeepSeek-V3 的 671B 不能直接拿去和 Chinchilla 的 20 token/参数比，训练算力更接近每个 token 激活的约 37B。把哪一个数放进拟合，必须写在坐标轴上。
 
-Scaling law 直接预测的是验证 loss，不是 benchmark。Llama 3 又做了第二步：先把正确选项的负对数似然和训练 FLOPs 关联起来，再用 sigmoid 把似然映射成准确率。这套外推跨了大约四个数量级，在 ARC-Challenge 上只是略低估了旗舰模型。它能用来选尺寸和数据配比，不能代替第一篇那种受控的数据消融。
+### 2.4 从 loss 到 benchmark，要两步
+
+Scaling law 直接预测的是验证 loss，不是 benchmark。准确率是离散的：一道选择题，模型给正确选项的概率从 0.26 升到 0.49，只要还没超过别的选项，准确率一点不动；再升一点越过去，准确率跳一格。小模型大多落在接近随机的那一段，拿它们的准确率直接外推，拟合的是一段平地。
+
+Llama 3 因此分两步。第一步用 compute-optimal 的那批模型，把下游任务上正确答案的负对数似然和训练 FLOPs 关联起来，报告里这是一个线性关系，横轴是对数的 FLOPs。第二步把负对数似然映射成准确率，用的是一条 sigmoid；拟合这条 sigmoid 时除了做 scaling law 的那批模型，还加上了训练算力更高的 Llama 2，因为小模型覆盖不到曲线上升的那一段。
+
+这套外推跨了大约四个数量级，在 ARC-Challenge 上只是略低估了旗舰模型。它能用来选尺寸和数据配比，不能代替第一篇那种受控的数据消融。
 
 ---
 
@@ -84,18 +146,60 @@ Scaling law 直接预测的是验证 loss，不是 benchmark。Llama 3 又做了
 
 *图 3：Dense 的 MLP 参数每个 token 都会看到梯度。MoE 只有被路由命中的专家收到该 token 的梯度；共享专家不走 Router，每个 token 都经过。谁收到梯度写在节点文字里，颜色仍按系列图例使用。*
 
+### 3.1 DeepSeek-V3 的配置
+
 DeepSeek-V3 的配置可以当作一张具体的对照，而不是「MoE 大概长这样」：61 层、隐藏维度 7168；**前三层仍是普通 FFN**，其余层是 MoE；每层 1 个共享专家 + 256 个路由专家，每个 token 激活 8 个路由专家，并且最多被送到 4 个节点。总参数 671B，每个 token 激活约 37B。算力和激活显存跟的是 37B，通信和专家并行跟的是 256 路路由。
 
 Switch 和 GShard 用 capacity factor 把超出专家容量的 token 丢掉。DeepSeek-V3 的报告里没有这个因子，也没有 token dropping：每个 token 仍然走完 top-8，再加共享专家。最多 4 个节点是路由约束，用来限制跨节点通信，不是把算不完的 token 从 loss 里拿掉。
 
+### 3.2 路由：谁被选中，谁收到梯度
+
+把一个 MoE 层写出来。输入 $$u_t$$ 是第 $$t$$ 个 token 进入这一层 FFN 之前的表示，$$e_i$$ 是第 $$i$$ 个路由专家的中心向量。亲和分是
+
+$$
+s_{i,t} = \mathrm{Sigmoid}\big(u_t^{\top} e_i\big)
+$$
+
+选出亲和分最高的 $$K_r$$ 个专家，没被选中的门控值置零，选中的在它们之间归一化成 $$g_{i,t}$$。这一层的输出是输入、全部共享专家、和被选中的路由专家三部分之和：
+
+$$
+h_t = u_t + \sum_{i=1}^{N_s}\mathrm{FFN}^{(s)}_i(u_t) + \sum_{i=1}^{N_r} g_{i,t}\,\mathrm{FFN}^{(r)}_i(u_t)
+$$
+
+V3 取 $$N_s=1$$、$$N_r=256$$、$$K_r=8$$。亲和分用的是 sigmoid 而不是在全部专家上做 softmax，归一化只发生在被选中的专家之间。
+
+梯度的落点从这两个式子直接读出来。$$g_{i,t}$$ 为零的专家，这个 token 对它没有梯度：图 3 里「未选中」的那一格。被选中的专家收到两路梯度，一路经过 $$\mathrm{FFN}^{(r)}_i$$ 的参数，一路经过门控值回到 $$e_i$$。Top-k 的选择本身是离散的，不传梯度：一个专家这一步没被选中，它的中心向量就不会因为这个 token 而移动。专家之间的负载一旦不均，没有外力时不会自己纠正，被选得多的专家学得多、更容易再被选中。
+
 负载均衡是第二个目标，会和语言模型损失抢梯度。辅助损失太大，专家利用更匀，但语言建模变差。DeepSeek-V3 的做法是把均衡移出 loss 的主项：
 
-- 每个专家有一个 bias $$b_{i}$$。**Top-k 看的是亲和分加 bias，乘进专家输出的门控值仍用原来的亲和分。** bias 不进计算图，每个 step 按该专家是否过载加减一个速度 $$\gamma$$。前 14.3T token $$\gamma=0.001$$，最后 500B 设为 0。
+- 每个专家有一个 bias $$b_{i}$$。**Top-k 看的是亲和分加 bias，乘进专家输出的门控值仍用原来的亲和分。** 也就是选人时比较的是 $$s_{i,t}+b_i$$，算 $$g_{i,t}$$ 时用的还是 $$s_{i,t}$$。bias 不进计算图，每个 step 结束时统计这一步每个专家的负载，过载的把 bias 减去 $$\gamma$$，欠载的加上 $$\gamma$$。前 14.3T token $$\gamma=0.001$$，最后 500B 设为 0。
 - 仍保留一条很弱的序列级均衡损失，系数 $$\alpha=10^{-4}$$，用来避免单条序列走向极端，而不是用来把 batch 级均衡做满。
+
+bias 这条路的要点是它不产生梯度。辅助损失是通过梯度去改专家的中心向量和上游的表示，语言模型损失也在改同一批参数，两者直接相争。bias 只在 Top-k 的比较里加一个偏移，改的是「这一步谁被选中」，不向任何参数回传。均衡和语言建模因此走的是两条互不相交的路。
+
+![DeepSeek-V3 的 MoE 路由：选人看 s+b，门控只用 s](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-7.png)
+
+*图 4：DeepSeek-V3 的一个 MoE 层。实线是前向；bias 那条虚线不是梯度，它在优化器之外按每步负载更新，只进 Top-k 的比较，不乘进输出。共享专家不走 Router。*
 
 他们在小模型上比过三种做法。1B 规模的验证 loss 是：序列级辅助损失 2.258，无辅助损失的 bias 方法 2.253，batch 级辅助损失也是 2.253。3B 上同样是序列级更差，另外两种打平。所以「去掉辅助损失」本身不是魔法；**把均衡从「每条序列上都强行均匀」改成「batch 上均匀，或用 bias 在优化器之外调节」**，才是那次实验里 loss 下降的来源。
 
-还有一个容易被当成架构花活、其实是训练目标的改动：Multi-Token Prediction。除了下一个 token，模型再用一层额外的 Transformer block 预测再下一个 token。深度 $$D=1$$，损失权重 $$\lambda$$ 在前 10T token 为 0.3，之后为 0.1。推理时可以丢掉这层，主模型独立工作；也可以留着做推测解码。报告给出的接受率大约 85%–90%，解码吞吐约 1.8 倍。训练侧该记住的是：主 loss 不再是唯一的梯度来源，调 $$\lambda$$ 就是在调「未来 token」占更新的比例。
+### 3.3 MTP：多一条损失
+
+还有一个容易被当成架构花活、其实是训练目标的改动：Multi-Token Prediction。除了下一个 token，模型再用一层额外的 Transformer block 预测再下一个 token。
+
+结构上它是串在主干后面的。第 $$k$$ 个 MTP 模块拿两样东西：上一级在位置 $$i$$ 的表示，和位置 $$i+k$$ 上那个真实 token 的 embedding。两者各过一次 RMSNorm，拼起来，经一个投影矩阵压回隐藏维度，再过这个模块自己的一层 Transformer block，最后用主模型的输出头预测位置 $$i+k+1$$ 的 token。Embedding 和输出头都和主模型共享，模块自己的参数只有那个投影和那一层 block。总的 MTP 损失是各级交叉熵的平均乘以权重：
+
+$$
+\mathcal{L}_{\mathrm{MTP}} = \frac{\lambda}{D}\sum_{k=1}^{D}\mathcal{L}^{k}_{\mathrm{MTP}}
+$$
+
+它和 [Gloeckle 等](https://arxiv.org/abs/2404.19737) 的多 token 预测不是一种结构。后者在共享主干上并行接几个独立的输出头，各自预测未来的第 1、2、3 个 token，头与头之间互不相见。V3 是顺序预测：预测再下一个 token 时，条件里有前一个真实 token 的 embedding，每一级都保持完整的因果链。
+
+![DeepSeek-V3 的 Multi-Token Prediction 模块](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-8.png)
+
+*图 5：MTP 模块串在主干之后，和主模型共享 embedding 与输出头。它的输入是上一级的表示和下一个真实 token 的 embedding。虚线框表示推理时可以丢掉这一层。*
+
+深度 $$D=1$$，损失权重 $$\lambda$$ 在前 10T token 为 0.3，之后为 0.1。推理时可以丢掉这层，主模型独立工作；也可以留着做推测解码。报告给出的接受率大约 85%–90%，解码吞吐约 1.8 倍。训练侧该记住的是：主 loss 不再是唯一的梯度来源，调 $$\lambda$$ 就是在调「未来 token」占更新的比例。
 
 注意力的 $$1/\sqrt{d}$$ 留到第六节。它是尺度问题，不是 MoE 问题。并行怎么把专家和序列切开，回到并行那篇文章。
 
@@ -105,15 +209,33 @@ Switch 和 GShard 用 capacity factor 把超出专家容量的 token 丢掉。De
 
 ![Llama 3 与 DeepSeek-V3 的学习率日程](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-3.png)
 
-*图 4：两条曲线都是示意，标注的 step、token 和学习率来自各自的技术报告。*
+*图 6：两条曲线都是示意，标注的 step、token 和学习率来自各自的技术报告。*
+
+### 4.1 两条日程
 
 Llama 3 405B 用的是经典形状：AdamW，峰值学习率 $$8\times 10^{-5}$$，线性 warmup 8,000 step，然后余弦衰减，在 1,200,000 step 上收到 $$8\times 10^{-7}$$。Batch 先小后大，理由写的是前期稳定、后期效率：最初 4M token、序列长度 4096；在 252M token 之后把这些值加倍；在 2.87T token 之后 batch 再加倍到 16M。报告的措辞在中间档容易读成「8M 条序列」，那会意味着一步大约 650 亿 token，和后文 16M 的训练配置对不上。这里按「token 数和序列长度一起加倍」理解：中间档是 8M token、序列 8192。序列一加倍，activation 和 logits 的形状一起变，这不是把学习率画成余弦就能解释的。
 
 DeepSeek-V3 更接近 [MiniCPM](https://arxiv.org/abs/2404.06395) 推广的 warmup–stable–decay，但衰减段不是一次收完。AdamW 的 $$\beta_{1}=0.9$$、$$\beta_{2}=0.95$$、weight decay 0.1，梯度裁剪 1.0。学习率 2,000 step 升到 $$2.2\times 10^{-4}$$，**保持到 10T token**，再用 4.3T token 的余弦降到 $$2.2\times 10^{-5}$$，最后 500B 里先用这个学习率走 333B，再用 $$7.3\times 10^{-6}$$ 走 167B。序列长度预训练阶段固定 4K。Batch 在前 469B token 里从 3072 条序列增到 15360 条，大约是 $$1.3\times 10^{7}$$ 到 $$6.3\times 10^{7}$$ token/step，之后保持 15360。
 
+### 4.2 平台的含义
+
 常数平台的工程含义是：还没承诺衰减之前，可以按同一学习率继续加 token，再决定何时进入 decay。衰减一旦开始，loss 的下降里就混进了学习率本身。第三篇会把高质量数据的升配放在这个窗口附近讨论；这里先记住实验约束——**不固定 token 数、日程和初始化，就不能把退火期的涨点归因于「低学习率更容易记住好数据」。**
 
-Llama 3 405B 那一段没有重复 $$\beta$$、weight decay 和 clip。不要从 Llama 2 或从 DeepSeek 把这些数抄过去当作 Llama 3 的事实。DeepSeek 把 $$\beta_{2}$$ 写成 0.95 而不是 0.999，是有稳定性动机的：二阶矩忘得更快，梯度突然变大时，步长不会被很久以前的小梯度继续放大。这是预防，不是 spike 已经发生后的诊断。它也不是此后唯一的优化器。2025 年的 [Kimi K2](https://arxiv.org/abs/2507.20534) 用 MuonClip（Muon + QK-Clip）压住注意力 logit，并报告预训练 15.5T token 期间没有 loss spike。AdamW 仍是下面这张表里两家的选择。
+### 4.3 batch 为什么先小后大
+
+两家的 batch 都在训练早期爬坡：Llama 3 从 4M token 到 16M，V3 从 3072 条序列到 15360 条。Llama 3 给的理由是一句话：小 batch 在早期提高稳定性，大 batch 在后期提高效率。V3 没有写理由。
+
+这句话背后有一个可以引用的概念，临界 batch size。batch 加倍，一步的梯度噪声减小，但超过某个大小之后，继续加倍换不来等比例的步数节省，多出来的 token 被浪费了。[Zhang 等](https://arxiv.org/abs/2410.21676) 在预训练设置里量过这个临界值，它随训练的推进而增大。照这个结论，早期用小 batch 是不浪费 token，后期放大 batch 是在数据效率不掉的前提下换吞吐。这是文献对这类日程的解释，两份报告自己没有这样论证。
+
+batch 变了，第六节的日志也跟着变。全局梯度范数的噪声底随 batch 增大而降低，爬坡前后的 grad norm 不在同一个基线上；每步的 token 数变了，按 step 画的曲线和按 token 画的曲线会错开。记日志时横轴用累计 token 数，batch 切换的位置单独标出来。
+
+### 4.4 优化器的两个细节
+
+Llama 3 405B 那一段没有重复 $$\beta$$、weight decay 和 clip。不要从 Llama 2 或从 DeepSeek 把这些数抄过去当作 Llama 3 的事实。
+
+DeepSeek 把 $$\beta_{2}$$ 写成 0.95 而不是 0.999，报告没有写动机。能从这个数直接算出来的是二阶矩的记忆长度，算术：指数滑动平均的半衰期是 $$\ln 0.5/\ln\beta_{2}$$，0.95 对应约 14 步，0.999 对应约 693 步。Adam 的步长是梯度除以二阶矩的平方根。一个参数长期只有很小的梯度，二阶矩也很小；梯度突然变大时，$$\beta_{2}=0.999$$ 的二阶矩要几百步才跟上，这期间的步长被一个过时的小分母放大。0.95 时十几步就跟上了。这是从更新公式读出来的预防作用，不是 spike 已经发生后的诊断。
+
+AdamW 也不是此后唯一的优化器。2025 年的 [Kimi K2](https://arxiv.org/abs/2507.20534) 用 MuonClip（Muon + QK-Clip）压住注意力 logit，并报告预训练 15.5T token 期间没有 loss spike。QK-Clip 和第六节的 QK-Norm 名字相近，做的不是一件事。QK-Norm 改前向：每次算注意力之前把 query 和 key 归一化。QK-Clip 不改前向：每步更新之后检查各个注意力头的最大 logit，超过阈值就把这个头的 query 和 key 投影权重按比例缩小。前者是结构里常驻的一个算子，后者是优化器旁边的一道事后检查。AdamW 仍是下面这张表里两家的选择。
 
 | | Llama 3 405B | DeepSeek-V3 |
 |---|---|---|
@@ -129,9 +251,27 @@ Llama 3 405B 那一段没有重复 $$\beta$$、weight decay 和 clip。不要从
 
 ## 五、精度：降的是 GEMM，不是所有算子
 
+### 5.1 默认配方
+
 默认配方仍是 BF16 计算、FP32 master weight 和 Adam 状态。BF16 的指数位和 FP32 一样宽，attention 分数不容易像 FP16 那样直接溢出。GLM-130B 的 spike 发生在 FP16 栈上，报告没有做 BF16 对照。指数位同宽，所以换 BF16 有可能消掉其中一批溢出；这是从数值格式推出来的，不是那份报告的结论，也覆盖不了范数本身在漂的情况。
 
+### 5.2 V3 的 FP8 覆盖了什么
+
 DeepSeek-V3 的 FP8 不是「整个模型用 FP8 训练」。三个 GEMM——前向、激活梯度、权重梯度——用 FP8 输入，累加再抬回更高精度。激活按 1×128 分块缩放，权重按 128×128 分块缩放，用来避免一个离群值把整块的 scale 撑爆。以下部分保持原来的 BF16 或 FP32：**embedding、输出头、MoE 门控、Norm、attention**。master weight、权重梯度和优化器状态也保持更高精度。
+
+### 5.3 细粒度缩放和累加精度
+
+FP8 只有 8 位，能表示的动态范围很窄。量化之前要先除以一个缩放因子，把数值挪进可表示的范围。缩放因子取多大的一块数据来定，是这套方案的核心。
+
+常见的做法是整个张量共用一个缩放因子，取张量里绝对值的最大值。一个离群值就能把这个因子撑大，其余所有数被挤到零附近的几个格子里，精度几乎丢光。激活里这种离群值很常见。V3 把块切小：激活按每个 token、每 128 个通道一块，权重按 128 乘 128 一块，各算各的缩放因子，离群值只影响它所在的那一小块。缩放因子是在线算的，每次用当前这一块的最大绝对值，不沿用历史统计。
+
+之前的 FP8 训练方案常在不同的张量上混用两种 FP8 格式，一种多给指数位，一种多给尾数位。V3 写明它没有这样做，所有张量都用尾数位更多的那一种；报告把这归因于细粒度缩放：块内的数值范围已经被缩放因子收窄，不再需要靠格式里的指数位去覆盖。
+
+第二处是累加。矩阵乘法要把很多个乘积加起来，报告指出硬件上 FP8 矩阵乘的累加器保留的精度有限，内积的维度一大，累加误差就显著。V3 的处理是每累加一段就把中间结果搬到高精度的寄存器里，乘上缩放因子再继续加。细粒度的缩放因子正好在这一步被乘回去，两件事是配套的。
+
+存储侧也分了档：AdamW 的一阶矩和二阶矩用 BF16 存，master weight 和用于梯度累积的梯度仍是 FP32。图 7 把这几样归在「高于 FP8」的一侧，它们彼此的精度并不相同。
+
+### 5.4 0.25% 这个数的口径
 
 他们用来和 BF16 对比的相对 loss 误差低于 0.25%，这个数来自接近 DeepSeek-V2-Lite 和 V2 的规模、大约 1T token 的验证，不是 671B 全程对 BF16 重训一遍的差值。671B 本身没有不可恢复的 spike，说明这套「GEMM 用 FP8、敏感算子留高精度」在那次运行里站得住；它不说明任意一个 FP8 内核都可以打开。
 
@@ -139,7 +279,7 @@ DeepSeek-V3 的 FP8 不是「整个模型用 FP8 训练」。三个 GEMM——�
 
 ![DeepSeek-V3 混合精度边界：降的是线性层 GEMM，不是所有算子](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-6.png)
 
-*图 5：DeepSeek-V3 的混合精度边界。实线是前向计算与权重写回，虚线是回传给常驻高精度状态的梯度。左框三个线性层 GEMM 使用细粒度分块缩放的 FP8 输入并抬回高精度累加；右框敏感算子以及常驻的 FP32 master weight、权重梯度存储和 AdamW 状态保持高精度。*
+*图 7：DeepSeek-V3 的混合精度边界。实线是前向计算与权重写回，虚线是回传给常驻高精度状态的梯度。左框三个线性层 GEMM 使用细粒度分块缩放的 FP8 输入并抬回高精度累加；右框敏感算子以及常驻的 FP32 master weight、权重梯度存储和 AdamW 状态保持高精度。*
 
 ---
 
@@ -154,7 +294,7 @@ Loss spike 指的是 loss 在很少的 step 内明显跳起。它可能在几十
 
 ![Loss spike 的诊断分支](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20261106-5.png)
 
-*图 6：上面两条分叉回答「要不要动数据和 checkpoint」。下面四格回答「信号已经指向某一层时，旋钮是哪一个」。梯度裁剪和降低学习率是围栏，放在诊断之后。*
+*图 8：上面两条分叉回答「要不要动数据和 checkpoint」。下面四格回答「信号已经指向某一层时，旋钮是哪一个」。梯度裁剪和降低学习率是围栏，放在诊断之后。*
 
 ### 6.1 重放实验，决定你动的是数据还是状态
 
@@ -262,3 +402,6 @@ DeepSeek-V3 是 MoE、FP8 GEMM、常数学习率平台、bias 式负载均衡，
 - [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
 - [OLMo 2](https://arxiv.org/abs/2501.00656)（公开配方中的 QK-Norm 与 z-loss）
 - [Kimi K2](https://arxiv.org/abs/2507.20534)（MuonClip / QK-Clip）
+- [Sardana et al., Beyond Chinchilla-Optimal](https://arxiv.org/abs/2401.00448)（把推理用量放进 scaling law）
+- [Gloeckle et al., Better & Faster LLMs via Multi-token Prediction](https://arxiv.org/abs/2404.19737)（并行多头的多 token 预测）
+- [Zhang et al., How Does Critical Batch Size Scale in Pre-training?](https://arxiv.org/abs/2410.21676)

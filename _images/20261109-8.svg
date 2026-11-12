@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 800" role="img" aria-labelledby="title desc">
+  <title id="title">续训的学习率从哪里接：平台分支，还是从末端重新 warmup</title>
+  <desc id="desc">从常数平台分支续训不需要重新 warmup；从余弦末端续训要在沿用低学习率与重新 warmup 之间选择，判据是通用切片上的两个审计量。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="800"/>
+  <text class="title" x="52" y="56">续训的学习率从哪里接：平台分支，还是从末端重新 warmup</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="panel" x="52" y="108" width="820" height="440" rx="26"/>
+  <text class="head" x="84" y="154">主干是 WSD：从平台上分出去</text>
+  <path class="thin" d="M110 470H830"/>
+  <path class="thin" d="M110 470V190"/>
+  <path class="flow" d="M130 450L190 240H560C640 240 700 330 790 440"/>
+  <path class="grad" d="M440 240C520 240 590 300 640 400"/>
+  <circle cx="440" cy="240" r="10" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <text class="lsmall" x="360" y="216">分支点：学习率还在高位</text>
+  <text class="lsmall" x="470" y="360">续训分支</text>
+  <text class="lsmall" x="130" y="510">不需要重新 warmup，已收敛的权重不会被重新搅动</text>
+  <rect class="panel" x="928" y="108" width="820" height="440" rx="26"/>
+  <text class="head" x="960" y="154">主干是余弦：从末端接</text>
+  <path class="thin" d="M986 470H1706"/>
+  <path class="thin" d="M986 470V190"/>
+  <path class="flow" d="M1006 450L1050 240C1180 250 1300 330 1400 440"/>
+  <circle cx="1400" cy="440" r="10" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <path class="grad" d="M1400 440L1450 300C1520 300 1600 370 1680 440"/>
+  <path class="grad" d="M1400 440H1680"/>
+  <text class="lsmall" x="1470" y="280">重新 warmup：挪得快</text>
+  <text class="lsmall" x="1440" y="412">沿用低学习率：挪得慢</text>
+  <text class="lsmall" x="1006" y="510">两条虚线是两种选择；前者对主干的冲击更大</text>
+  <rect class="ivory" x="52" y="590" width="520" height="100" rx="18"/>
+  <text class="label" x="312.0" y="634">通用切片上的 backward transfer</text>
+  <text class="small" x="312.0" y="662">续训后减续训前</text>
+  <rect class="ivory" x="640" y="590" width="520" height="100" rx="18"/>
+  <text class="label" x="900.0" y="634">通用文本上相对 base 的 KL</text>
+  <text class="small" x="900.0" y="662">不依赖任何 benchmark</text>
+  <polygon points="1470,574 1670,640 1470,706 1270,640" class="green"/>
+  <text class="on" x="1470" y="636">看走势</text>
+  <text class="sd" x="1470" y="662">先掉后回，或一路往下</text>
+  <path class="flow" d="M572 640H640" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1160 640H1270" marker-end="url(#arrow)"/>
+  <text class="note" x="52" y="752">曲线是示意。虚线表示可选的续训路径。两个审计量在续训开始前先在 base checkpoint 上算基线，再随续训 token 数画出来。</text>
+</svg>

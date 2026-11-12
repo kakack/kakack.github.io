@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 860" role="img" aria-labelledby="title desc">
+  <title id="title">同一批运行，两个指标：够不够得着，靠不靠得住</title>
+  <desc id="desc">单次成功率 0.6 时，pass@k 随 k 快速趋近 1，而 pass^k 快速趋近 0；下方并列 τ-bench 与 SWE-bench Verified 各自冻结的东西。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="860"/>
+  <text class="title" x="52" y="56">同一批运行，两个指标：够不够得着，靠不靠得住</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="panel" x="52" y="108" width="1000" height="460" rx="26"/>
+  <text class="head" x="84" y="154">单次成功率 0.6，重复 k 次</text>
+  <path class="thin" d="M150 480H1000"/>
+  <path class="thin" d="M150 480V180"/>
+  <path class="flow" d="M190 312 L300 245 L410 218 L520 207 L630 203 L740 201 L850 200 L960 200"/>
+  <path class="grad" d="M190 312 L300 379 L410 420 L520 444 L630 458 L740 467 L850 472 L960 475"/>
+  <circle cx="300" cy="245" r="8" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="410" cy="218" r="8" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="520" cy="207" r="8" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="630" cy="203" r="8" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="740" cy="201" r="8" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="850" cy="200" r="8" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="960" cy="200" r="8" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="300" cy="379" r="8" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <circle cx="410" cy="420" r="8" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <circle cx="520" cy="444" r="8" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <circle cx="630" cy="458" r="8" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <circle cx="740" cy="467" r="8" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <circle cx="850" cy="472" r="8" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <circle cx="960" cy="475" r="8" fill="#D97757" stroke="#141413" stroke-width="3"/>
+  <circle cx="190" cy="312" r="10" fill="#FAF9F5" stroke="#141413" stroke-width="3.5"/>
+  <text class="lsmall" x="176" y="356">k=1：两者都是 0.6</text>
+  <text class="small" x="190" y="506">1</text>
+  <text class="small" x="300" y="506">2</text>
+  <text class="small" x="410" y="506">3</text>
+  <text class="small" x="520" y="506">4</text>
+  <text class="small" x="630" y="506">5</text>
+  <text class="small" x="740" y="506">6</text>
+  <text class="small" x="850" y="506">7</text>
+  <text class="small" x="960" y="506">8</text>
+  <text class="small" x="560" y="536">k</text>
+  <text class="lsmall" x="520" y="184">pass@k：至少一次成功（蓝）</text>
+  <text class="lsmall" x="640" y="420">pass^k：k 次全部成功（橙）</text>
+  <text class="lsmall" x="880" y="222">0.9993</text>
+  <text class="lsmall" x="880" y="462">0.017</text>
+  <rect class="ivory" x="1120" y="150" width="628" height="120" rx="18"/>
+  <text class="label" x="1434.0" y="190">pass@k 回答：够不够得着</text>
+  <text class="small" x="1434.0" y="218">第六篇用它看 RL 有没有扩大范围</text>
+  <text class="small" x="1434.0" y="242">数的是「任取 k 次全错」的组合</text>
+  <rect class="ivory" x="1120" y="300" width="628" height="120" rx="18"/>
+  <text class="label" x="1434.0" y="340">pass^k 回答：靠不靠得住</text>
+  <text class="small" x="1434.0" y="368">τ-bench 用它量稳定性</text>
+  <text class="small" x="1434.0" y="392">数的是「任取 k 次全对」的组合</text>
+  <rect class="orange" x="1120" y="450" width="628" height="100" rx="18"/>
+  <text class="on" x="1434.0" y="506">同一个模型，k=8 时两个数差约 60 倍</text>
+  <rect class="blue" x="52" y="610" width="820" height="110" rx="18"/>
+  <text class="on" x="462.0" y="659">τ-bench 冻住：领域策略、工具接口、模拟用户</text>
+  <text class="sd" x="462.0" y="687">按任务结束时数据库的终态判定</text>
+  <rect class="blue" x="928" y="610" width="820" height="110" rx="18"/>
+  <text class="on" x="1338.0" y="659">SWE-bench Verified 冻住：仓库、issue、两组测试、容器镜像</text>
+  <text class="sd" x="1338.0" y="687">修复前失败的要通过，原本通过的不能坏</text>
+  <text class="note" x="52" y="780">曲线是算术，不是某个模型的实测：单次成功率取 0.6。实线是 pass@k，虚线是 pass^k。</text>
+  <text class="note" x="52" y="814">两个切片都只是切片。换一版工具 schema、测试或模拟用户，分数就不能和上一行比较。</text>
+</svg>

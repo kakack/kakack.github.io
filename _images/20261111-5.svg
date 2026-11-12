@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">一个分数，要带着这些一起落盘</title>
+  <desc id="desc">裁判评测要交换顺序判两次、不一致记平局；分数的标准误随题目数减小；评测配置与 judge 版本都是 lineage 的一部分。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="56">一个分数，要带着这些一起落盘</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="panel" x="52" y="108" width="820" height="420" rx="26"/>
+  <text class="head" x="84" y="154">裁判：交换顺序，各判一次</text>
+  <rect class="blue" x="84" y="172" width="220" height="70" rx="14"/>
+  <text class="on" x="194.0" y="213">回答 A，回答 B</text>
+  <rect class="blue" x="84" y="262" width="220" height="70" rx="14"/>
+  <text class="on" x="194.0" y="303">回答 B，回答 A</text>
+  <rect class="ivory" x="360" y="172" width="160" height="70" rx="14"/>
+  <text class="label" x="440.0" y="213">裁判</text>
+  <rect class="ivory" x="360" y="262" width="160" height="70" rx="14"/>
+  <text class="label" x="440.0" y="303">裁判</text>
+  <path class="flow" d="M304 207H360" marker-end="url(#arrow)"/>
+  <path class="flow" d="M304 297H360" marker-end="url(#arrow)"/>
+  <polygon points="690,178 800,252 690,326 580,252" class="green"/>
+  <text class="on" x="690" y="258">两次一致？</text>
+  <path class="flow" d="M520 207C556 207 570 232 596 240" marker-end="url(#arrow)"/>
+  <path class="flow" d="M520 297C556 297 570 272 596 264" marker-end="url(#arrow)"/>
+  <rect class="orange" x="84" y="428" width="330" height="72" rx="14"/>
+  <text class="on" x="249.0" y="470">一致：分出胜负</text>
+  <rect class="dash" x="470" y="428" width="370" height="72" rx="14"/>
+  <text class="label" x="655.0" y="470">不一致：记平局，比例单独报</text>
+  <path class="flow" d="M650 322C600 380 330 380 250 428" marker-end="url(#arrow)"/>
+  <path class="flow" d="M720 320V428" marker-end="url(#arrow)"/>
+  <rect class="panel" x="928" y="108" width="820" height="420" rx="26"/>
+  <text class="head" x="960" y="154">题目数决定多大的差值才算数</text>
+  <path class="thin" d="M1026 440H1700"/>
+  <path class="thin" d="M1026 440V190"/>
+  <rect x="1100" y="229" width="110" height="211" rx="8" fill="#6A9BCC" stroke="#141413" stroke-width="3.5"/>
+  <text class="small" x="1155" y="466">164 题</text>
+  <text class="small" x="1155" y="219.4">约 3.9 个点</text>
+  <rect x="1300" y="321" width="110" height="119" rx="8" fill="#6A9BCC" stroke="#141413" stroke-width="3.5"/>
+  <text class="small" x="1355" y="466">500 题</text>
+  <text class="small" x="1355" y="311.2">约 2.2 个点</text>
+  <rect x="1500" y="386" width="110" height="54" rx="8" fill="#6A9BCC" stroke="#141413" stroke-width="3.5"/>
+  <text class="small" x="1555" y="466">2500 题</text>
+  <text class="small" x="1555" y="376.0">约 1.0 个点</text>
+  <text class="lsmall" x="960" y="184">标准误（正确率在 50% 附近）</text>
+  <text class="lsmall" x="960" y="504">几百道题的评测集上，一两个点的差值分不清是进步还是抽样</text>
+  <rect class="ivory" x="52" y="570" width="540" height="120" rx="18"/>
+  <text class="label" x="322.0" y="610">judge</text>
+  <text class="small" x="322.0" y="638">模型与版本、温度、提示词哈希</text>
+  <text class="small" x="322.0" y="662">是否交换顺序、不一致率、平局率</text>
+  <rect class="ivory" x="630" y="570" width="540" height="120" rx="18"/>
+  <text class="label" x="900.0" y="610">评测配置</text>
+  <text class="small" x="900.0" y="638">提示格式与 few-shot、生成还是似然</text>
+  <text class="small" x="900.0" y="662">答案提取规则、是否套 chat template</text>
+  <rect class="ivory" x="1208" y="570" width="540" height="120" rx="18"/>
+  <text class="label" x="1478.0" y="610">被评的模型和数据</text>
+  <text class="small" x="1478.0" y="638">checkpoint、manifest、tool schema 版本</text>
+  <text class="small" x="1478.0" y="662">蒸馏时还有 teacher 与它的截止日</text>
+  <text class="note" x="52" y="752">柱高是算术：标准误等于 p(1−p)/n 的平方根。交换顺序的判定方式来自 MT-Bench 论文。</text>
+  <text class="note" x="52" y="786">下排三格缺了哪一项，这个分数都无法复现，也无法指回它是在什么配置下、对着哪一份数据量出来的。</text>
+</svg>

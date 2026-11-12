@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 820" role="img" aria-labelledby="title desc">
+  <title id="title">两种「平均」：同一条轨迹上的点，和几次运行的终点</title>
+  <desc id="desc">Polyak averaging 平均同一次运行末段的若干 checkpoint；model souping 平均从同一起点出发的几次独立运行的终点，平均前先做插值检查。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="820"/>
+  <text class="title" x="52" y="56">两种「平均」：同一条轨迹上的点，和几次运行的终点</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="panel" x="52" y="108" width="820" height="470" rx="26"/>
+  <text class="head" x="84" y="154">Polyak averaging：一次运行，末段相邻的点</text>
+  <rect class="blue" x="90" y="300" width="180" height="90" rx="18"/>
+  <text class="on" x="180.0" y="351">主干 checkpoint</text>
+  <path class="flow" d="M270 345C380 300 470 380 560 330C620 300 660 350 720 330"/>
+  <circle cx="560" cy="330" r="10" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="640" cy="338" r="10" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <circle cx="720" cy="330" r="10" fill="#6A9BCC" stroke="#141413" stroke-width="3"/>
+  <rect class="orange" x="520" y="440" width="300" height="90" rx="18"/>
+  <text class="on" x="670.0" y="479">对这几个点取均值</text>
+  <text class="sd" x="670.0" y="507">平滑轨迹末端的抖动</text>
+  <path class="flow" d="M640 348V440" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="300" y="270">同一条优化轨迹</text>
+  <rect class="panel" x="928" y="108" width="820" height="470" rx="26"/>
+  <text class="head" x="960" y="154">Model souping：同一起点，几次独立运行</text>
+  <rect class="blue" x="966" y="300" width="180" height="90" rx="18"/>
+  <text class="on" x="1056.0" y="351">主干 checkpoint</text>
+  <path class="flow" d="M1146 320C1230 250 1290 230 1360 230" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1146 345H1360" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1146 370C1230 440 1290 460 1360 460" marker-end="url(#arrow)"/>
+  <rect class="ivory" x="1360" y="195" width="200" height="70" rx="14"/>
+  <text class="label" x="1460.0" y="236">顺序 A 的终点</text>
+  <rect class="ivory" x="1360" y="310" width="200" height="70" rx="14"/>
+  <text class="label" x="1460.0" y="351">顺序 B 的终点</text>
+  <rect class="ivory" x="1360" y="425" width="200" height="70" rx="14"/>
+  <text class="label" x="1460.0" y="466">顺序 C 的终点</text>
+  <polygon points="1654,275 1736,345 1654,415 1572,345" class="green"/>
+  <text class="on" x="1654" y="341">插值</text>
+  <text class="sd" x="1654" y="367">无屏障？</text>
+  <path class="flow" d="M1560 230C1620 230 1654 250 1654 275" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1560 460C1620 460 1654 440 1654 415" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1560 345H1572" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="1190" y="222">同配比，不同数据顺序</text>
+  <text class="lsmall" x="966" y="540">通过检查再取均值：压低「这一次顺序碰巧如何」的方差</text>
+  <text class="note" x="52" y="640">左边只需要一次运行；右边要付几次 mid-training 的算力，并且要求数据顺序可重放。</text>
+  <text class="note" x="52" y="674">权重能直接平均，前提是几次运行从同一个 checkpoint 出发、落在同一片低损失区域。两次独立初始化的模型不满足这个前提。</text>
+  <text class="note" x="52" y="708">插值检查：在两个终点之间取几个中间权重各测一次验证 loss。中间不鼓包，才平均。</text>
+  <text class="note" x="52" y="742">Llama 3 末段的 checkpoint 均值属于左边；OLMo 2 对不同数据顺序的平均属于右边。</text>
+</svg>

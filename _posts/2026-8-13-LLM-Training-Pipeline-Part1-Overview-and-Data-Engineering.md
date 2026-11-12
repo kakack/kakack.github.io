@@ -90,7 +90,7 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 
 ### 2.7 蒸馏与评估：迁移能力，也检验因果
 
-黑盒蒸馏用 teacher 生成训练样本，白盒蒸馏匹配 logits 或中间分布。[DeepSeek-R1](https://arxiv.org/abs/2501.12948)的公开实验显示，在其若干小模型设置中，推理轨迹蒸馏优于直接对相应小模型做同类 RL；这是一组具体实验结果，不能泛化成「蒸馏永远胜过 RL」。评估则贯穿每一阶段：base 模型看受控能力曲线，post-training 看任务与偏好，agent 看端到端成功率，同时审计 judge 偏差、训练—测试污染和重复运行方差。
+黑盒蒸馏用 teacher 生成训练样本，白盒蒸馏匹配 logits 或中间分布。[DeepSeek-R1](https://arxiv.org/abs/2501.12948)的公开实验显示，在同一个 32B 底座的对照里，用 R1 的输出做蒸馏优于直接对这个底座做大规模 RL；这是一组具体实验结果，不能泛化成「蒸馏永远胜过 RL」。评估则贯穿每一阶段：base 模型看受控能力曲线，post-training 看任务与偏好，agent 看端到端成功率，同时审计 judge 偏差、训练—测试污染和重复运行方差。
 
 把这七个模块放回同一条生命周期，可以得到一张更具体的「前置接口表」：
 
@@ -166,6 +166,36 @@ Agentic 训练把一次回答扩展为 model ↔ environment 的 trajectory：�
 先写清目标模型的语言、领域、上下文长度、token 预算、许可边界和评测集，再下载数据。否则「高质量」无从定义，配比优化也会把噪声当信号。
 
 每条文档至少需要以下数据契约：`content_id`、`source_id`、URL/仓库/文件标识、crawl 或版本时间、MIME、语言及置信度、许可/权利状态、parser 版本、质量向量、policy flags、duplicate cluster、父文档与生成 lineage。原文放 immutable raw lake；分数与决策放可版本化 sidecar。这样阈值改变时只重算选择，不必重新抓取和解析。
+
+落成记录是两条，用 `content_id` 连起来。取值是示意：
+
+```json
+{"content_id": "c-7f3a9e", "source_id": "cc-2025-18", "url": "https://example.org/a/17",
+ "raw_uri": "raw/cc-2025-18/00412.warc.gz#88213", "canonical_sha256": "9b1c...",
+ "crawl_time": "2025-05-02T08:11:00Z", "mime": "text/html", "license_status": "unknown"}
+```
+
+```json
+{"content_id": "c-7f3a9e", "sidecar_version": "2026-07-14.r3", "parser": "trafilatura@1.12",
+ "lang": {"id": "en", "conf": 0.97},
+ "quality": {"readability": 0.81, "educational": 2.6, "spam": 0.03},
+ "rules": {"reason_codes": [], "repeat_line_ratio": 0.02},
+ "dedup": {"cluster_id": "m-55120", "is_representative": true},
+ "decontam": {"eval_set": "holdout-v5", "hits": 0, "run": "2026-07-10"},
+ "policy": {"pii_masked": 2, "tombstone": false}}
+```
+
+第一条写一次就不再改。第二条每次重跑解析器、分类器或去污染都出一个新版本，旧版本留着。这个分法带来三件具体的事。
+
+改阈值不动原文。「教育价值分数从 3 降到 2.5」是在 sidecar 上重新做一次选择，重算的是一个过滤视图，不重新抓取，不重新解析，也不重新跑分类器。
+
+决策可以回放。训练用的是 sidecar 的某一个版本，manifest 里记下版本号。几个月后问「这篇文档当时为什么被留下」，答案在那个版本的 sidecar 里，而不是在已经改过三轮的脚本里。
+
+删除能传下去。退出或删除请求把 `tombstone` 置为真。下一次从 sidecar 生成训练视图时，这条内容、以它为 `parent_id` 的合成样本、它所在重复簇的代表选择，都要跟着重算。原文本身按政策处理；传播靠的是 `content_id` 和 lineage，不靠在各个脚本里维护黑名单。
+
+![不可变的 raw lake 与可版本化的 sidecar](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-7.png)
+
+*图 3：原文写一次，决策写在多版本的 sidecar 里，两边用 `content_id` 相连。实线是主流程，虚线表示反馈：改阈值只重算选择视图；删除请求沿 lineage 传到下游，在下一次生成视图时生效。*
 
 评测集要在数据选择前冻结并版本化，至少包含：通用能力、目标领域、语言、长尾、安全、记忆/隐私和人工抽样。按来源/时间/重复簇划分 holdout；否则同一模板或转载文章会横跨训练与验证。
 
@@ -248,7 +278,7 @@ FineWeb 没有照搬 C4 的句末标点规则：那一条单独就会删掉约 3
 
 ![质量过滤的成本级联](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-3.png)
 
-*图 3：质量过滤应按单位成本级联。越靠下语义能力越强、单文档成本越高，只让少量困难样本进入昂贵阶段。*
+*图 4：质量过滤应按单位成本级联。越靠下语义能力越强、单文档成本越高，只让少量困难样本进入昂贵阶段。*
 
 | 路线 | 优点 | 局限 | 典型用途 |
 |---|---|---|---|
@@ -268,7 +298,7 @@ DCLM 的一个关键结果是：用 OpenHermes 2.5 与高分 ELI5 等指令式�
 
 ![分层去重与代表样本选择](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-4.png)
 
-*图 4：去重的正确抽象是先发现重复关系并建立簇，再按质量、许可、时间和结构选择代表，最后决定采样权重。*
+*图 5：去重的正确抽象是先发现重复关系并建立簇，再按质量、许可、时间和结构选择代表，最后决定采样权重。*
 
 | 层级 | 方案 | 优点 | 缺点/风险 |
 |---|---|---|---|
@@ -360,7 +390,7 @@ Tokenizer 不必机械地在「最终完整混合」上训练，而应在**反�
 
 Tokenizer 后还不是训练数据。需要决定：
 
-- **文档拼接**：多个短文以 EOS 拼接；可允许跨文档 attention，或用 block-diagonal mask 禁止跨文档注意力（Llama 3 报告采用后者）；
+- **文档拼接**：多个短文以 EOS 拼接；可允许跨文档 attention，或用 block-diagonal mask 禁止跨文档注意力；预训练阶段两种做法都有公开先例，DeepSeek-V3 写明它在预训练时不做跨样本的注意力屏蔽，到 SFT 打包时才用 sample masking；
 - **长文切分**：截断、滑窗重叠、结构感知 chunk，或保留整篇供长上下文阶段使用；始终保留 doc/chunk ID；
 - **代码增强**：可加入 FIM（fill-in-the-middle）变换，但要独立记录转换和比例；
 - **packing**：追求高 token utilization，同时正确处理 position、loss mask 与跨文档边界；
@@ -369,9 +399,39 @@ Tokenizer 后还不是训练数据。需要决定：
 
 发布训练前设置 QA gate：schema/checksum、空文档与解码错误、每 stage 留存率、来源/语言/长度/质量漂移、duplicate cluster 跨 split、PII/secret 抽检、污染率、tokenizer fertility、packed sequence mask 单测、data loader 吞吐与固定 seed 可重放。输出 dataset card 与精确 manifest，而不仅是一个总 token 数。
 
+清单里的「packed sequence mask 单测」可以小到下面这样。它断言的是你声明的配置：这里声明的是跨文档不可见、位置在每篇文档起点重新计数。声明的若是允许跨文档注意力，把第一条断言反过来写。
+
+```python
+def packed_masks(doc_lens):
+    doc_id = torch.cat([torch.full((n,), i) for i, n in enumerate(doc_lens)])
+    pos = torch.cat([torch.arange(n) for n in doc_lens])        # 每篇文档从 0 计数
+    T = doc_id.numel()
+    causal = torch.tril(torch.ones(T, T, dtype=torch.bool))
+    attn = causal & (doc_id[:, None] == doc_id[None, :])         # block-diagonal
+    return doc_id, pos, attn
+
+doc_id, pos, attn = packed_masks([5, 3, 4])
+assert not attn[5:8, :5].any() and not attn[8:, :8].any()        # 后面的文档看不见前面的
+assert attn[4, :5].all() and attn[7, 5:8].all()                  # 文档内部因果可见
+assert not torch.triu(attn, 1).any()                             # 没有看到未来
+assert pos[5] == 0 and pos[8] == 0                               # 文档起点位置归零
+```
+
+位置要不要重新计数取决于位置编码。相对位置编码下，文档之间互相不可见时，整篇文档平移多少个位置不改变注意力分数，重置是卫生习惯；绝对位置编码下它才改变训练分布。第四篇 4.4 节在 SFT 打包上把这件事再走一遍。
+
+manifest 的一条索引项回答的是「第几步吃了什么」。取值是示意：
+
+```json
+{"global_step": 412800, "micro_batch": 3, "rank": 17, "shard": "train-08812.bin",
+ "byte_offset": 1934458880, "n_tokens": 4096, "doc_ids": ["c-7f3a9e", "c-10b2d4", "c-9e77a1"],
+ "sidecar_version": "2026-07-14.r3", "tokenizer": "tok-v4", "shuffle_seed": 20260714}
+```
+
+第二篇的 batch 指纹就是这条记录的摘要。loss 在第 412800 步跳起来时，从 step 查到 shard 和偏移，从偏移查到文档，从文档查到它在那个 sidecar 版本里的全部标签。这条链上任何一环没有落盘，spike 就只能靠猜。
+
 ![序列构造：Packing、跨文档隔离与 Manifest 溯源](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-5.png)
 
-*图 5：分词后的两条序列去向与门禁。短文档经 EOS 拼接进 packed sequence，由 block-diagonal mask 阻断跨文档注意力；未切碎的长文档单独保留给长上下文阶段；两者经 QA gate 落成二进制分片与精确 manifest，虚线在训练出现异常时按 step 反查回具体文档。*
+*图 6：分词后的两条序列去向与门禁。短文档经 EOS 拼接进 packed sequence，由 block-diagonal mask 阻断跨文档注意力；未切碎的长文档单独保留给长上下文阶段；两者经 QA gate 落成二进制分片与精确 manifest，虚线在训练出现异常时按 step 反查回具体文档。*
 
 ---
 
@@ -434,9 +494,19 @@ OLMo 3 / Dolma 3 则展示了完整开放的数据生命周期：不同来源各
 
 ![数据决策的受控代理实验：从假设注册到跨尺度复核](https://raw.githubusercontent.com/kakack/kakack.github.io/master/_images/20260813-6.png)
 
-*图 6：开训前的数据实验闭环。实线是单因素对照经多尺度初筛、目标 checkpoint 退火复核与切片审计后写入版本化 sidecar 的主流程；虚线是出现回退或跨尺度翻转时，抽检正负样本回到假设注册的控制回路。*
+*图 7：开训前的数据实验闭环。实线是单因素对照经多尺度初筛、目标 checkpoint 退火复核与切片审计后写入版本化 sidecar 的主流程；虚线是出现回退或跨尺度翻转时，抽检正负样本回到假设注册的控制回路。*
 
-FineWeb 论文报的是全程消融合计：70 多个模型、估计 8 万 H100 GPU 小时。官方博客里逐 Common Crawl snapshot 的那一组是 **192 个模型、超过 6 万 H100 GPU 小时**。两个口径都是官方数字，统计范围不同，混用才会得出「论文写错了」或「博客纠正了论文」。proxy 排名可能随尺度、LR 和评测任务翻转。
+FineWeb 论文报的是全程消融合计：70 多个模型、估计 8 万 H100 GPU 小时。官方博客里逐 Common Crawl snapshot 的那一组是 **192 个模型、超过 6 万 H100 GPU 小时**。两个口径都是官方数字，统计范围不同，混用才会得出「论文写错了」或「博客纠正了论文」。
+
+proxy 排名可能随尺度、LR 和评测任务翻转。翻转有三个来源，各自对应协议里的一条。
+
+**指标是离散的还是连续的。** 多选题的准确率只有在正确选项的概率越过其他选项时才动。小模型大多落在接近随机的那一段，两份数据在准确率上打平，在正确选项的对数似然上已经分出了高下。4.12 节引用的 DataDecide 的发现之一就是连续的似然类指标让小规模实验更能预测大规模的结果。协议第 5 条「看学习曲线而非单点」，落到这里是优先看连续指标。第二篇 2.4 节写 Llama 3 的两步外推，是同一个原因。
+
+**差值有没有超过噪声。** 两份数据在小模型上差 0.5 个点，换一个 seed 差值可能反号。这种情况下排序本身就不存在，谈不上翻转。协议第 4 条要多个 seed，就是为了先知道噪声有多大，再看差值。
+
+**数据的价值随模型已经会什么而变。** 第三篇 2.3 节有一个现成的例子：同一份贴近 benchmark 的数据放进退火，8B 模型大涨，405B 可以忽略。这不是噪声，是真实的交互。它没有办法在小模型上预先知道，只能在目标尺度上复核，协议第 4 条的后半句管的是这个。
+
+三个来源里，前两个靠更好的协议能消掉，第三个不能。代理实验能做的是把明显差的选项筛掉，把候选缩到少数几个，再把最后的决定留给目标尺度上的短实验。
 
 ---
 

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 880" role="img" aria-labelledby="title desc">
+  <title id="title">两个方向的 KL：小学生把概率放在哪里</title>
+  <desc id="desc">教师分布有两个峰时，前向 KL 让小学生摊开覆盖两峰及其间的空隙，反向 KL 让学生贴住其中一个峰；底部是白盒蒸馏的存储算术。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="880"/>
+  <text class="title" x="52" y="56">两个方向的 KL：小学生把概率放在哪里</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="panel" x="52" y="108" width="820" height="430" rx="26"/>
+  <text class="head" x="84" y="154">前向 KL：按教师加权，去盖住每个模式</text>
+  <path class="thin" d="M110 450H830"/>
+  <path class="flow" d="M130 450 C198.0 450 225.2 220 293.2 220 C361.20000000000005 220 388.4 431.6 470.0 431.6 C551.6 431.6 578.8 284.4 646.8 284.4 C714.8 284.4 742.0 450 810 450"/>
+  <path class="grad" d="M130 450C300 450 320 310 470 310C620 310 640 450 810 450"/>
+  <text class="lsmall" x="250" y="204">教师</text>
+  <text class="lsmall" x="520" y="300">学生：摊开</text>
+  <text class="lsmall" x="84" y="506">两峰之间教师并不会去，学生却放了概率</text>
+  <rect class="panel" x="928" y="108" width="820" height="430" rx="26"/>
+  <text class="head" x="960" y="154">反向 KL：按学生加权，贴住主要的模式</text>
+  <path class="thin" d="M986 450H1706"/>
+  <path class="flow" d="M1006 450 C1074.0 450 1101.2 220 1169.2 220 C1237.2 220 1264.4 431.6 1346.0 431.6 C1427.6 431.6 1454.8 284.4 1522.8 284.4 C1590.8 284.4 1618.0 450 1686 450"/>
+  <path class="grad" d="M1006 450C1080 450 1100 232 1169 232C1238 232 1258 450 1330 450"/>
+  <text class="lsmall" x="1410" y="268">教师</text>
+  <text class="lsmall" x="1200" y="216">学生：贴住一个峰</text>
+  <text class="lsmall" x="960" y="506">次要模式被丢掉；梯度要穿过采样，更难训</text>
+  <rect class="blue" x="52" y="580" width="400" height="120" rx="18"/>
+  <text class="on" x="252.0" y="620">只存 token</text>
+  <text class="sd" x="252.0" y="648">4 字节</text>
+  <text class="sd" x="252.0" y="672">每个位置一个 id</text>
+  <rect class="blue" x="520" y="580" width="400" height="120" rx="18"/>
+  <text class="on" x="720.0" y="620">全词表 logits</text>
+  <text class="sd" x="720.0" y="648">约 512 KB</text>
+  <text class="sd" x="720.0" y="672">是 token id 的约 13 万倍</text>
+  <rect class="blue" x="988" y="580" width="400" height="120" rx="18"/>
+  <text class="on" x="1188.0" y="620">抽 256 个 logit</text>
+  <text class="sd" x="1188.0" y="648">约 1.5 KB</text>
+  <text class="sd" x="1188.0" y="672">比全词表小约 340 倍</text>
+  <rect class="dash" x="1456" y="580" width="292" height="120" rx="18"/>
+  <text class="label" x="1602.0" y="634">截断丢的是尾部</text>
+  <text class="small" x="1602.0" y="662">信息损失要写明</text>
+  <path class="flow" d="M452 640H520" marker-end="url(#arrow)"/>
+  <path class="flow" d="M920 640H988" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1388 640H1456"/>
+  <text class="note" x="52" y="768">上排曲线是示意：实线是教师分布，虚线是容量不够的学生在两种目标下的最优形状。</text>
+  <text class="note" x="52" y="802">下排是算术：词表取 256K、每个 logit 2 字节；抽样时每项存编号和值共 6 字节。Gemma 3 报告写明每个 token 抽 256 个 logit。</text>
+  <text class="note" x="52" y="836">学生容量够时两个方向差别不大；差别出现在学生盖不住教师全部模式的时候。</text>
+</svg>

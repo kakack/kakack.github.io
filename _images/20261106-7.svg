@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 940" role="img" aria-labelledby="title desc">
+  <title id="title">DeepSeek-V3 的一个 MoE 层：选人看 s+b，门控只用 s</title>
+  <desc id="desc">亲和分经 bias 调整后做 Top-k 选择，门控值仍由原始亲和分归一化得到；bias 不进计算图，按每步负载在优化器之外更新。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="940"/>
+  <text class="title" x="52" y="56">DeepSeek-V3 的一个 MoE 层：选人看 s+b，门控只用 s</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="blue" x="52" y="300" width="220" height="110" rx="18"/>
+  <text class="on" x="162.0" y="349">token 表示 u</text>
+  <text class="sd" x="162.0" y="377">进入这一层之前</text>
+  <rect class="ivory" x="350" y="300" width="280" height="110" rx="18"/>
+  <text class="label" x="490.0" y="349">亲和分 s</text>
+  <text class="small" x="490.0" y="377">Sigmoid(u · e)</text>
+  <path class="flow" d="M272 355H350" marker-end="url(#arrow)"/>
+  <polygon points="850,136 1000,220 850,304 700,220" class="green"/>
+  <text class="on" x="850" y="216">Top-8 选择</text>
+  <text class="sd" x="850" y="242">比较 s + b</text>
+  <rect class="ivory" x="730" y="400" width="240" height="100" rx="18"/>
+  <text class="label" x="850.0" y="444">门控值 g</text>
+  <text class="small" x="850.0" y="472">选中者之间归一化 s</text>
+  <path class="flow" d="M630 330C680 330 660 220 700 220" marker-end="url(#arrow)"/>
+  <path class="flow" d="M630 380C680 380 680 450 730 450" marker-end="url(#arrow)"/>
+  <path class="flow" d="M850 304V400" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="866" y="356">谁被选中</text>
+  <rect class="ivory" x="1090" y="400" width="280" height="100" rx="18"/>
+  <text class="label" x="1230.0" y="444">8 个路由专家</text>
+  <text class="small" x="1230.0" y="472">输出乘各自的 g</text>
+  <path class="flow" d="M970 450H1090" marker-end="url(#arrow)"/>
+  <rect class="orange" x="1490" y="395" width="258" height="110" rx="18"/>
+  <text class="on" x="1619.0" y="444">这一层的输出 h</text>
+  <text class="sd" x="1619.0" y="472">u + 共享 + 路由</text>
+  <path class="flow" d="M1370 450H1490" marker-end="url(#arrow)"/>
+  <rect class="ivory" x="350" y="600" width="280" height="100" rx="18"/>
+  <text class="label" x="490.0" y="644">共享专家</text>
+  <text class="small" x="490.0" y="672">不走 Router，每个 token 都过</text>
+  <path class="flow" d="M162 410C162 560 250 650 350 650" marker-end="url(#arrow)"/>
+  <path class="flow" d="M630 690C900 760 1619 760 1619 505" marker-end="url(#arrow)"/>
+  <rect class="ivory" x="1090" y="170" width="280" height="100" rx="18"/>
+  <text class="label" x="1230.0" y="214">统计这一步的负载</text>
+  <text class="small" x="1230.0" y="242">过载减 γ，欠载加 γ</text>
+  <rect class="dash" x="1490" y="170" width="258" height="100" rx="18"/>
+  <text class="label" x="1619.0" y="214">bias b</text>
+  <text class="small" x="1619.0" y="242">不进计算图</text>
+  <path class="flow" d="M1230 400V270" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1370 220H1490" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1619 170C1619 110 850 100 850 136" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="1150" y="152">只改「谁被选中」</text>
+  <text class="note" x="52" y="830">实线是前向，虚线表示反馈。bias 那条虚线不是梯度：它在优化器之外按负载更新，只进 Top-k 的比较，不乘进输出。</text>
+  <text class="note" x="52" y="864">梯度的落点从图上读：未被选中的专家 g 为 0，这个 token 对它没有梯度；选中的专家经 FFN 参数和门控值两路收到梯度。</text>
+  <text class="note" x="52" y="898">亲和分公式、Top-8、共享专家与 bias 的更新规则来自 DeepSeek-V3 技术报告。</text>
+</svg>

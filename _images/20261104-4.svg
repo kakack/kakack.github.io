@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 930" role="img" aria-labelledby="title desc">
+  <title id="title">一条工具轨迹上：哪些 token 进损失，奖励在哪里出现</title>
+  <desc id="desc">模型的文字与调用进损失，环境返回的观察不进；两种结尾标记都要学；终端奖励只在任务结束时出现，梯度回到所有可训练的片段。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="930"/>
+  <text class="title" x="52" y="56">一条工具轨迹上：哪些 token 进损失，奖励在哪里出现</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <text class="head" x="52" y="126">按时间从左到右</text>
+  <rect class="dash" x="52" y="160" width="170" height="96" rx="14"/>
+  <text class="label" x="137.0" y="202">system</text>
+  <text class="small" x="137.0" y="230">工具定义</text>
+  <rect class="dash" x="234" y="160" width="130" height="96" rx="14"/>
+  <text class="label" x="299.0" y="202">user</text>
+  <text class="small" x="299.0" y="230">任务</text>
+  <rect class="blue" x="376" y="160" width="190" height="96" rx="14"/>
+  <text class="on" x="471.0" y="202">assistant</text>
+  <text class="sd" x="471.0" y="230">想法 + 调用</text>
+  <rect class="dash" x="578" y="160" width="200" height="96" rx="14"/>
+  <text class="label" x="678.0" y="202">tool</text>
+  <text class="small" x="678.0" y="230">观察</text>
+  <rect class="blue" x="790" y="160" width="190" height="96" rx="14"/>
+  <text class="on" x="885.0" y="202">assistant</text>
+  <text class="sd" x="885.0" y="230">想法 + 调用</text>
+  <rect class="dash" x="992" y="160" width="200" height="96" rx="14"/>
+  <text class="label" x="1092.0" y="202">tool</text>
+  <text class="small" x="1092.0" y="230">观察</text>
+  <rect class="blue" x="1204" y="160" width="180" height="96" rx="14"/>
+  <text class="on" x="1294.0" y="202">assistant</text>
+  <text class="sd" x="1294.0" y="230">最终回答</text>
+  <rect class="orange" x="1426" y="160" width="322" height="96" rx="18"/>
+  <text class="on" x="1587.0" y="202">终端奖励</text>
+  <text class="sd" x="1587.0" y="230">测试或约束检查</text>
+  <path class="flow" d="M1384 208H1426" marker-end="url(#arrow)"/>
+  <text class="head" x="52" y="320">进不进损失</text>
+  <rect class="dash" x="52" y="344" width="170" height="64" rx="12"/>
+  <text class="label" x="137.0" y="382">不进</text>
+  <rect class="dash" x="234" y="344" width="130" height="64" rx="12"/>
+  <text class="label" x="299.0" y="382">不进</text>
+  <rect class="ivory" x="376" y="344" width="190" height="64" rx="12"/>
+  <text class="label" x="471.0" y="382">进</text>
+  <rect class="dash" x="578" y="344" width="200" height="64" rx="12"/>
+  <text class="label" x="678.0" y="382">不进</text>
+  <rect class="ivory" x="790" y="344" width="190" height="64" rx="12"/>
+  <text class="label" x="885.0" y="382">进</text>
+  <rect class="dash" x="992" y="344" width="200" height="64" rx="12"/>
+  <text class="label" x="1092.0" y="382">不进</text>
+  <rect class="ivory" x="1204" y="344" width="180" height="64" rx="12"/>
+  <text class="label" x="1294.0" y="382">进</text>
+  <rect class="orange" x="52" y="470" width="1340" height="96" rx="18"/>
+  <text class="on" x="722.0" y="512">可训练的模型：只从「进」的三段收到梯度</text>
+  <text class="sd" x="722.0" y="540">同一个终端奖励，摊在每一段模型自己写的文字上</text>
+  <path class="grad" d="M471 470V408" marker-end="url(#arrow)"/>
+  <path class="grad" d="M885 470V408" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1294 470V408" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1590 256C1590 518 1500 518 1392 518" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="1470" y="440">奖励</text>
+  <rect class="ivory" x="52" y="620" width="540" height="120" rx="18"/>
+  <text class="label" x="322.0" y="660">两种结尾都要学</text>
+  <text class="small" x="322.0" y="688">发出调用后停下，等环境返回</text>
+  <text class="small" x="322.0" y="712">或给出最终回答，结束任务</text>
+  <rect class="ivory" x="630" y="620" width="540" height="120" rx="18"/>
+  <text class="label" x="900.0" y="660">观察不进损失，但进算力</text>
+  <text class="small" x="900.0" y="688">仍在上下文里</text>
+  <text class="small" x="900.0" y="712">后面每个动作都要对它做注意力</text>
+  <rect class="ivory" x="1208" y="620" width="540" height="120" rx="18"/>
+  <text class="label" x="1478.0" y="660">一个比特，整条轨迹共享</text>
+  <text class="small" x="1478.0" y="688">式子里分不出第 1 步和第 16 步</text>
+  <text class="small" x="1478.0" y="712">组内基线只减掉任务难度</text>
+  <text class="note" x="52" y="806">蓝色是参与损失的片段，虚线边框是只作条件的片段，虚线箭头是梯度。片段宽度只是示意，观察通常比动作长得多。</text>
+  <text class="note" x="52" y="840">工具定义渲染在 system 里，也是 token：schema 版本变了，模型的输入就变了。</text>
+  <text class="note" x="52" y="874">把观察也放进损失，模型会学着自己写观察：发出调用后不等环境返回，直接续写一段像返回值的文字。</text>
+</svg>

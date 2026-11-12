@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 820" role="img" aria-labelledby="title desc">
+  <title id="title">原文只写一次，决策写在可版本化的 sidecar 里</title>
+  <desc id="desc">不可变的 raw lake 与多版本 sidecar 用 content_id 相连；训练视图由某一版 sidecar 生成，tombstone 沿 lineage 传到下游。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="820"/>
+  <text class="title" x="52" y="56">原文只写一次，决策写在可版本化的 sidecar 里</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="blue" x="52" y="150" width="330" height="150" rx="18"/>
+  <text class="on" x="217.0" y="205">Raw lake</text>
+  <text class="sd" x="217.0" y="233">原文、抓取时间、许可状态</text>
+  <text class="sd" x="217.0" y="257">写一次，不再改</text>
+  <text class="lsmall" x="52" y="340">content_id 是两边唯一的连接</text>
+  <rect class="panel" x="470" y="110" width="560" height="330" rx="26"/>
+  <text class="head" x="502" y="156">Sidecar：每次重跑出一个新版本</text>
+  <rect class="ivory" x="502" y="180" width="496" height="62" rx="14"/>
+  <text class="label" x="750.0" y="217">r1：解析器、语言、规则原因码</text>
+  <rect class="ivory" x="502" y="256" width="496" height="62" rx="14"/>
+  <text class="label" x="750.0" y="293">r2：加上质量向量与重复簇</text>
+  <rect class="blue" x="502" y="332" width="496" height="62" rx="14"/>
+  <text class="on" x="750.0" y="369">r3：加上去污染记录与 tombstone</text>
+  <path class="flow" d="M382 225H470" marker-end="url(#arrow)"/>
+  <polygon points="1250,183 1400,275 1250,367 1100,275" class="green"/>
+  <text class="on" x="1250" y="271">选择视图</text>
+  <text class="sd" x="1250" y="297">阈值与配比</text>
+  <path class="flow" d="M1030 275H1100" marker-end="url(#arrow)"/>
+  <rect class="orange" x="1470" y="220" width="278" height="110" rx="18"/>
+  <text class="on" x="1609.0" y="269">训练 manifest</text>
+  <text class="sd" x="1609.0" y="297">记下用的是哪一版</text>
+  <path class="flow" d="M1400 275H1470" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1250 367C1250 470 766 470 766 440" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="1010" y="494">改阈值：只重算这一步</text>
+  <rect class="ivory" x="52" y="560" width="330" height="110" rx="18"/>
+  <text class="label" x="217.0" y="609">删除或退出请求</text>
+  <text class="small" x="217.0" y="637">tombstone 置为真</text>
+  <rect class="ivory" x="470" y="560" width="400" height="110" rx="18"/>
+  <text class="label" x="670.0" y="609">沿 content_id 与 parent_id 找下游</text>
+  <text class="small" x="670.0" y="637">合成样本、重复簇代表</text>
+  <rect class="ivory" x="960" y="560" width="400" height="110" rx="18"/>
+  <text class="label" x="1160.0" y="609">下一次生成视图时重算</text>
+  <text class="small" x="1160.0" y="637">不靠各脚本里的黑名单</text>
+  <path class="flow" d="M382 615H470" marker-end="url(#arrow)"/>
+  <path class="flow" d="M870 615H960" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1160 560C1160 510 1250 500 1250 367" marker-end="url(#arrow)"/>
+  <text class="note" x="52" y="730">实线是主流程，虚线表示反馈。原文和决策分开存：改阈值、换分类器、处理删除请求，动的都是 sidecar 和由它生成的视图。</text>
+  <text class="note" x="52" y="764">训练用的是某一个 sidecar 版本，版本号进 manifest；几个月后仍能回答「这篇文档当时为什么被留下」。</text>
+</svg>

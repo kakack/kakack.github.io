@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 840" role="img" aria-labelledby="title desc">
+  <title id="title">推理时的计算：并行采样和串行思考，上限不一样</title>
+  <desc id="desc">并行路线采 N 条后用多数投票或打分器挑选，上限分别是众数是否正确与 pass@k；串行路线延长单条回答的思考，延迟随长度线性增长。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="840"/>
+  <text class="title" x="52" y="56">推理时的计算：并行采样和串行思考，上限不一样</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="orange" x="52" y="380" width="200" height="110" rx="18"/>
+  <text class="on" x="152.0" y="429">一道题</text>
+  <text class="sd" x="152.0" y="457">同一个模型</text>
+  <rect class="panel" x="330" y="108" width="1418" height="330" rx="26"/>
+  <text class="head" x="362" y="154">并行：采很多条，再选一条</text>
+  <rect class="blue" x="362" y="178" width="190" height="54" rx="12"/>
+  <text class="on" x="457.0" y="211">回答 1</text>
+  <rect class="blue" x="362" y="246" width="190" height="54" rx="12"/>
+  <text class="on" x="457.0" y="279">回答 2</text>
+  <rect class="blue" x="362" y="314" width="190" height="54" rx="12"/>
+  <text class="on" x="457.0" y="347">回答 N</text>
+  <polygon points="760,196 890,272 760,348 630,272" class="green"/>
+  <text class="on" x="760" y="278">怎么选</text>
+  <path class="flow" d="M552 205C620 205 630 240 660 256" marker-end="url(#arrow)"/>
+  <path class="flow" d="M552 273H630" marker-end="url(#arrow)"/>
+  <path class="flow" d="M552 341C620 341 630 304 660 288" marker-end="url(#arrow)"/>
+  <rect class="ivory" x="980" y="166" width="330" height="96" rx="18"/>
+  <text class="label" x="1145.0" y="208">多数投票</text>
+  <text class="small" x="1145.0" y="236">取出现最多的最终答案</text>
+  <rect class="ivory" x="980" y="300" width="330" height="96" rx="18"/>
+  <text class="label" x="1145.0" y="342">Best-of-N</text>
+  <text class="small" x="1145.0" y="370">打分器或验证器挑一条</text>
+  <path class="flow" d="M856 240C910 220 930 214 980 214" marker-end="url(#arrow)"/>
+  <path class="flow" d="M856 304C910 330 930 348 980 348" marker-end="url(#arrow)"/>
+  <rect class="dash" x="1390" y="166" width="326" height="96" rx="18"/>
+  <text class="label" x="1553.0" y="208">上限：正确答案是不是众数</text>
+  <text class="small" x="1553.0" y="236">偶尔才对一次的题帮不上</text>
+  <rect class="dash" x="1390" y="300" width="326" height="96" rx="18"/>
+  <text class="label" x="1553.0" y="342">上限：pass@k</text>
+  <text class="small" x="1553.0" y="370">有验证器才达得到</text>
+  <path class="grad" d="M1310 214H1390"/>
+  <path class="grad" d="M1310 348H1390"/>
+  <path class="flow" d="M252 410C290 410 290 273 362 273" marker-end="url(#arrow)"/>
+  <rect class="panel" x="330" y="478" width="1418" height="210" rx="26"/>
+  <text class="head" x="362" y="524">串行：让一条回答想得更久</text>
+  <rect class="blue" x="362" y="548" width="300" height="96" rx="18"/>
+  <text class="on" x="512.0" y="590">一条回答</text>
+  <text class="sd" x="512.0" y="618">思考长度可控</text>
+  <rect class="ivory" x="760" y="548" width="330" height="96" rx="18"/>
+  <text class="label" x="925.0" y="590">预算强制</text>
+  <text class="small" x="925.0" y="618">压住或强制输出结束标记</text>
+  <rect class="dash" x="1190" y="548" width="526" height="96" rx="18"/>
+  <text class="label" x="1453.0" y="590">延迟随长度线性增长</text>
+  <text class="small" x="1453.0" y="618">改的是解码过程，权重没有变</text>
+  <path class="flow" d="M662 596H760" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1090 596H1190"/>
+  <path class="flow" d="M252 460C290 460 290 596 362 596" marker-end="url(#arrow)"/>
+  <text class="note" x="52" y="752">实线是主流程，虚线框是这条路线的边界。并行的 N 条可以同时跑，墙钟时间接近一条；串行只能一个 token 接一个 token。</text>
+  <text class="note" x="52" y="786">三个量排成一列：多数投票的正确率 ≤ 完美打分器下的 Best-of-N = pass@k。训练若没有抬高大 k 的 pass@k，并行采样的上限也不涨。</text>
+</svg>

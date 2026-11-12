@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 800" role="img" aria-labelledby="title desc">
+  <title id="title">DeepSeek-V3 的 MTP：多一条损失，条件里带着真实 token</title>
+  <desc id="desc">MTP 模块串在主干之后，输入是上一级表示与下一个真实 token 的 embedding，共享 embedding 与输出头，预测再下一个 token。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="800"/>
+  <text class="title" x="52" y="56">DeepSeek-V3 的 MTP：多一条损失，条件里带着真实 token</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="blue" x="52" y="200" width="230" height="100" rx="18"/>
+  <text class="on" x="167.0" y="244">Embedding</text>
+  <text class="sd" x="167.0" y="272">与 MTP 共享</text>
+  <rect class="ivory" x="380" y="200" width="300" height="100" rx="18"/>
+  <text class="label" x="530.0" y="244">主干 Block × L</text>
+  <text class="small" x="530.0" y="272">位置 i 的表示</text>
+  <rect class="blue" x="780" y="200" width="240" height="100" rx="18"/>
+  <text class="on" x="900.0" y="244">输出头</text>
+  <text class="sd" x="900.0" y="272">与 MTP 共享</text>
+  <rect class="orange" x="1120" y="200" width="280" height="100" rx="18"/>
+  <text class="on" x="1260.0" y="244">主损失</text>
+  <text class="sd" x="1260.0" y="272">预测位置 i+1</text>
+  <path class="flow" d="M282 250H380" marker-end="url(#arrow)"/>
+  <path class="flow" d="M680 250H780" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1020 250H1120" marker-end="url(#arrow)"/>
+  <rect class="blue" x="52" y="470" width="230" height="100" rx="18"/>
+  <text class="on" x="167.0" y="514">Embedding</text>
+  <text class="sd" x="167.0" y="542">位置 i+1 的真实 token</text>
+  <rect class="ivory" x="380" y="470" width="300" height="100" rx="18"/>
+  <text class="label" x="530.0" y="514">各过 RMSNorm，拼接</text>
+  <text class="small" x="530.0" y="542">再投影回隐藏维度</text>
+  <rect class="ivory" x="780" y="470" width="240" height="100" rx="18"/>
+  <text class="label" x="900.0" y="514">一层 Transformer</text>
+  <text class="small" x="900.0" y="542">MTP 模块自己的参数</text>
+  <rect class="orange" x="1120" y="470" width="280" height="100" rx="18"/>
+  <text class="on" x="1260.0" y="514">MTP 损失，乘 λ</text>
+  <text class="sd" x="1260.0" y="542">预测位置 i+2</text>
+  <path class="flow" d="M282 520H380" marker-end="url(#arrow)"/>
+  <path class="flow" d="M530 300V470" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="546" y="392">上一级的表示</text>
+  <path class="flow" d="M680 520H780" marker-end="url(#arrow)"/>
+  <path class="flow" d="M900 470V300" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="916" y="392">用同一个输出头</text>
+  <path class="flow" d="M960 300C960 380 1260 390 1260 470" marker-end="url(#arrow)"/>
+  <rect class="dash" x="1490" y="335" width="258" height="100" rx="18"/>
+  <text class="label" x="1619.0" y="379">推理时可丢掉</text>
+  <text class="small" x="1619.0" y="407">或留作推测解码</text>
+  <path class="grad" d="M1400 520C1450 520 1450 435 1490 420"/>
+  <text class="note" x="52" y="650">实线是前向。MTP 是顺序预测：预测位置 i+2 时，条件里有位置 i+1 的真实 token，每一级保持完整的因果链。</text>
+  <text class="note" x="52" y="684">它不同于在共享主干上并行接几个独立输出头的多 token 预测。深度 D=1；λ 前 10T token 为 0.3，之后为 0.1，来自技术报告。</text>
+  <text class="note" x="52" y="718">训练侧要记的是：主损失不再是唯一的梯度来源，λ 调的是未来 token 占更新的比例。</text>
+</svg>

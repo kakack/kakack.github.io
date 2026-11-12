@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900" role="img" aria-labelledby="title desc">
+  <title id="title">同一份偏好数据，RM 要全部，DPO 只要最新的</title>
+  <desc id="desc">Llama 3 一轮后训练里，RM 用到当时全部的偏好数据并作拒绝采样的筛子，DPO 只用最近批次；新模型回到下一轮的采样。</desc>
+  <defs>
+    <style>
+      .bg{fill:#FAF9F5}.ink{fill:none;stroke:#141413;stroke-linecap:round;stroke-linejoin:round}
+      .ivory{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .orange{fill:#D97757;stroke:#141413;stroke-width:4.5}
+      .blue{fill:#6A9BCC;stroke:#141413;stroke-width:4.5}
+      .green{fill:#788C5D;stroke:#141413;stroke-width:4.5}
+      .dash{fill:#FAF9F5;stroke:#141413;stroke-width:4;stroke-dasharray:9 8}
+      .panel{fill:#FAF9F5;stroke:#141413;stroke-width:4.5}
+      .flow{fill:none;stroke:#141413;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .grad{fill:none;stroke:#141413;stroke-width:3.5;stroke-dasharray:10 9;stroke-linecap:round;stroke-linejoin:round}
+      .thin{fill:none;stroke:#141413;stroke-width:2.5;stroke-linecap:round}
+      .title{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:34px;fill:#141413}
+      .head{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:700;font-size:21px;fill:#141413}
+      .label{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#141413;text-anchor:middle}
+      .on{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:600;font-size:18px;fill:#FAF9F5;text-anchor:middle}
+      .small{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413;text-anchor:middle}
+      .sd{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#FAF9F5;text-anchor:middle}
+      .note{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:16px;fill:#141413}
+      .axis{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+      .lsmall{font-family:Poppins,'Hiragino Sans GB','PingFang SC',sans-serif;font-weight:500;font-size:14px;fill:#141413}
+    </style>
+    <marker id="arrow" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2 2L14 8L2 14" fill="none" stroke="#141413" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1800" height="900"/>
+  <text class="title" x="52" y="56">同一份偏好数据，RM 要全部，DPO 只要最新的</text>
+  <path class="ink" d="M52 74C520 72 1280 76 1748 73" stroke-width="2.5"/>
+  <rect class="orange" x="52" y="300" width="250" height="120" rx="18"/>
+  <text class="on" x="177.0" y="354">上一轮最好的几个模型</text>
+  <text class="sd" x="177.0" y="382">两两采样回答</text>
+  <rect class="ivory" x="390" y="300" width="250" height="120" rx="18"/>
+  <text class="label" x="515.0" y="354">人工标注</text>
+  <text class="small" x="515.0" y="382">四档强度，可编辑 chosen</text>
+  <path class="flow" d="M302 360H390" marker-end="url(#arrow)"/>
+  <rect class="panel" x="730" y="110" width="420" height="500" rx="26"/>
+  <text class="head" x="762" y="156">偏好数据，按批次</text>
+  <rect class="blue" x="762" y="180" width="356" height="70" rx="14"/>
+  <text class="on" x="940.0" y="221">更早的批次</text>
+  <rect class="blue" x="762" y="264" width="356" height="70" rx="14"/>
+  <text class="on" x="940.0" y="305">…</text>
+  <rect class="blue" x="762" y="348" width="356" height="70" rx="14"/>
+  <text class="on" x="940.0" y="389">上一批</text>
+  <rect class="blue" x="762" y="432" width="356" height="70" rx="14"/>
+  <text class="on" x="940.0" y="473">最新一批</text>
+  <text class="lsmall" x="762" y="560">每条回答带着 policy 版本</text>
+  <path class="flow" d="M640 360H730" marker-end="url(#arrow)"/>
+  <rect class="ivory" x="1260" y="150" width="250" height="110" rx="18"/>
+  <text class="label" x="1385.0" y="199">Reward model</text>
+  <text class="small" x="1385.0" y="227">用全部批次训练</text>
+  <rect class="ivory" x="1260" y="300" width="250" height="110" rx="18"/>
+  <text class="label" x="1385.0" y="349">拒绝采样 + SFT</text>
+  <text class="small" x="1385.0" y="377">RM 在这里是筛子</text>
+  <rect class="ivory" x="1260" y="450" width="250" height="110" rx="18"/>
+  <text class="label" x="1385.0" y="499">DPO</text>
+  <text class="small" x="1385.0" y="527">只用最近的批次</text>
+  <path class="flow" d="M1150 215H1260" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1385 260V300" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1385 410V450" marker-end="url(#arrow)"/>
+  <path class="flow" d="M1150 467C1200 467 1200 505 1260 505" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="1166" y="196">全部</text>
+  <text class="lsmall" x="1160" y="540">最新</text>
+  <rect class="orange" x="1580" y="300" width="168" height="110" rx="18"/>
+  <text class="on" x="1664.0" y="349">这一轮的模型</text>
+  <text class="sd" x="1664.0" y="377">权重平均</text>
+  <path class="flow" d="M1510 505C1570 505 1630 470 1630 410" marker-end="url(#arrow)"/>
+  <path class="grad" d="M1720 410C1720 720 177 720 177 420" marker-end="url(#arrow)"/>
+  <text class="lsmall" x="820" y="700">回到下一轮的采样</text>
+  <text class="note" x="52" y="770">实线是一轮之内的流程，虚线表示模型回到下一轮采样。共六轮，每轮都是 SFT 再 DPO。</text>
+  <text class="note" x="52" y="804">RM 是打分器，见得越多越好；DPO 是离线分类，偏好对离当前策略越远越没用。同一份数据，两处对新鲜度的要求相反。</text>
+  <text class="note" x="52" y="838">环节来自 Llama 3 技术报告第 4 节。DPO 只留前两档强度的样本；两条回答来自两个不同的模型。</text>
+</svg>
