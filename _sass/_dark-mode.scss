@@ -20,9 +20,13 @@
     border-bottom-color: #403D39;
   }
 
-  .topbar-name {
+  .topbar-brand {
     color: #E4DFD8;
-    &:hover { color: #A9C0B0; }
+    &:hover, &:active { color: #A9C0B0; }
+  }
+
+  .topbar-logo {
+    background-color: #A9C0B0;
   }
 
   .topbar-nav a {

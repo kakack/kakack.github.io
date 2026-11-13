@@ -11,11 +11,11 @@ layout: home
 <section class="hero" id="hero">
   <div class="hero-inner">
     <p class="hero-name">{{ site.author_name }}</p>
-    <h1>写大模型是怎么训出来的，也写路上看到的。</h1>
-    <p class="hero-lede">做训练和推理系统的工程师。这里有 {{ tech_count }} 篇技术笔记和 {{ travel_count }} 篇游记，<em lang="en">where scaling laws meet the open road</em>。</p>
+    <h1>Where scaling laws meet the open road.</h1>
+    <p class="hero-lede">I build training and inference systems for large models, and I write down what I learn. {{ tech_count }} technical notes and {{ travel_count }} travel essays so far, most of them in Chinese.</p>
     <div class="hero-actions">
-      <a class="btn" href="{{ site.baseurl }}{{ stages.first.url }}">从第一篇读起</a>
-      <a class="text-link" href="{{ site.baseurl }}/archive/">全部文章</a>
+      <a class="btn" href="{{ site.baseurl }}{{ stages.first.url }}">Start with part one</a>
+      <a class="text-link" href="{{ site.baseurl }}/archive/">All posts</a>
     </div>
   </div>
 </section>
@@ -23,8 +23,8 @@ layout: home
 <section class="line" id="line" aria-labelledby="line-title">
   <div class="pin">
     <div class="line-head">
-      <h2 id="line-title">一个模型从生到熟，{{ stages | size }} 篇写完。</h2>
-      <p>从开训前要锁死的数据契约，到蒸馏和评估怎样指回数据。每一站是一篇文章。</p>
+      <h2 id="line-title">How a large model gets trained, in {{ stages | size }} parts.</h2>
+      <p>From the data contract you lock before the first step to the evaluation that points back at the data. Each station is one article.</p>
     </div>
 
     <div class="stages">
@@ -34,7 +34,7 @@ layout: home
           <p class="stage-num" aria-hidden="true">{{ forloop.index }}</p>
           <h3 class="stage-name">{{ stage.name }}</h3>
           <p class="stage-q">{{ stage.question }}</p>
-          <a class="text-link" href="{{ site.baseurl }}{{ stage.url }}">读第{{ stage.ordinal }}篇</a>
+          <a class="text-link" href="{{ site.baseurl }}{{ stage.url }}">Read part {{ forloop.index }}</a>
         </div>
         <a class="stage-fig" href="{{ site.baseurl }}{{ stage.url }}" tabindex="-1" aria-hidden="true">
           <img src="{{ img_base }}{{ stage.figure }}" alt="" width="1800" height="820" loading="lazy" decoding="async" draggable="false">
@@ -60,26 +60,26 @@ layout: home
 
 <section class="road" aria-labelledby="road-title">
   <div class="road-head">
-    <h2 id="road-title">也写路上看到的。</h2>
-    <p>{{ travel_count }} 篇游记，从大西北到亚平宁。按住照片可以左右拖。</p>
+    <h2 id="road-title">And the open road.</h2>
+    <p>{{ travel_count }} travel essays, from China's north-west to the Apennines. Drag the photos sideways.</p>
     <div class="chips" aria-hidden="true">{% for stage in stages %}<span style="--c:{{ stage.hue }}"></span>{% endfor %}</div>
   </div>
-  <div class="strip" id="strip" tabindex="0" role="group" aria-label="游记照片，可左右滚动">
+  <div class="strip" id="strip" tabindex="0" role="group" aria-label="Travel photos, scrolls sideways">
     {% for shot in site.data.home.road %}
     <a class="shot" href="{{ site.baseurl }}{{ shot.url }}" draggable="false">
-      <img src="{{ img_base }}{{ shot.photo }}" alt="{{ shot.place }}，{{ shot.year }}" width="880" height="660" loading="lazy" decoding="async" draggable="false">
+      <img src="{{ img_base }}{{ shot.photo }}" alt="{{ shot.place }}, {{ shot.year }}" width="880" height="660" loading="lazy" decoding="async" draggable="false">
       <span class="shot-place">{{ shot.place }}</span>
-      <span class="shot-meta">{{ shot.title }}，{{ shot.year }}</span>
+      <span class="shot-meta" lang="zh-CN">{{ shot.title }}, {{ shot.year }}</span>
     </a>
     {% endfor %}
   </div>
-  <p class="road-foot"><a class="text-link" href="{{ site.baseurl }}/tags/#travel">全部游记</a></p>
+  <p class="road-foot"><a class="text-link" href="{{ site.baseurl }}/tags/#travel">All travel essays</a></p>
 </section>
 
 <section class="recent" aria-labelledby="recent-title">
   <div class="recent-head">
-    <h2 id="recent-title">系列之外，最近写的</h2>
-    <a class="text-link" href="{{ site.baseurl }}/archive/">查看归档</a>
+    <h2 id="recent-title">Recent posts outside the series</h2>
+    <a class="text-link" href="{{ site.baseurl }}/archive/">Browse the archive</a>
   </div>
   <ul>
     {% assign stage_urls = stages | map: "url" %}
@@ -91,7 +91,7 @@ layout: home
         <a class="row" href="{{ site.baseurl }}{{ post.url }}">
           <time datetime="{{ post.date | date: '%Y-%m-%d' }}">{{ post.date | date: "%Y-%m-%d" }}</time>
           <span class="row-title" style="view-transition-name: post-{{ post.date | date: '%Y%m%d' }}">{{ post.title }}</span>
-          <span class="row-tags">{{ post.tags | slice: 0, 2 | join: "、" }}</span>
+          <span class="row-tags">{{ post.tags | slice: 0, 2 | join: ", " }}</span>
         </a>
       </li>
       {% assign shown = shown | plus: 1 %}

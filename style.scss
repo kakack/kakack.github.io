@@ -398,17 +398,40 @@ body.is-scrolled .topbar {
   border-bottom-color: $rule;
 }
 
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: $base-color;
+  white-space: nowrap;
+
+  &:hover, &:active {
+    color: $accent;
+  }
+}
+
+// The monogram is a single-colour drawing, so it is used as a mask and tinted here.
+// That lets it follow the palette in light and dark themes without editing the logo file.
+.topbar-logo {
+  display: block;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  margin: 0 -2px 0 -4px;
+  background-color: $accent;
+  -webkit-mask: url("/assets/brand/monogram.svg") center / contain no-repeat;
+  mask: url("/assets/brand/monogram.svg") center / contain no-repeat;
+}
+
 .topbar-name {
   font-family: $serif-font;
   font-weight: 600;
   font-size: 18px;
   line-height: 1;
   letter-spacing: 0.01em;
-  color: $base-color;
-  white-space: nowrap;
 
-  &:hover, &:active {
-    color: $accent;
+  @media screen and (max-width: 420px) {
+    font-size: 16px;
   }
 }
 
@@ -661,7 +684,7 @@ h1[id], h2[id], h3[id], h4[id], h5[id], h6[id] {
   }
   
   &:before{
-    content:"目录";
+    content:"Contents";
     margin: 0 0 12px 10px;
     font-family: $serif-font;
     font-weight: 700;

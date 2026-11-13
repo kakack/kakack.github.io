@@ -1,6 +1,9 @@
 <header class="topbar" id="topbar">
-  <a class="topbar-name" href="{{ site.baseurl }}/">{{ site.name }}</a>
-  <nav class="topbar-nav" aria-label="主导航">
+  <a class="topbar-brand" href="{{ site.baseurl }}/" aria-label="{{ site.name }}, home">
+    <span class="topbar-logo" aria-hidden="true"></span>
+    <span class="topbar-name">{{ site.name }}</span>
+  </a>
+  <nav class="topbar-nav" aria-label="Main">
     {% for nav in site.navigation %}
       {% assign nav_path = nav.url | append: '/' | replace: '//', '/' %}
       {% if nav.url == '/' %}{% continue %}{% endif %}
@@ -10,6 +13,6 @@
       <a href="{{ site.baseurl }}{{ nav.url }}"{% if page.url == nav_path %} aria-current="page"{% endif %}>{{ nav.label | default: nav.name }}</a>
       {% endif %}
     {% endfor %}
-    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="切换到深色模式">深色</button>
+    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to dark mode">Dark</button>
   </nav>
 </header>
