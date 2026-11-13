@@ -1,0 +1,35 @@
+{% assign pubs = site.data.publications %}
+{% assign selected = pubs | where: "selected", true %}
+{% assign unselected = pubs | where_exp: "item", "item.selected != true" %}
+{% assign published = unselected | where_exp: "item", "item.type != 'under_review'" %}
+{% assign pending = pubs | where: "type", "under_review" %}
+{% assign years = published | map: "year" | uniq | sort | reverse %}
+
+<section id="publications" class="publications">
+  <h2>Publications</h2>
+  <p class="publications-intro">Full list on <a href="https://scholar.google.com/citations?user=4Lt1ETcAAAAJ">Google Scholar</a> · <a href="https://openreview.net/profile?id=~Kai_Chen45">OpenReview</a></p>
+
+  {% if selected.size > 0 %}
+    <h3>Selected</h3>
+    {% for pub in selected %}
+      {% include publication-entry.html pub=pub %}
+    {% endfor %}
+  {% endif %}
+
+  {% for year in years %}
+    {% assign year_pubs = published | where: "year", year | sort: "date" | reverse %}
+    {% if year_pubs.size > 0 %}
+      <h3 class="publications-year">{{ year }}</h3>
+      {% for pub in year_pubs %}
+        {% include publication-entry.html pub=pub %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+
+  {% if pending.size > 0 %}
+    <h3 class="publications-year">Under Review</h3>
+    {% for pub in pending %}
+      {% include publication-entry.html pub=pub %}
+    {% endfor %}
+  {% endif %}
+</section>

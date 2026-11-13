@@ -1,0 +1,141 @@
+- title: "MemOS: A Memory OS for AI System"
+  authors: "Zhiyu Li, Chenyang Xi, Chunyu Li, Ding Chen, Boyu Chen, Shichao Song, Simin Niu, Hanyu Wang, Jiawei Yang, Chen Tang, Qingchen Yu, Jihao Zhao, Yezhaohui Wang, Peng Liu, Zehao Lin, Pengyuan Wang, Jiahao Huo, Tianyi Chen, Kai Chen, Kehang Li, Zhen Tao, Huayi Lai, Hao Wu, Bo Tang, Zhengren Wang, Zhaoxin Fan, Ningyu Zhang, Linfeng Zhang, Junchi Yan, Mingchuan Yang, Tong Xu, Wei Xu, Huajun Chen, Haofen Wang, Hongkang Yang, Wentao Zhang, Zhi-Qin John Xu, Siheng Chen, Feiyu Xiong"
+  venue: "arXiv preprint arXiv:2507.03724"
+  year: 2025
+  date: 2025-07-04
+  type: preprint
+  selected: true
+  links:
+    arxiv: "https://arxiv.org/abs/2507.03724"
+    code: "https://github.com/MemTensor/MemOS"
+    project: "https://memos.openmem.net/"
+  tldr: "A memory operating system that unifies plaintext, activation (KV-cache) and parameter memory via the MemCube abstraction; best overall on LoCoMo, LongMemEval, PreFEval and PersonaMem."
+- title: "MemOS: An Operating System for Memory-Augmented Generation (MAG) in Large Language Models"
+  authors: "Zhiyu Li, Shichao Song, Hanyu Wang, Simin Niu, Ding Chen, Jiawei Yang, Chenyang Xi, Huayi Lai, Jihao Zhao, Yezhaohui Wang, Junpeng Ren, Zehao Lin, Jiahao Huo, Tianyi Chen, Kai Chen, Kehang Li, Zhiqiang Yin, Qingchen Yu, Bo Tang, Hongkang Yang, Zhi-Qin John Xu, Feiyu Xiong"
+  venue: "arXiv preprint arXiv:2505.22101"
+  year: 2025
+  date: 2025-05-28
+  type: preprint
+  selected: false
+  links:
+    arxiv: "https://arxiv.org/abs/2505.22101"
+    code: "https://github.com/MemTensor/MemOS"
+  tldr: "Short version of the MemOS design: memory as a first-class resource across parametric, activation and plaintext memory."
+- title: "Memory^3: Language Modeling with Explicit Memory"
+  authors: "Hongkang Yang, Zehao Lin, Wenjin Wang, Hao Wu, Zhiyu Li, Bo Tang, Wenqiang Wei, Jinbo Wang, Zeyun Tang, Shichao Song, Chenyang Xi, Yu Yu, Kai Chen, Feiyu Xiong, Linpeng Tang, Weinan E"
+  venue: "Journal of Machine Learning, 3(3): 300-346"
+  year: 2024
+  date: 2024-09-21
+  type: journal
+  selected: true
+  links:
+    arxiv: "https://arxiv.org/abs/2407.01178"
+  tldr: "Adds explicit memory as a third, cheaper knowledge format alongside weights and context KV, letting a 2.4B model outperform larger models and RAG baselines."
+- title: "A Survey on Long-Term Memory Security in LLM Agents: Attacks, Defenses, and Governance Across the Memory Lifecycle"
+  authors: "Zehao Lin, Xixuan Hao, Renyu Fu, Shaobo Cui, Kai Chen, Chunyu Li, Zhiyu Li, Feiyu Xiong"
+  venue: "EMNLP 2026"
+  year: 2026
+  date: 2026-04-17
+  type: conference
+  selected: true
+  links:
+    arxiv: "https://arxiv.org/abs/2604.16548"
+  tldr: "Organizes attacks and defenses on agent long-term memory across six lifecycle phases and proposes Verifiable Memory Governance."
+- title: "MemT-1.0: Towards Memory-Native Evolution"
+  authors: "Zhiyu Li, Zeyu Zhang, Linyun Liu, Yiwei Bu, Chenyang Xi, Xichong Zhang, Yi Yu, Yu Yu, Zhichen Liu, Yuxiao Yi, Chunyu Li, Haoran Liu, Zhenkai Ding, Le Zhou, Juncheng Zhang, Boyu Chen, Zehao Lin, Guorui Li, Renyu Fu, Ji Li, Youyang Xia, Jiajun Shen, Harvey Li, Jingsong Zhou, Helan Hu, Tong Shen, Tianxiao Xu, Chenye Han, Weijie Li, Zhongquan Zhou, Hongming Xu, Yuekeng Li, Erenkai Zhu, Peng Yu, Wenhao Li, Jingyi Kang, Xixuan Hao, Xuzhou Zhu, Can Chen, Jiawei Liu, Chen Jiang, Tao Jiang, Fangwei Xiang, Zepeng Yao, Kai Chen, Guang Yang, Mingfei Lu, Chunhui Li, Zhengxuan Jiang, Bo Tang, Shiyu Zhan, Yihang Sun, Jie Chu, Wenjun Xiong, Zhenxiang Hua, Chen Lin, Detong Su, Dongyu Deng, Qiuping Ding, Guofeng Ding, Si Chen, Guohua Wen, Xu Chen, Zhi-Qin John Xu, Ying-Cong Chen, Ningyu Zhang, Haofen Wang, Muning Wen, Haotian Chen, Wentao Zhang, Xuanhe Zhou, Rita Zhang, Junchi Yan, Feiyu Xiong"
+  venue: "arXiv preprint arXiv:2610.26825"
+  year: 2026
+  date: 2026-10-19
+  type: preprint
+  selected: true
+  links:
+    arxiv: "https://arxiv.org/abs/2610.26825"
+  tldr: "Builds memory into the model with Gated DeltaNet-2 and Mixture-of-Storage; ~1.86x faster and ~66x less storage than full-context KV at 128K history."
+- title: "SparseX: Efficient Segment-Level KV Cache Sharing for Interleaved LLM Serving"
+  authors: "Quqing Zhang, Kai Chen, Ning Liao, Zehao Lin, Bo Tang, Feiyu Xiong, Zhiyu Li, Xiaoxing Wang"
+  venue: "arXiv preprint arXiv:2606.01751"
+  year: 2026
+  date: 2026-06-01
+  type: preprint
+  selected: true
+  links:
+    arxiv: "https://arxiv.org/abs/2606.01751"
+    code: "https://github.com/MemTensor/SparseX"
+  tldr: "Training-free non-prefix KV-cache reuse with sparse recomputation; cuts TTFT from 9.23 s to 0.87 s on LOCOMO with Qwen3-32B at near full-recompute quality."
+- title: "The Value of Memory in Language Agents"
+  authors: "Zehao Lin, Erenkai Zhu, Helan Hu, Xixuan Hao, Chunyu Li, Linyun Liu, Kai Chen, Chenxu Du, Feiyu Xiong"
+  venue: "arXiv preprint arXiv:2610.31303"
+  year: 2026
+  date: 2026-10-22
+  type: preprint
+  selected: false
+  links:
+    arxiv: "https://arxiv.org/abs/2610.31303"
+  tldr: "Measures the value of agent memory in avoided task loss and how timing, retrieval access and changing demand shape it."
+- title: "Compiling Autoregressive LLM Control into Policy-Exact Parallel Inference for Hierarchical RAG"
+  authors: "Zehao Lin, Qianfeng Shen, Xixuan Hao, Shaobo Cui, Chunyu Li, Kai Chen, Bo Tang, Zhenjun Wang, Jin Yan, Zhiyu Li, Feiyu Xiong"
+  venue: "arXiv preprint arXiv:2610.30664"
+  year: 2026
+  date: 2026-10-22
+  type: preprint
+  selected: false
+  links:
+    arxiv: "https://arxiv.org/abs/2610.30664"
+  tldr: "Compiles bounded-horizon LLM control into one prefill plus one tree-causal probe, matching the serial policy while cutting control latency by 35-47%."
+- title: "When Does Better Confidence Improve a Knowledge-Graph Audit?"
+  authors: "Zehao Lin, Kai Chen, Xixuan Hao, Erenkai Zhu, Chunyu Li, Helan Hu, Feiyu Xiong"
+  venue: "arXiv preprint arXiv:2611.05877"
+  year: 2026
+  date: 2026-11-04
+  type: preprint
+  selected: false
+  links:
+    arxiv: "https://arxiv.org/abs/2611.05877"
+  tldr: "Studies when confidence scores actually improve human audits of LLM-built knowledge graphs, framing auditing as budgeted covering."
+- title: "Innovator: Scientific Continued Pretraining with Fine-grained MoE Upcycling"
+  authors: "Ning Liao, Xiaoxing Wang, Zehao Lin, Weiyang Guo, Feng Hong, Shixiang Song, Geng Yu, Zihua Zhao, Sitao Xie, Longxuan Wei, Xiangqi Jin, Xiaohan Qin, Jiale Ma, Kai Chen, Jiangchao Yao, Zhouhan Lin, Junchi Yan, Zhiyu Li, Feiyu Xiong, Yanfeng Wang, Linfeng Zhang"
+  venue: "arXiv preprint arXiv:2507.18671"
+  year: 2025
+  date: 2025-07-24
+  type: preprint
+  selected: false
+  links:
+    arxiv: "https://arxiv.org/abs/2507.18671"
+  tldr: "Upcycles Qwen2.5-7B into a 53.3B fine-grained MoE for science, +25% on 30 scientific tasks while retaining ~99% general ability."
+- title: "Scalable Complexity Control Facilitates Reasoning Ability of LLMs"
+  authors: "Liangkai Hang, Junjie Yao, Zhiwei Bai, Tianyi Chen, Yang Chen, Rongjie Diao, Hezhou Li, Pengxiao Lin, Zhiwei Wang, Cheng Xu, Zhongwang Zhang, Zhangchen Zhou, Zhiyu Li, Zehao Lin, Kai Chen, Feiyu Xiong, Yaoyu Zhang, Weinan E, Hongkang Yang, Zhi-Qin John Xu"
+  venue: "arXiv preprint arXiv:2505.23013"
+  year: 2025
+  date: 2025-05-29
+  type: preprint
+  selected: false
+  links:
+    arxiv: "https://arxiv.org/abs/2505.23013"
+  tldr: "Controlling model complexity via initialization rate and weight decay improves scaling and reasoning, e.g. GSM8K 52.8 to 63.8 on 2.4B models."
+- title: "Beyond Context: Parameter-Efficient Model-Level Evolution of Agents"
+  authors: ""   # TODO: fill in after the review is public; do not invent
+  venue: "Under review"
+  year: 2026
+  type: under_review
+  selected: false
+  links:
+    openreview: "https://openreview.net/forum?id=Y6uJaR8j0T"
+  tldr: "Turns verified agent experience into versioned LoRA capability patches on a frozen backbone, selected at run time."
+- title: "PACE-VL: Preserving Attention via Clustered Evictions for Vision-Language Models"
+  authors: ""   # TODO: fill in after the review is public; do not invent
+  venue: "Under review"
+  year: 2026
+  type: under_review
+  selected: false
+  links:
+    openreview: "https://openreview.net/forum?id=RcMvEr7YnJ"
+  tldr: "Training-free KV-cache eviction for VLMs that beats all compared baselines at a 10% cache budget."
+- title: "CrossKV: Breaking the Prefix Barrier with Segment-Level KV Cache Sharing in Agentic Workflow"
+  authors: ""   # TODO: fill in after the review is public; do not invent
+  venue: "Under review"
+  year: 2026
+  type: under_review
+  selected: false
+  links:
+    openreview: "https://openreview.net/forum?id=vVAEBWE77l"
+  tldr: "Segment-level KV-cache sharing so one agent's output is reused as working memory by later agents, built on vLLM."

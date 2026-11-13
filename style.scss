@@ -1163,6 +1163,7 @@ body.post-page {
 // Settled on moving the import of syntax highlighting to the bottom of the CSS
 @import "highlights";
 // 若启用 Gitalk 评论，取消下一行注释: @import "gitalk";
+@import "publications";
 @import "dark-mode";
 
 // Mermaid diagrams (replaced from ```mermaid code blocks)

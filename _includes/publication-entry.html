@@ -1,0 +1,90 @@
+{% assign pub = include.pub %}
+{% assign title_html = pub.title | escape | replace: "Memory^3", "Memory<sup>3</sup>" %}
+{% assign primary_url = "" %}
+{% for pair in pub.links %}
+  {% if forloop.first %}
+    {% assign primary_url = pair[1] %}
+  {% endif %}
+{% endfor %}
+
+<article class="pub-entry">
+  <a class="pub-title" href="{{ primary_url }}">{{ title_html }}</a>
+
+  {% assign author_str = pub.authors | default: "" | strip %}
+  {% if author_str != "" %}
+    {% assign names = author_str | split: ", " %}
+    {% assign count = names.size %}
+    <p class="pub-authors">
+      {% if count > 10 %}
+        {% assign last = count | minus: 1 %}
+        {% assign kai_idx = -1 %}
+        {% for name in names %}
+          {% if name == "Kai Chen" %}
+            {% assign kai_idx = forloop.index0 %}
+          {% endif %}
+        {% endfor %}
+        {% assign idxs = ",0,1,2," %}
+        {% if kai_idx > 2 %}
+          {% assign prev = kai_idx | minus: 1 %}
+          {% if prev > 2 %}
+            {% assign idxs = idxs | append: prev | append: "," %}
+          {% endif %}
+          {% if kai_idx < last %}
+            {% assign idxs = idxs | append: kai_idx | append: "," %}
+            {% assign nxt = kai_idx | plus: 1 %}
+            {% if nxt < last %}
+              {% assign idxs = idxs | append: nxt | append: "," %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        {% assign idxs = idxs | append: last | append: "," %}
+        {%- assign emitted = false -%}
+        {%- assign last_shown = -1 -%}
+        {%- for name in names -%}
+          {%- capture token %},{{ forloop.index0 }},{% endcapture -%}
+          {%- if idxs contains token -%}
+            {%- if emitted -%}
+              {%- assign gap = forloop.index0 | minus: last_shown -%}
+              {%- if gap > 1 %} … {% else %}, {% endif -%}
+            {%- endif -%}
+            {%- if name == "Kai Chen" -%}<strong>Kai Chen</strong>{%- else -%}{{ name | escape }}{%- endif -%}
+            {%- assign last_shown = forloop.index0 -%}
+            {%- assign emitted = true -%}
+          {%- endif -%}
+        {%- endfor %} <span class="pub-count">({{ count }} authors)</span>
+      {%- else -%}
+        {%- for name in names -%}
+          {%- unless forloop.first %}, {% endunless -%}
+          {%- if name == "Kai Chen" -%}<strong>Kai Chen</strong>{%- else -%}{{ name | escape }}{%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    </p>
+  {% endif %}
+
+  <p class="pub-meta"><em>{{ pub.venue | escape }}</em> {{ pub.year }}</p>
+
+  {% if pub.links %}
+    <p class="pub-links">
+      {% for pair in pub.links %}
+        {% assign key = pair[0] %}
+        {% case key %}
+          {% when "arxiv" %}
+            {% assign label = "arXiv" %}
+          {% when "code" %}
+            {% assign label = "Code" %}
+          {% when "project" %}
+            {% assign label = "Project" %}
+          {% when "openreview" %}
+            {% assign label = "OpenReview" %}
+          {% else %}
+            {% assign label = key %}
+        {% endcase %}
+        <a class="pub-badge" href="{{ pair[1] }}">{{ label }}</a>
+      {% endfor %}
+    </p>
+  {% endif %}
+
+  {% if pub.tldr != blank %}
+    <p class="pub-tldr">{{ pub.tldr | escape }}</p>
+  {% endif %}
+</article>
