@@ -8,8 +8,21 @@
 // 默认为teal，如果需要更换，可以直接将teal并替换成你想要的颜色，例如，查找teal，替换indigo，全部替换，保存，push，完成！
 
 
-// Colors
-$blue: $oc-teal-8;
+// Palette: Morandi, oat paper with grey-green. Every colour carries some grey.
+// Contrast is checked: body text ~9:1, secondary text and links >= 4.5:1 on paper.
+$paper: #E9E5DE;
+$paper-deep: #DFDAD1;      // table stripes, chips, inline code
+$ink: #3B3835;
+$ink-soft: #5E5750;        // secondary text
+$ink-faint: #8C857C;       // decorative only; too light for body text
+$rule: #D0C9BF;
+$rule-soft: #DDD7CE;
+$accent: #4E6857;
+$accent-soft: #6B8573;     // fills and bars only; too light for text
+$accent-wash: #D5DDD3;     // hover backgrounds
+$slide: #FAF9F5;           // the ivory the diagrams are drawn on
+
+$blue: $accent;
 
 // Grays
 $black: #000;
@@ -27,6 +40,7 @@ $georgia: Georgia, serif;
 // Fonts - Apple System Font Stack
 // San Francisco for English, PingFang SC for Chinese, SF Mono for code
 // Uses native system fonts for best performance and rendering
+$serif-font: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "STSong", Georgia, serif;
 $base-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
 $code-font: "SF Mono", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Monaco, "Courier New", monospace;
 
@@ -35,38 +49,47 @@ $base-font-size: 16px;
 $small-font-size: 14px;
 
 // Colors
-$base-color: $oc-gray-8;
-$base-lighten-color: $oc-gray-6;
-$base-lightener-color: $oc-gray-4;
+$base-color: $ink;
+$base-lighten-color: $ink-soft;
+$base-lightener-color: $ink-faint;
 
-$background-color: $oc-gray-0;
-$background-lighten-color: hsla(210, 17%, 98%, 0.42);
+$background-color: $paper;
+$background-lighten-color: rgba($paper, 0.42);
 
 $text-color: $base-color;
-$link-color: $oc-teal-8;
-$link-lighten-color: $oc-teal-6;
-$link-bghv-color: $oc-teal-0;
-$divider-color: $oc-gray-1;
+$link-color: $accent;
+$link-lighten-color: #3A4F41;        // hover: darker, not lighter, so links stay readable (7.5:1)
+$link-bghv-color: $accent-wash;
+$divider-color: $rule-soft;
 
-$error-color:$oc-red-8;
+$error-color: #9A4A3F;
 
-$table-border-color: $oc-gray-2;
-$table-background-color: $oc-gray-1;
+$table-border-color: $rule;
+$table-background-color: $paper-deep;
 
 $blockquote-color: $base-lighten-color;
-$blockquote-border-color: $oc-gray-3;
+$blockquote-border-color: $rule;
 
-$footnote-link-border-color: $oc-gray-1;
-$footnote-link-background-over-color: $oc-gray-1;
+$footnote-link-border-color: $rule-soft;
+$footnote-link-background-over-color: $paper-deep;
 
 // $selection-color: $oc-black;
-$selection-background-color: $oc-gray-3;
+$selection-background-color: $accent-wash;
 
-$tag-index-label-background-color: $oc-gray-2;
-$tag-index-count-background-color: hsla(210, 7%, 56%, 0.102);
+$tag-index-label-background-color: $paper-deep;
+$tag-index-count-background-color: rgba($ink, 0.08);
 
-$footer-border-color: $oc-gray-2;
-$footer-background-color: $oc-gray-0;
+$footer-border-color: $rule;
+$footer-background-color: $paper;
+
+// Layout
+$nav-h: 56px;
+$gutter-min: 20px;
+$gutter-max: 72px;
+$page-max: 1180px;
+$measure: 780px;           // article text column
+$toc-w: 232px;
+$bp-toc: 1180px;           // below this the table of contents is hidden
 
 // List
 $li-bottom-space: 0.4em;
@@ -91,7 +114,7 @@ $dd-position: $dt-width+$dt-dd-space;
 
 // Mobile breakpoints
 @mixin mobile {
-  @media screen and (max-width: 1200px) {
+  @media screen and (max-width: 760px) {
     @content;
   }
 }

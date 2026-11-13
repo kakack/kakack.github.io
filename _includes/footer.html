@@ -1,5 +1,9 @@
-{% include svg-icons.html %}
-
-{% if site.footer-text %}
-<p>{{ site.footer-text }}</p>
-{% endif %}
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <p class="site-footer-poem">{{ site.description }}</p>
+    {% include svg-icons.html %}
+    {% if site.footer-text %}
+    <p class="site-footer-note">{{ site.footer-text }}</p>
+    {% endif %}
+  </div>
+</footer>

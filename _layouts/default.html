@@ -1,34 +1,39 @@
 <!DOCTYPE html>
 <html lang="{{ page.lang | default: site.lang | default: 'zh-CN' }}">
   {% include head.html %}
-  <body{% if page.layout == 'post' %} class="post-page"{% endif %}>
-    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">Dark mode</button>
+  <body class="{% if page.layout == 'post' %}post-page{% elsif page.layout == 'home' %}home-page{% else %}plain-page{% endif %}{% if page.toc == true %} has-toc{% endif %}">
+    <a class="skip-link" href="#main">跳到正文</a>
     {% include nav.html %}
 
+    {% if page.layout == 'post' %}
+    <div class="reading-progress-bar" aria-hidden="true"><div class="reading-progress-fill" id="reading-progress-fill"></div></div>
+    {% endif %}
+
     {% if page.toc==true %}
-      <aside class="toc">
+      <aside class="toc" aria-label="目录">
         {% include toc.html html=content %}
       </aside>
     {% endif %}
 
-    <div id="main" role="main" class="wrapper-content">
+    <main id="main" class="wrapper-content">
+      {% if page.layout == 'home' %}
+        {{ content }}
+      {% else %}
       <div class="container">
         {{ content }}
       </div>
-    </div>
+      {% endif %}
+    </main>
 
-    <div class="wrapper-footer-mobile">
-      <footer class="footer">
-        {% include footer.html %}
-      </footer>
-    </div>
+    {% include footer.html %}
+
+    {% if page.layout == 'post' %}
+    <button type="button" class="back-to-top" id="back-to-top" aria-label="回到顶部">↑</button>
+    {% endif %}
 
     {% include analytics.html %}
 
     {% if page.toc==true %}
-    <script>
-      document.getElementById("main").classList.add("withtoc");
-    </script>
     <script>
       (function () {
         var toc = document.querySelector(".toc");
@@ -43,7 +48,7 @@
         var headings = container.querySelectorAll("h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]");
         if (!headings.length) return;
 
-        var offsetFromTop = 100;
+        var offsetFromTop = 120;
 
         function getCurrentId() {
           var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -99,16 +104,14 @@
           if (theme === "dark") {
             root.setAttribute("data-theme", "dark");
             if (themeToggle) {
-              themeToggle.textContent = "Light mode";
+              themeToggle.textContent = "浅色";
               themeToggle.setAttribute("aria-label", "切换到浅色模式");
-              themeToggle.setAttribute("title", "切换到浅色模式");
             }
           } else {
             root.removeAttribute("data-theme");
             if (themeToggle) {
-              themeToggle.textContent = "Dark mode";
+              themeToggle.textContent = "深色";
               themeToggle.setAttribute("aria-label", "切换到深色模式");
-              themeToggle.setAttribute("title", "切换到深色模式");
             }
           }
         }

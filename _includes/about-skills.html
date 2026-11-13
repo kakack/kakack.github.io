@@ -1,0 +1,105 @@
+{% comment %} Moved here from the old home page: quick facts, skills cloud, focus areas. {% endcomment %}
+{% assign travel_posts = site.posts | where_exp: "p", "p.tags contains 'Travel'" %}
+
+<section class="about-block" aria-labelledby="about-skills">
+  <h2 id="about-skills">Skills & Tools</h2>
+  <ul class="about-facts">
+    <li><strong>{{ site.posts | size }}</strong> posts, <strong>{{ travel_posts | size }}</strong> of them travel notes</li>
+    <li>Focus: <strong>ML, LLM, Infra</strong></li>
+    <li id="github-status">Last GitHub activity: <strong class="status-loading">loading</strong></li>
+  </ul>
+
+  <div class="skills-filter">
+    <button class="skill-filter-btn active" data-category="all">All</button>
+    <button class="skill-filter-btn" data-category="language">Languages</button>
+    <button class="skill-filter-btn" data-category="training">LLM Training</button>
+    <button class="skill-filter-btn" data-category="infra">AI Infra</button>
+    <button class="skill-filter-btn" data-category="agent">Agent Systems</button>
+  </div>
+
+  <div class="skills-cloud">
+    <span class="skill-tag" data-category="language" data-level="expert">Python</span>
+    <span class="skill-tag" data-category="language" data-level="advanced">C++</span>
+    <span class="skill-tag" data-category="language" data-level="advanced">C</span>
+    <span class="skill-tag" data-category="language" data-level="advanced">Java</span>
+
+    <span class="skill-tag" data-category="training" data-level="expert">PyTorch</span>
+    <span class="skill-tag" data-category="training" data-level="expert">Transformers</span>
+    <span class="skill-tag" data-category="training" data-level="advanced">DeepSpeed</span>
+    <span class="skill-tag" data-category="training" data-level="advanced">Megatron-LM</span>
+    <span class="skill-tag" data-category="training" data-level="advanced">CUDA</span>
+    <span class="skill-tag" data-category="training" data-level="intermediate">MoE</span>
+
+    <span class="skill-tag" data-category="infra" data-level="expert">vLLM</span>
+    <span class="skill-tag" data-category="infra" data-level="expert">KV Cache</span>
+    <span class="skill-tag" data-category="infra" data-level="advanced">TensorRT</span>
+    <span class="skill-tag" data-category="infra" data-level="advanced">Triton</span>
+    <span class="skill-tag" data-category="infra" data-level="advanced">Docker</span>
+    <span class="skill-tag" data-category="infra" data-level="advanced">Kubernetes</span>
+
+    <span class="skill-tag" data-category="agent" data-level="advanced">LangChain</span>
+    <span class="skill-tag" data-category="agent" data-level="advanced">RAG</span>
+    <span class="skill-tag" data-category="agent" data-level="advanced">MCP</span>
+    <span class="skill-tag" data-category="agent" data-level="expert">Memory System</span>
+    <span class="skill-tag" data-category="agent" data-level="advanced">Prompt Engineering</span>
+  </div>
+</section>
+
+<section class="about-block" aria-labelledby="about-focus">
+  <h2 id="about-focus">Focus Areas</h2>
+
+  <div class="projects-grid">
+    <article class="project-card">
+      <div class="project-header">
+        <h3>LLM Inference Optimization</h3>
+      </div>
+      <p class="project-description">High-performance LLM serving built on vLLM, covering KV Cache management, Speculative Decoding, Continuous Batching, and quantized deployment for low-latency online inference at scale.</p>
+      <div class="project-tags">
+        <span class="project-tag">vLLM</span>
+        <span class="project-tag">KV Cache</span>
+        <span class="project-tag">TensorRT</span>
+        <span class="project-tag">CUDA</span>
+      </div>
+    </article>
+
+    <article class="project-card">
+      <div class="project-header">
+        <h3>Distributed Training & Model Architecture</h3>
+      </div>
+      <p class="project-description">Large-scale distributed training infrastructure and model architecture research, including 5D Parallelism (DP/TP/PP/SP/EP), MoE sparse architectures, Scaling Law validation, and training stability tuning.</p>
+      <div class="project-tags">
+        <span class="project-tag">DeepSpeed</span>
+        <span class="project-tag">Megatron-LM</span>
+        <span class="project-tag">PyTorch</span>
+        <span class="project-tag">MoE</span>
+      </div>
+    </article>
+
+    <article class="project-card">
+      <div class="project-header">
+        <h3>Agent & Memory System</h3>
+      </div>
+      <p class="project-description">Design and implementation of LLM Agent systems, including hierarchical Memory management for multi-turn conversations, Tool-use orchestration, MCP protocol integration, and RAG pipelines.</p>
+      <div class="project-tags">
+        <span class="project-tag">LangChain</span>
+        <span class="project-tag">RAG</span>
+        <span class="project-tag">MCP</span>
+        <span class="project-tag">Memory System</span>
+      </div>
+    </article>
+
+    <article class="project-card">
+      <div class="project-header">
+        <h3>LLM Serving Infrastructure</h3>
+      </div>
+      <p class="project-description">Production-grade LLM serving platform covering model deployment orchestration, GPU cluster scheduling, Triton inference gateway, and end-to-end observability.</p>
+      <div class="project-tags">
+        <span class="project-tag">Kubernetes</span>
+        <span class="project-tag">Docker</span>
+        <span class="project-tag">Triton</span>
+        <span class="project-tag">Python</span>
+      </div>
+    </article>
+  </div>
+  <p><a href="https://github.com/kakack" target="_blank" rel="noopener">View all on GitHub</a></p>
+</section>

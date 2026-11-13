@@ -10,7 +10,22 @@
   <link rel="preconnect" href="https://use.typekit.net" crossorigin>
   <link rel="preconnect" href="https://p.typekit.net" crossorigin>
 
+  <script>
+    /* set the theme before first paint so dark mode never flashes light */
+    (function () {
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "dark" || (t !== "light" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/style.css" />
+  <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/assets/css/site.css" />
+  {% if page.layout == 'home' %}
+  <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/assets/css/home.css" />
+  {% endif %}
   <link rel="alternate" type="application/rss+xml" title="{{ site.name }} - {{ site.description }}" href="{{ site.url }}{{ site.baseurl }}/feed.xml" />
 
   {% if site.favicon %}

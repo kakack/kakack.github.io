@@ -1,6 +1,6 @@
 .publications {
   margin-top: 2.75em;
-  scroll-margin-top: 88px;
+  scroll-margin-top: $nav-h + 20px;
 }
 
 .publications-intro {
@@ -91,25 +91,25 @@
   .publications-year,
   .pub-authors,
   .pub-tldr {
-    color: #adb5bd;
+    color: #B4ACA4;
   }
 
   .pub-authors strong {
-    color: #f1f3f5;
+    color: #ECE8E1;
   }
 
   .publications-year {
-    border-color: #2d3238;
+    border-color: #403D39;
   }
 
   .pub-badge {
-    border-color: #3a4149;
-    background: #2a3036;
-    color: #63e6be;
+    border-color: #4D4944;
+    background: #33312E;
+    color: #A9C0B0;
 
     &:hover {
-      background: rgba(32, 201, 151, 0.16);
-      color: #63e6be;
+      background: rgba(169, 192, 176, 0.16);
+      color: #C3D5C8;
     }
   }
 }

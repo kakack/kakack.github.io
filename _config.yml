@@ -11,15 +11,17 @@ about_preview: My technical writing traces every step of learning and building t
 avatar: /assets/brand/logo.svg
 favicon: /assets/brand/favicon.svg
 social_image: https://kakack.github.io/assets/brand/social.png
+# 顶部导航。站名本身链回主页，所以这里不再列 Home。
 navigation:
-  - name: Home
-    url: /
-  - name: About
-    url: /about
   - name: Archive
+    label: 文章
     url: /archive
   - name: Tags
+    label: 标签
     url: /tags
+  - name: About
+    label: 关于
+    url: /about
 paginate: 8
 excerpt_separator: <!-- more -->
 footer-links:

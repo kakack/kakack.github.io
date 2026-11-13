@@ -1,0 +1,27 @@
+/* Site-wide enhancements in plain CSS.
+   Everything here uses syntax the Sass version on GitHub Pages cannot parse (clamp, max, @view-transition),
+   so it lives outside style.scss. style.scss already gives a complete layout with fixed values;
+   this file only refines it. The numbers mirror _sass/_variables.scss. */
+
+/* fluid gutters */
+.topbar { padding: 0 clamp(20px, 5vw, 72px); view-transition-name: topbar; }
+.topbar-nav { gap: clamp(14px, 2.4vw, 30px); }
+.wrapper-content { padding-left: clamp(20px, 5vw, 72px); padding-right: clamp(20px, 5vw, 72px); }
+.site-footer-inner { padding-left: clamp(20px, 5vw, 72px); padding-right: clamp(20px, 5vw, 72px); }
+body.home-page .wrapper-content { padding: 0; }
+
+/* table of contents + text column, centred as a pair on wide screens */
+@media screen and (min-width: 1180px) {
+  .toc { left: max(20px, calc(50vw - 534px)); }
+  body.has-toc .wrapper-content { padding-left: calc(max(20px, 50vw - 534px) + 288px); padding-right: 20px; }
+}
+
+/* page-to-page transitions; browsers without support navigate as before */
+@view-transition { navigation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 0.22s; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

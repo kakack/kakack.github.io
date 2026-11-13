@@ -1,0 +1,97 @@
+# 主页的内容：八站流水线和游记照片带。
+# 改这里就能改主页，不用动 index.html。
+
+# 每一站是训练系列的一篇。url 是文章的站内路径，figure 是 _images/ 里的文件名，
+# hue 是这一站的灰调色相（钉住时背景会淡淡地染成它）。
+stages:
+  - name: 开训准备
+    question: 第一个 batch 进 GPU 之前，哪些东西必须先锁死。
+    url: /LLM-Training-Pipeline-Part1-Overview-and-Data-Engineering/
+    figure: 20260813-1.png
+    ordinal: 一
+    hue: "#B7A990"
+  - name: 预训练
+    question: 下一个 token 的目标怎样流过一个 step，loss 跳起来时先看哪个信号。
+    url: /LLM-Training-Pipeline-Part2-Pretrain/
+    figure: 20261106-1.png
+    ordinal: 二
+    hue: "#8A9BAE"
+  - name: Mid-training
+    question: 学习率在降、数据也在换，涨的那几个点该记在谁头上。
+    url: /LLM-Training-Pipeline-Part3-Midtraining/
+    figure: 20261109-1.png
+    ordinal: 三
+    hue: "#A39AAE"
+  - name: SFT
+    question: 监督从每个 token 改成哪些 token，边界由 mask 决定。
+    url: /LLM-Training-Pipeline-Part4-SFT/
+    figure: 20261110-1.png
+    ordinal: 四
+    hue: "#94A596"
+  - name: 偏好对齐
+    question: 四个模型同时在场，谁在打分，谁在更新。
+    url: /LLM-Training-Pipeline-Part5-Preference/
+    figure: 20261009-1.png
+    ordinal: 五
+    hue: "#C4A29E"
+  - name: 推理 RL
+    question: 奖励能被规则验证之后，还有哪三种方式会失控。
+    url: /LLM-Training-Pipeline-Part6-RLVR/
+    figure: 20261023-1.png
+    ordinal: 六
+    hue: "#7F9A9A"
+  - name: Agentic
+    question: 奖励退到轨迹末端，梯度回到哪几段文字。
+    url: /LLM-Training-Pipeline-Part7-Agentic/
+    figure: 20261104-1.png
+    ordinal: 七
+    hue: "#BFA778"
+  - name: 蒸馏与评估
+    question: 把能力搬进小模型，再让分数指回数据。
+    url: /LLM-Training-Pipeline-Part8-Distill-Eval/
+    figure: 20261111-1.png
+    ordinal: 八
+    hue: "#9A8C84"
+
+# 游记照片带。photo 是 _images/ 里的文件名，最好用横幅照片。
+road:
+  - place: 首尔
+    year: 2024
+    title: Seoul的冬季恋歌
+    url: /Seoul的冬季恋歌/
+    photo: seoul-1.jpg
+  - place: 东京湾
+    year: 2024
+    title: 富士初窥
+    url: /富士初窥/
+    photo: 240504_1.jpg
+  - place: 北京
+    year: 2023
+    title: 胡同深处有人家
+    url: /胡同深处有人家/
+    photo: bj2.jpg
+  - place: 新加坡
+    year: 2025
+    title: 南洋一梦
+    url: /南洋一梦/
+    photo: sgp_20250205_02.jpg
+  - place: 意大利
+    year: 2024
+    title: 约会亚平宁
+    url: /约会亚平宁/
+    photo: ita_241007-10.jpg
+  - place: 关西
+    year: 2024
+    title: 从关西开始吧
+    url: /从关西开始吧/
+    photo: jp_07.jpg
+  - place: 泰国
+    year: 2025
+    title: 泰国的山海
+    url: /泰国的山海/
+    photo: thai-2510-9.jpg
+  - place: 大西北
+    year: 2017
+    title: 来自塞外那渺茫的歌声——历险大西北
+    url: /来自塞外那渺茫的歌声——历险大西北/
+    photo: 20171010-2.jpg
